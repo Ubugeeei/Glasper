@@ -1,10 +1,16 @@
+#[derive(Debug)]
+pub struct Token {
+    pub token_type: TokenType,
+    pub literal: String,
+}
+
 #[derive(PartialEq, Debug)]
-pub enum Token {
-    ILLEAGAL,
+pub enum TokenType {
+    ILLEGAL,
     EOF,
 
-    IDENT(String),
-    INT(f64),
+    IDENT,
+    INT,
 
     ASSIGN,
     PLUS,
@@ -19,4 +25,13 @@ pub enum Token {
 
     FUNCTION,
     LET,
+}
+
+impl Token {
+    pub fn new(token_type: TokenType, literal: String) -> Self {
+        Token {
+            token_type,
+            literal,
+        }
+    }
 }
