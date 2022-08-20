@@ -55,15 +55,144 @@ pub mod tests {
     use super::*;
     #[test]
     fn test_next_token() {
-        let source = String::from("=+(){},;");
-        let mut l = Lexer::new(source);
-        assert_eq!(l.next_token().token_type, TokenType::ASSIGN);
-        assert_eq!(l.next_token().token_type, TokenType::PLUS);
-        assert_eq!(l.next_token().token_type, TokenType::LPAREN);
-        assert_eq!(l.next_token().token_type, TokenType::RPAREN);
-        assert_eq!(l.next_token().token_type, TokenType::LBRACE);
-        assert_eq!(l.next_token().token_type, TokenType::RBRACE);
-        assert_eq!(l.next_token().token_type, TokenType::COMMA);
-        assert_eq!(l.next_token().token_type, TokenType::SEMICOLON);
+        {
+            let source = String::from("=+(){},;");
+            let mut l = Lexer::new(source);
+            assert_eq!(l.next_token().token_type, TokenType::ASSIGN);
+            assert_eq!(l.next_token().token_type, TokenType::PLUS);
+            assert_eq!(l.next_token().token_type, TokenType::LPAREN);
+            assert_eq!(l.next_token().token_type, TokenType::RPAREN);
+            assert_eq!(l.next_token().token_type, TokenType::LBRACE);
+            assert_eq!(l.next_token().token_type, TokenType::RBRACE);
+            assert_eq!(l.next_token().token_type, TokenType::COMMA);
+            assert_eq!(l.next_token().token_type, TokenType::SEMICOLON);
+        }
+        {
+            let source = String::from(r#"
+                let five = 5;
+                let ten = 10;
+
+                let add = fn(x, y) {
+                    x + y;
+                };
+
+                let result = add(five, ten);
+            "#);
+            let mut l = Lexer::new(source);
+
+            let mut t = l.next_token();
+            assert_eq!(t.token_type, TokenType::LET);
+
+            t = l.next_token();
+            assert_eq!(t.token_type, TokenType::IDENT);
+            assert_eq!(t.literal, String::from("five"));
+
+            t = l.next_token();
+            assert_eq!(t.token_type, TokenType::ASSIGN);
+
+            t = l.next_token();
+            assert_eq!(t.token_type, TokenType::INT);
+            assert_eq!(t.literal, String::from("5"));
+
+            t = l.next_token();
+            assert_eq!(t.token_type, TokenType::SEMICOLON);
+
+            t = l.next_token();
+            assert_eq!(t.token_type, TokenType::LET);
+            assert_eq!(t.literal, String::from("ten"));
+
+            t = l.next_token();
+            assert_eq!(t.token_type, TokenType::ASSIGN);
+
+            t = l.next_token();
+            assert_eq!(t.token_type, TokenType::INT);
+            assert_eq!(t.literal, String::from("10"));
+
+            t = l.next_token();
+            assert_eq!(t.token_type, TokenType::SEMICOLON);
+            
+            t = l.next_token();
+            assert_eq!(t.token_type, TokenType::LET);
+            assert_eq!(t.literal, String::from("add"));
+
+            t = l.next_token();
+            assert_eq!(t.token_type, TokenType::FUNCTION);
+            assert_eq!(t.literal, String::from("fn"));
+
+            t = l.next_token();
+            assert_eq!(t.token_type, TokenType::LPAREN);
+            
+            t = l.next_token();
+            assert_eq!(t.token_type, TokenType::IDENT);
+            assert_eq!(t.literal, String::from("x"));
+
+            t = l.next_token();
+            assert_eq!(t.token_type, TokenType::COMMA);
+
+            t = l.next_token();
+            assert_eq!(t.token_type, TokenType::IDENT);
+            assert_eq!(t.literal, String::from("y"));
+
+            t = l.next_token();
+            assert_eq!(t.token_type, TokenType::RPAREN);
+
+            t = l.next_token();
+            assert_eq!(t.token_type, TokenType::LBRACE);
+
+            t = l.next_token();
+            assert_eq!(t.token_type, TokenType::IDENT);
+            assert_eq!(t.literal, String::from("x"));
+
+            t = l.next_token();
+            assert_eq!(t.token_type, TokenType::PLUS);
+
+            t = l.next_token();
+            assert_eq!(t.token_type, TokenType::IDENT);
+            assert_eq!(t.literal, String::from("y"));
+
+            t = l.next_token();
+            assert_eq!(t.token_type, TokenType::SEMICOLON);
+
+            t = l.next_token();
+            assert_eq!(t.token_type, TokenType::RBRACE);
+
+            t = l.next_token();
+            assert_eq!(t.token_type, TokenType::SEMICOLON);
+
+            t = l.next_token();
+            assert_eq!(t.token_type, TokenType::LET);
+            assert_eq!(t.literal, String::from("result"));
+
+            t = l.next_token();
+            assert_eq!(t.token_type, TokenType::ASSIGN);
+
+            t = l.next_token();
+            assert_eq!(t.token_type, TokenType::IDENT);
+            assert_eq!(t.literal, String::from("add"));
+            
+            t = l.next_token();
+            assert_eq!(t.token_type, TokenType::LPAREN);
+
+            t = l.next_token();
+            assert_eq!(t.token_type, TokenType::IDENT);
+            assert_eq!(t.literal, String::from("five"));
+
+            t = l.next_token();
+            assert_eq!(t.token_type, TokenType::COMMA);
+
+            t = l.next_token();
+            assert_eq!(t.token_type, TokenType::IDENT);
+            assert_eq!(t.literal, String::from("ten"));
+
+            t = l.next_token();
+            assert_eq!(t.token_type, TokenType::RPAREN);
+            assert_eq!(t.literal, String::from(""));
+
+            t = l.next_token();
+            assert_eq!(t.token_type, TokenType::SEMICOLON);
+
+            t = l.next_token();
+            assert_eq!(t.token_type, TokenType::EOF);
+        }
     }
 }
