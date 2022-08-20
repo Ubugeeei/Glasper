@@ -31,12 +31,26 @@ impl Lexer {
             '{' => Token::new(TokenType::LBRACE, self.ch.to_string()),
             '}' => Token::new(TokenType::RBRACE, self.ch.to_string()),
             '0' => Token::new(TokenType::EOF, self.ch.to_string()),
-            _ => Token::new(TokenType::ILLEGAL, self.ch.to_string()),
+            _ => {
+                if self.is_letter() {
+                    Token::new(TokenType::IDENT, self.read_identifier())
+                } else {
+                    Token::new(TokenType::ILLEGAL, self.ch.to_string())
+                }
+            }
         };
 
         self.read_char();
 
         tok
+    }
+
+    fn read_identifier(&mut self) -> String {
+        let position = self.position;
+        while self.is_letter() {
+            self.read_char();
+        }
+        self.input[position..self.position].to_string()
     }
 
     fn read_char(&mut self) {
@@ -47,6 +61,10 @@ impl Lexer {
         }
         self.position = self.read_position;
         self.read_position += 1;
+    }
+
+    fn is_letter(&self) -> bool {
+        self.ch.is_alphabetic() || self.ch == '_'
     }
 }
 
@@ -68,7 +86,8 @@ pub mod tests {
             assert_eq!(l.next_token().token_type, TokenType::SEMICOLON);
         }
         {
-            let source = String::from(r#"
+            let source = String::from(
+                r#"
                 let five = 5;
                 let ten = 10;
 
@@ -77,7 +96,8 @@ pub mod tests {
                 };
 
                 let result = add(five, ten);
-            "#);
+            "#,
+            );
             let mut l = Lexer::new(source);
 
             let mut t = l.next_token();
@@ -110,7 +130,6 @@ pub mod tests {
 
             t = l.next_token();
             assert_eq!(t.token_type, TokenType::SEMICOLON);
-            
             t = l.next_token();
             assert_eq!(t.token_type, TokenType::LET);
             assert_eq!(t.literal, String::from("add"));
@@ -121,7 +140,6 @@ pub mod tests {
 
             t = l.next_token();
             assert_eq!(t.token_type, TokenType::LPAREN);
-            
             t = l.next_token();
             assert_eq!(t.token_type, TokenType::IDENT);
             assert_eq!(t.literal, String::from("x"));
@@ -169,7 +187,6 @@ pub mod tests {
             t = l.next_token();
             assert_eq!(t.token_type, TokenType::IDENT);
             assert_eq!(t.literal, String::from("add"));
-            
             t = l.next_token();
             assert_eq!(t.token_type, TokenType::LPAREN);
 
