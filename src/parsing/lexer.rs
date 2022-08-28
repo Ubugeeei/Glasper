@@ -36,6 +36,8 @@ impl Lexer {
                 if self.is_letter() {
                     let token_type = lookup_indent(&self.ch.to_string());
                     Token::new(token_type, self.read_identifier())
+                } else if self.is_digit() {
+                    Token::new(TokenType::INT, self.read_number())
                 } else {
                     Token::new(TokenType::ILLEGAL, self.ch.to_string())
                 }
@@ -65,6 +67,14 @@ impl Lexer {
         self.read_position += 1;
     }
 
+    fn read_number(&mut self) -> String {
+        let position = self.position;
+        while self.is_digit() {
+            self.read_char();
+        }
+        self.input[position..self.position].to_string()
+    }
+
     fn skip_whitespace(&mut self) {
         while self.ch == ' ' || self.ch == '\t' || self.ch == '\n' || self.ch == '\r' {
             self.read_char();
@@ -73,6 +83,10 @@ impl Lexer {
 
     fn is_letter(&self) -> bool {
         self.ch.is_alphabetic() || self.ch == '_'
+    }
+
+    fn is_digit(&self) -> bool {
+        self.ch.is_digit(10)
     }
 }
 
