@@ -159,8 +159,8 @@ pub mod tests {
         {
             let source = String::from(
                 r#"
-                let five = 5;
-                let ten = 10;
+                    let five = 5;
+                    let ten = 10;
         "#,
             );
             let mut l = Lexer::new(source);
@@ -174,8 +174,8 @@ pub mod tests {
         {
             let source = String::from(
                 r#"
-                let = 5;
-                let 10;
+                    let = 5;
+                    let 10;
         "#,
             );
             let mut l = Lexer::new(source);
