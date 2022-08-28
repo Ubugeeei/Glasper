@@ -1,12 +1,12 @@
 #![allow(non_camel_case_types)]
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Token {
     pub token_type: TokenType,
     pub literal: String,
 }
 
-#[derive(PartialEq, Eq, Debug)]
+#[derive(PartialEq, Eq, Debug, Clone)]
 pub enum TokenType {
     Illegal,
     Eof,

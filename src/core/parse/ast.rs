@@ -26,6 +26,7 @@ pub trait Node {
     fn token_literal(&self) -> String;
 }
 
+#[derive(Debug)]
 pub enum Statement {
     LetStatement(LetStatement),
 }
@@ -40,7 +41,9 @@ impl Node for Statement {
     }
 }
 
+#[derive(Debug)]
 pub enum Expression {
+    Integer(i32),
     Identifier(Identifier),
 }
 impl Expression {
@@ -54,13 +57,25 @@ impl Node for Expression {
     }
 }
 
+#[derive(Debug)]
 pub struct LetStatement {
     pub token: Token,
     pub name: Identifier,
     pub value: Expression,
 }
+impl LetStatement {
+    pub fn new(token: Token, name: Identifier, value: Expression) -> LetStatement {
+        LetStatement { token, name, value }
+    }
+}
 
+#[derive(Debug)]
 pub struct Identifier {
     pub token: Token,
     pub value: String,
+}
+impl Identifier {
+    pub fn new(token: Token, value: String) -> Identifier {
+        Identifier { token, value }
+    }
 }
