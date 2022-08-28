@@ -1,4 +1,4 @@
-use super::{Token, TokenType};
+use super::{token::lookup_indent, Token, TokenType};
 
 pub struct Lexer {
     input: String,
@@ -33,7 +33,8 @@ impl Lexer {
             '0' => Token::new(TokenType::EOF, self.ch.to_string()),
             _ => {
                 if self.is_letter() {
-                    Token::new(TokenType::IDENT, self.read_identifier())
+                    let token_type = lookup_indent(&self.ch.to_string());
+                    Token::new(token_type, self.read_identifier())
                 } else {
                     Token::new(TokenType::ILLEGAL, self.ch.to_string())
                 }
