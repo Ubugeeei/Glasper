@@ -21,6 +21,7 @@ impl Lexer {
 
     #[allow(dead_code)]
     fn next_token(&mut self) -> Token {
+        self.skip_whitespace();
         let tok = match self.ch {
             '=' => Token::new(TokenType::ASSIGN, self.ch.to_string()),
             '+' => Token::new(TokenType::PLUS, self.ch.to_string()),
@@ -62,6 +63,12 @@ impl Lexer {
         }
         self.position = self.read_position;
         self.read_position += 1;
+    }
+
+    fn skip_whitespace(&mut self) {
+        while self.ch == ' ' || self.ch == '\t' || self.ch == '\n' || self.ch == '\r' {
+            self.read_char();
+        }
     }
 
     fn is_letter(&self) -> bool {
