@@ -27,4 +27,8 @@ impl<'a> Parser<'a> {
         self.cur_token = self.peeked_token.clone();
         self.peeked_token = self.l.next_token();
     }
+
+    fn parse_program(&mut self) -> Option<Program> {
+        None
+    }
 }
