@@ -97,4 +97,20 @@ pub mod tests {
             assert_eq!(p.peeked_token.token_type, TokenType::Eof);
         }
     }
+
+    #[test]
+    fn test_parse_let_statements() {
+        let source = String::from(
+            r#"
+                let five = 5;
+                let ten = 10;
+        "#,
+        );
+        let mut l = Lexer::new(source);
+        let mut p = Parser::new(&mut l);
+        let program = p.parse_program();
+
+        assert_eq!(program.statements.len(), 2);
+        // TODO: test
+    }
 }
