@@ -1,9 +1,11 @@
 // TODO: remove this
 #![allow(dead_code)]
 
+use crate::core::tokenize::token::TokenType;
+
 use super::{
     super::{lexer::Lexer, token::Token},
-    ast::Program,
+    ast::{Expression, Identifier, Program, Statement},
 };
 
 pub struct Parser<'a> {
@@ -28,8 +30,44 @@ impl<'a> Parser<'a> {
         self.peeked_token = self.l.next_token();
     }
 
-    fn parse_program(&mut self) -> Option<Program> {
-        None
+    fn parse_program(&mut self) -> Program {
+        let mut program = Program::new();
+
+        while self.cur_token.token_type != TokenType::Eof {
+            let statements = match self.cur_token.token_type {
+                TokenType::Let => self.parse_let_statement(),
+                TokenType::Return => self.parse_return_statement(),
+                TokenType::If => self.parse_if_statement(),
+                _ => todo!(),
+            };
+            program.statements.push(statements);
+        }
+
+        program
+    }
+
+    fn parse_let_statement(&mut self) -> Statement {
+        todo!()
+    }
+
+    fn parse_return_statement(&mut self) -> Statement {
+        todo!()
+    }
+
+    fn parse_if_statement(&mut self) -> Statement {
+        todo!()
+    }
+
+    fn parse_identifier(&mut self) -> Identifier {
+        todo!()
+    }
+
+    fn parse_expression(&mut self) -> Expression {
+        todo!()
+    }
+
+    fn parse_operator_expression(&mut self) -> Expression {
+        todo!()
     }
 }
 
