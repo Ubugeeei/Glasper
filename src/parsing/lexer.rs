@@ -146,7 +146,12 @@ pub mod tests {
     }
 
     #[test]
-    fn test_combination_of_symbols() {}
+    fn test_combination_of_symbols() {
+        let source = String::from("== !=");
+        let mut l = Lexer::new(source);
+        assert_eq!(l.next_token().token_type, TokenType::EQ);
+        assert_eq!(l.next_token().token_type, TokenType::NOT_EQ);
+    }
 
     #[test]
     fn test_keywords() {
