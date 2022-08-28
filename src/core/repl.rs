@@ -4,26 +4,26 @@ use std::io::{self, Write};
 const PROMPT: &str = "> ";
 
 pub fn start() {
-  loop {
-    print!("{}", PROMPT);
-    io::stdout().flush().unwrap();
+    loop {
+        print!("{}", PROMPT);
+        io::stdout().flush().unwrap();
 
-    let mut input = String::new();
+        let mut input = String::new();
 
-    io::stdin().read_line(&mut input).unwrap();
+        io::stdin().read_line(&mut input).unwrap();
 
-    if &input == "exit()\n" {
-      println!("Bye!");
-      break;
+        if &input == "exit()\n" {
+            println!("Bye!");
+            break;
+        }
+
+        let mut l = Lexer::new(input);
+        let mut t = l.next_token();
+        println!();
+        while t.token_type != TokenType::Eof {
+            println!("{:?}", t);
+            t = l.next_token();
+        }
+        println!();
     }
-
-    let mut l = Lexer::new(input);
-    let mut t = l.next_token();
-    println!();
-    while t.token_type != TokenType::Eof {
-      println!("{:?}", t);
-      t = l.next_token();
-    }
-    println!();
-  }
 }
