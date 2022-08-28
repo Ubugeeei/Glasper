@@ -1,7 +1,10 @@
 // TODO: remove this
 #![allow(dead_code)]
 
-use crate::core::tokenize::{lexer::Lexer, token::Token};
+use super::{
+    super::{lexer::Lexer, token::Token},
+    ast::Program,
+};
 
 pub struct Parser<'a> {
     l: &'a mut Lexer,
