@@ -12,19 +12,45 @@ pub enum TokenType {
     IDENT,
     INT,
 
+    /*
+     * symbols
+     */
     ASSIGN,
+    // arithmetic operations
     PLUS,
-
-    COMMA,
-    SEMICOLON,
-
+    MINUS,
+    BANG,
+    ASTERISK,
+    SLASH,
+    // comp
+    LT,
+    GT,
+    // brackets
     LPAREN,
     RPAREN,
     LBRACE,
     RBRACE,
+    // others
+    COMMA,
+    SEMICOLON,
 
+    /*
+     * combination of symbols
+     */
+    EQ,
+    #[allow(non_camel_case_types)]
+    NOT_EQ,
+
+    /*
+     * keywords
+     */
     FUNCTION,
     LET,
+    TRUE,
+    FALSE,
+    IF,
+    ELSE,
+    RETURN,
 }
 
 impl Token {
@@ -40,6 +66,11 @@ pub fn lookup_indent(ident: &str) -> TokenType {
     match ident {
         "fn" => TokenType::FUNCTION,
         "let" => TokenType::LET,
+        "true" => TokenType::TRUE,
+        "false" => TokenType::FALSE,
+        "if" => TokenType::IF,
+        "else" => TokenType::ELSE,
+        "return" => TokenType::RETURN,
         _ => TokenType::IDENT,
     }
 }
