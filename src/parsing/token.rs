@@ -39,6 +39,11 @@ pub enum TokenType {
      */
     FUNCTION,
     LET,
+    TRUE,
+    FALSE,
+    IF,
+    ELSE,
+    RETURN,
 }
 
 impl Token {
