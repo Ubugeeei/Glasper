@@ -93,20 +93,30 @@ impl Lexer {
 #[cfg(test)]
 pub mod tests {
     use super::*;
+
     #[test]
-    fn test_next_token() {
-        {
-            let source = String::from("=+(){},;");
-            let mut l = Lexer::new(source);
-            assert_eq!(l.next_token().token_type, TokenType::ASSIGN);
-            assert_eq!(l.next_token().token_type, TokenType::PLUS);
-            assert_eq!(l.next_token().token_type, TokenType::LPAREN);
-            assert_eq!(l.next_token().token_type, TokenType::RPAREN);
-            assert_eq!(l.next_token().token_type, TokenType::LBRACE);
-            assert_eq!(l.next_token().token_type, TokenType::RBRACE);
-            assert_eq!(l.next_token().token_type, TokenType::COMMA);
-            assert_eq!(l.next_token().token_type, TokenType::SEMICOLON);
-        }
+    fn test_simple_token() {
+        let source = String::from("=+(){},;");
+        let mut l = Lexer::new(source);
+        assert_eq!(l.next_token().token_type, TokenType::ASSIGN);
+        assert_eq!(l.next_token().token_type, TokenType::PLUS);
+        assert_eq!(l.next_token().token_type, TokenType::LPAREN);
+        assert_eq!(l.next_token().token_type, TokenType::RPAREN);
+        assert_eq!(l.next_token().token_type, TokenType::LBRACE);
+        assert_eq!(l.next_token().token_type, TokenType::RBRACE);
+        assert_eq!(l.next_token().token_type, TokenType::COMMA);
+        assert_eq!(l.next_token().token_type, TokenType::SEMICOLON);
+    }
+
+    #[test]
+    fn test_witespace() {
+        let source = String::from(" \t\n\r=");
+        let mut l = Lexer::new(source);
+        assert_eq!(l.next_token().token_type, TokenType::ASSIGN);
+    }
+
+    #[test]
+    fn test_next_tokenize() {
         {
             let source = String::from(
                 r#"
