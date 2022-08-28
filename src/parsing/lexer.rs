@@ -117,6 +117,13 @@ pub mod tests {
     }
 
     #[test]
+    fn test_digit() {
+        let source = String::from("42");
+        let mut l = Lexer::new(source);
+        assert_eq!(l.next_token().token_type, TokenType::INT);
+    }
+
+    #[test]
     fn test_keywords() {
         let source = String::from("fn let");
         let mut l = Lexer::new(source);
