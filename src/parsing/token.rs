@@ -12,24 +12,31 @@ pub enum TokenType {
     IDENT,
     INT,
 
+    /*
+     * symbols
+     */
     ASSIGN,
+    // arithmetic operations
     PLUS,
     MINUS,
     BANG,
     ASTERISK,
     SLASH,
-
+    // comp
     LT,
     GT,
-
-    COMMA,
-    SEMICOLON,
-
+    // brackets
     LPAREN,
     RPAREN,
     LBRACE,
     RBRACE,
+    // others
+    COMMA,
+    SEMICOLON,
 
+    /*
+     * keywords
+     */
     FUNCTION,
     LET,
 }
