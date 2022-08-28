@@ -182,7 +182,6 @@ pub mod tests {
             let mut p = Parser::new(&mut l);
             let program = p.parse_program();
             assert_eq!(program.statements.len(), 0);
-            // TODO: test
         }
     }
 }
