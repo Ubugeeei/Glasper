@@ -23,37 +23,37 @@ impl Lexer {
     pub fn next_token(&mut self) -> Token {
         self.skip_whitespace();
         let tok = match self.ch {
-            '\u{0}' => Token::new(TokenType::EOF, self.ch.to_string()),
+            '\u{0}' => Token::new(TokenType::Eof, self.ch.to_string()),
 
-            '+' => Token::new(TokenType::PLUS, self.ch.to_string()),
-            '-' => Token::new(TokenType::MINUS, self.ch.to_string()),
-            '*' => Token::new(TokenType::ASTERISK, self.ch.to_string()),
-            '/' => Token::new(TokenType::SLASH, self.ch.to_string()),
+            '+' => Token::new(TokenType::Plus, self.ch.to_string()),
+            '-' => Token::new(TokenType::Minus, self.ch.to_string()),
+            '*' => Token::new(TokenType::Asterisk, self.ch.to_string()),
+            '/' => Token::new(TokenType::Slash, self.ch.to_string()),
 
             '<' => Token::new(TokenType::LT, self.ch.to_string()),
             '>' => Token::new(TokenType::GT, self.ch.to_string()),
-            ';' => Token::new(TokenType::SEMICOLON, self.ch.to_string()),
-            ',' => Token::new(TokenType::COMMA, self.ch.to_string()),
-            '(' => Token::new(TokenType::LPAREN, self.ch.to_string()),
-            ')' => Token::new(TokenType::RPAREN, self.ch.to_string()),
-            '{' => Token::new(TokenType::LBRACE, self.ch.to_string()),
-            '}' => Token::new(TokenType::RBRACE, self.ch.to_string()),
+            ';' => Token::new(TokenType::SemiColon, self.ch.to_string()),
+            ',' => Token::new(TokenType::Comma, self.ch.to_string()),
+            '(' => Token::new(TokenType::LParen, self.ch.to_string()),
+            ')' => Token::new(TokenType::RParen, self.ch.to_string()),
+            '{' => Token::new(TokenType::LBrace, self.ch.to_string()),
+            '}' => Token::new(TokenType::RBrace, self.ch.to_string()),
 
             '=' => {
                 if self.peek_char() == '=' {
                     self.read_char();
-                    Token::new(TokenType::EQ, self.ch.to_string())
+                    Token::new(TokenType::Eq, self.ch.to_string())
                 } else {
-                    Token::new(TokenType::ASSIGN, self.ch.to_string())
+                    Token::new(TokenType::Assign, self.ch.to_string())
                 }
             }
 
             '!' => {
                 if self.peek_char() == '=' {
                     self.read_char();
-                    Token::new(TokenType::NOT_EQ, self.ch.to_string())
+                    Token::new(TokenType::NotEq, self.ch.to_string())
                 } else {
-                    Token::new(TokenType::BANG, self.ch.to_string())
+                    Token::new(TokenType::Bang, self.ch.to_string())
                 }
             }
 
@@ -63,9 +63,9 @@ impl Lexer {
                     let token_type = lookup_indent(&id);
                     Token::new(token_type, id)
                 } else if Self::is_digit(self.ch) {
-                    Token::new(TokenType::INT, self.read_number())
+                    Token::new(TokenType::Int, self.read_number())
                 } else {
-                    Token::new(TokenType::ILLEGAL, self.ch.to_string())
+                    Token::new(TokenType::Illegal, self.ch.to_string())
                 }
             }
         };
@@ -138,56 +138,56 @@ pub mod tests {
     fn test_witespace() {
         let source = String::from(" \t\n\r=");
         let mut l = Lexer::new(source);
-        assert_eq!(l.next_token().token_type, TokenType::ASSIGN);
+        assert_eq!(l.next_token().token_type, TokenType::Assign);
     }
 
     #[test]
     fn test_digit() {
         let source = String::from("42;");
         let mut l = Lexer::new(source);
-        assert_eq!(l.next_token().token_type, TokenType::INT);
-        assert_eq!(l.next_token().token_type, TokenType::SEMICOLON);
+        assert_eq!(l.next_token().token_type, TokenType::Int);
+        assert_eq!(l.next_token().token_type, TokenType::SemiColon);
     }
 
     #[test]
     fn test_symbol_token() {
         let source = String::from("=+-*/!<>(){},;");
         let mut l = Lexer::new(source);
-        assert_eq!(l.next_token().token_type, TokenType::ASSIGN);
-        assert_eq!(l.next_token().token_type, TokenType::PLUS);
-        assert_eq!(l.next_token().token_type, TokenType::MINUS);
-        assert_eq!(l.next_token().token_type, TokenType::ASTERISK);
-        assert_eq!(l.next_token().token_type, TokenType::SLASH);
-        assert_eq!(l.next_token().token_type, TokenType::BANG);
+        assert_eq!(l.next_token().token_type, TokenType::Assign);
+        assert_eq!(l.next_token().token_type, TokenType::Plus);
+        assert_eq!(l.next_token().token_type, TokenType::Minus);
+        assert_eq!(l.next_token().token_type, TokenType::Asterisk);
+        assert_eq!(l.next_token().token_type, TokenType::Slash);
+        assert_eq!(l.next_token().token_type, TokenType::Bang);
         assert_eq!(l.next_token().token_type, TokenType::LT);
         assert_eq!(l.next_token().token_type, TokenType::GT);
-        assert_eq!(l.next_token().token_type, TokenType::LPAREN);
-        assert_eq!(l.next_token().token_type, TokenType::RPAREN);
-        assert_eq!(l.next_token().token_type, TokenType::LBRACE);
-        assert_eq!(l.next_token().token_type, TokenType::RBRACE);
-        assert_eq!(l.next_token().token_type, TokenType::COMMA);
-        assert_eq!(l.next_token().token_type, TokenType::SEMICOLON);
+        assert_eq!(l.next_token().token_type, TokenType::LParen);
+        assert_eq!(l.next_token().token_type, TokenType::RParen);
+        assert_eq!(l.next_token().token_type, TokenType::LBrace);
+        assert_eq!(l.next_token().token_type, TokenType::RBrace);
+        assert_eq!(l.next_token().token_type, TokenType::Comma);
+        assert_eq!(l.next_token().token_type, TokenType::SemiColon);
     }
 
     #[test]
     fn test_combination_of_symbols() {
         let source = String::from("== !=");
         let mut l = Lexer::new(source);
-        assert_eq!(l.next_token().token_type, TokenType::EQ);
-        assert_eq!(l.next_token().token_type, TokenType::NOT_EQ);
+        assert_eq!(l.next_token().token_type, TokenType::Eq);
+        assert_eq!(l.next_token().token_type, TokenType::NotEq);
     }
 
     #[test]
     fn test_keywords() {
         let source = String::from("fn let true false if else return");
         let mut l = Lexer::new(source);
-        assert_eq!(l.next_token().token_type, TokenType::FUNCTION);
-        assert_eq!(l.next_token().token_type, TokenType::LET);
-        assert_eq!(l.next_token().token_type, TokenType::TRUE);
-        assert_eq!(l.next_token().token_type, TokenType::FALSE);
-        assert_eq!(l.next_token().token_type, TokenType::IF);
-        assert_eq!(l.next_token().token_type, TokenType::ELSE);
-        assert_eq!(l.next_token().token_type, TokenType::RETURN);
+        assert_eq!(l.next_token().token_type, TokenType::Function);
+        assert_eq!(l.next_token().token_type, TokenType::Let);
+        assert_eq!(l.next_token().token_type, TokenType::True);
+        assert_eq!(l.next_token().token_type, TokenType::False);
+        assert_eq!(l.next_token().token_type, TokenType::If);
+        assert_eq!(l.next_token().token_type, TokenType::Else);
+        assert_eq!(l.next_token().token_type, TokenType::Return);
     }
 
     #[test]
@@ -207,131 +207,131 @@ pub mod tests {
         let mut l = Lexer::new(source);
 
         let mut t = l.next_token();
-        assert_eq!(t.token_type, TokenType::LET);
+        assert_eq!(t.token_type, TokenType::Let);
 
         t = l.next_token();
-        assert_eq!(t.token_type, TokenType::IDENT);
+        assert_eq!(t.token_type, TokenType::Ident);
         assert_eq!(t.literal, String::from("five"));
 
         t = l.next_token();
-        assert_eq!(t.token_type, TokenType::ASSIGN);
+        assert_eq!(t.token_type, TokenType::Assign);
 
         t = l.next_token();
-        assert_eq!(t.token_type, TokenType::INT);
+        assert_eq!(t.token_type, TokenType::Int);
         assert_eq!(t.literal, String::from("5"));
 
         t = l.next_token();
-        assert_eq!(t.token_type, TokenType::SEMICOLON);
+        assert_eq!(t.token_type, TokenType::SemiColon);
 
         t = l.next_token();
-        assert_eq!(t.token_type, TokenType::LET);
+        assert_eq!(t.token_type, TokenType::Let);
         assert_eq!(t.literal, String::from("let"));
 
         t = l.next_token();
-        assert_eq!(t.token_type, TokenType::IDENT);
+        assert_eq!(t.token_type, TokenType::Ident);
         assert_eq!(t.literal, String::from("ten"));
 
         t = l.next_token();
-        assert_eq!(t.token_type, TokenType::ASSIGN);
+        assert_eq!(t.token_type, TokenType::Assign);
 
         t = l.next_token();
-        assert_eq!(t.token_type, TokenType::INT);
+        assert_eq!(t.token_type, TokenType::Int);
         assert_eq!(t.literal, String::from("10"));
 
         t = l.next_token();
-        assert_eq!(t.token_type, TokenType::SEMICOLON);
+        assert_eq!(t.token_type, TokenType::SemiColon);
 
         t = l.next_token();
-        assert_eq!(t.token_type, TokenType::LET);
+        assert_eq!(t.token_type, TokenType::Let);
         assert_eq!(t.literal, String::from("let"));
 
         t = l.next_token();
-        assert_eq!(t.token_type, TokenType::IDENT);
+        assert_eq!(t.token_type, TokenType::Ident);
         assert_eq!(t.literal, String::from("add"));
 
         t = l.next_token();
-        assert_eq!(t.token_type, TokenType::ASSIGN);
+        assert_eq!(t.token_type, TokenType::Assign);
 
         t = l.next_token();
-        assert_eq!(t.token_type, TokenType::FUNCTION);
+        assert_eq!(t.token_type, TokenType::Function);
         assert_eq!(t.literal, String::from("fn"));
 
         t = l.next_token();
-        assert_eq!(t.token_type, TokenType::LPAREN);
+        assert_eq!(t.token_type, TokenType::LParen);
 
         t = l.next_token();
-        assert_eq!(t.token_type, TokenType::IDENT);
+        assert_eq!(t.token_type, TokenType::Ident);
         assert_eq!(t.literal, String::from("x"));
 
         t = l.next_token();
-        assert_eq!(t.token_type, TokenType::COMMA);
+        assert_eq!(t.token_type, TokenType::Comma);
 
         t = l.next_token();
-        assert_eq!(t.token_type, TokenType::IDENT);
+        assert_eq!(t.token_type, TokenType::Ident);
         assert_eq!(t.literal, String::from("y"));
 
         t = l.next_token();
-        assert_eq!(t.token_type, TokenType::RPAREN);
+        assert_eq!(t.token_type, TokenType::RParen);
 
         t = l.next_token();
-        assert_eq!(t.token_type, TokenType::LBRACE);
+        assert_eq!(t.token_type, TokenType::LBrace);
 
         t = l.next_token();
-        assert_eq!(t.token_type, TokenType::IDENT);
+        assert_eq!(t.token_type, TokenType::Ident);
         assert_eq!(t.literal, String::from("x"));
 
         t = l.next_token();
-        assert_eq!(t.token_type, TokenType::PLUS);
+        assert_eq!(t.token_type, TokenType::Plus);
 
         t = l.next_token();
-        assert_eq!(t.token_type, TokenType::IDENT);
+        assert_eq!(t.token_type, TokenType::Ident);
         assert_eq!(t.literal, String::from("y"));
 
         t = l.next_token();
-        assert_eq!(t.token_type, TokenType::SEMICOLON);
+        assert_eq!(t.token_type, TokenType::SemiColon);
 
         t = l.next_token();
-        assert_eq!(t.token_type, TokenType::RBRACE);
+        assert_eq!(t.token_type, TokenType::RBrace);
 
         t = l.next_token();
-        assert_eq!(t.token_type, TokenType::SEMICOLON);
+        assert_eq!(t.token_type, TokenType::SemiColon);
 
         t = l.next_token();
-        assert_eq!(t.token_type, TokenType::LET);
+        assert_eq!(t.token_type, TokenType::Let);
         assert_eq!(t.literal, String::from("let"));
 
         t = l.next_token();
-        assert_eq!(t.token_type, TokenType::IDENT);
+        assert_eq!(t.token_type, TokenType::Ident);
         assert_eq!(t.literal, String::from("result"));
 
         t = l.next_token();
-        assert_eq!(t.token_type, TokenType::ASSIGN);
+        assert_eq!(t.token_type, TokenType::Assign);
 
         t = l.next_token();
-        assert_eq!(t.token_type, TokenType::IDENT);
+        assert_eq!(t.token_type, TokenType::Ident);
         assert_eq!(t.literal, String::from("add"));
 
         t = l.next_token();
-        assert_eq!(t.token_type, TokenType::LPAREN);
+        assert_eq!(t.token_type, TokenType::LParen);
 
         t = l.next_token();
-        assert_eq!(t.token_type, TokenType::IDENT);
+        assert_eq!(t.token_type, TokenType::Ident);
         assert_eq!(t.literal, String::from("five"));
 
         t = l.next_token();
-        assert_eq!(t.token_type, TokenType::COMMA);
+        assert_eq!(t.token_type, TokenType::Comma);
 
         t = l.next_token();
-        assert_eq!(t.token_type, TokenType::IDENT);
+        assert_eq!(t.token_type, TokenType::Ident);
         assert_eq!(t.literal, String::from("ten"));
 
         t = l.next_token();
-        assert_eq!(t.token_type, TokenType::RPAREN);
+        assert_eq!(t.token_type, TokenType::RParen);
 
         t = l.next_token();
-        assert_eq!(t.token_type, TokenType::SEMICOLON);
+        assert_eq!(t.token_type, TokenType::SemiColon);
 
         t = l.next_token();
-        assert_eq!(t.token_type, TokenType::EOF);
+        assert_eq!(t.token_type, TokenType::Eof);
     }
 }

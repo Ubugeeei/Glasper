@@ -1,3 +1,5 @@
+#![allow(non_camel_case_types)]
+
 #[derive(Debug)]
 pub struct Token {
     pub token_type: TokenType,
@@ -6,51 +8,50 @@ pub struct Token {
 
 #[derive(PartialEq, Eq, Debug)]
 pub enum TokenType {
-    ILLEGAL,
-    EOF,
+    Illegal,
+    Eof,
 
-    IDENT,
-    INT,
+    Ident,
+    Int,
 
     /*
      * symbols
      */
-    ASSIGN,
+    Assign,
     // arithmetic operations
-    PLUS,
-    MINUS,
-    BANG,
-    ASTERISK,
-    SLASH,
+    Plus,
+    Minus,
+    Bang,
+    Asterisk,
+    Slash,
     // comp
     LT,
     GT,
     // brackets
-    LPAREN,
-    RPAREN,
-    LBRACE,
-    RBRACE,
+    LParen,
+    RParen,
+    LBrace,
+    RBrace,
     // others
-    COMMA,
-    SEMICOLON,
+    Comma,
+    SemiColon,
 
     /*
      * combination of symbols
      */
-    EQ,
-    #[allow(non_camel_case_types)]
-    NOT_EQ,
+    Eq,
+    NotEq,
 
     /*
      * keywords
      */
-    FUNCTION,
-    LET,
-    TRUE,
-    FALSE,
-    IF,
-    ELSE,
-    RETURN,
+    Function,
+    Let,
+    True,
+    False,
+    If,
+    Else,
+    Return,
 }
 
 impl Token {
@@ -64,13 +65,13 @@ impl Token {
 
 pub fn lookup_indent(ident: &str) -> TokenType {
     match ident {
-        "fn" => TokenType::FUNCTION,
-        "let" => TokenType::LET,
-        "true" => TokenType::TRUE,
-        "false" => TokenType::FALSE,
-        "if" => TokenType::IF,
-        "else" => TokenType::ELSE,
-        "return" => TokenType::RETURN,
-        _ => TokenType::IDENT,
+        "fn" => TokenType::Function,
+        "let" => TokenType::Let,
+        "true" => TokenType::True,
+        "false" => TokenType::False,
+        "if" => TokenType::If,
+        "else" => TokenType::Else,
+        "return" => TokenType::Return,
+        _ => TokenType::Ident,
     }
 }

@@ -20,7 +20,7 @@ pub fn start() {
     let mut l = Lexer::new(input);
     let mut t = l.next_token();
     println!();
-    while t.token_type != TokenType::EOF {
+    while t.token_type != TokenType::Eof {
       println!("{:?}", t);
       t = l.next_token();
     }
