@@ -8,6 +8,8 @@ pub struct Token {
 
 #[derive(PartialEq, Eq, Debug)]
 pub enum TokenType {
+    InitialValue, // inital value on parse start
+
     Illegal,
     Eof,
 
