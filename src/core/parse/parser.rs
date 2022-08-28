@@ -32,3 +32,31 @@ impl<'a> Parser<'a> {
         None
     }
 }
+
+#[cfg(test)]
+pub mod tests {
+    use crate::core::tokenize::token::TokenType;
+
+    use super::*;
+
+    #[test]
+    fn test_new() {
+        {
+            let source = String::from("let five = 5;");
+            let mut l = Lexer::new(source);
+            let p = Parser::new(&mut l);
+
+            assert_eq!(p.cur_token.token_type, TokenType::Let);
+            assert_eq!(p.peeked_token.token_type, TokenType::Ident);
+        }
+
+        {
+            let source = String::from("");
+            let mut l = Lexer::new(source);
+            let p = Parser::new(&mut l);
+
+            assert_eq!(p.cur_token.token_type, TokenType::Eof);
+            assert_eq!(p.peeked_token.token_type, TokenType::Eof);
+        }
+    }
+}
