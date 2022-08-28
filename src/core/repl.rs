@@ -4,8 +4,8 @@ use std::io::{self, Write};
 const PROMPT: &str = "> ";
 
 pub fn start() {
+    println!("Welcome to Glasper v0.1.0 ");
     loop {
-        println!("Welcome to Glasper v0.1.0 ");
         print!("{}", PROMPT);
         io::stdout().flush().unwrap();
 
@@ -20,11 +20,9 @@ pub fn start() {
 
         let mut l = Lexer::new(input);
         let mut t = l.next_token();
-        println!();
         while t.token_type != TokenType::Eof {
             println!("{:?}", t);
             t = l.next_token();
         }
-        println!();
     }
 }
