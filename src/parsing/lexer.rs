@@ -111,7 +111,7 @@ pub mod tests {
     use super::*;
 
     #[test]
-    fn test_simple_token() {
+    fn test_symbol_token() {
         let source = String::from("=+-*/!<>(){},;");
         let mut l = Lexer::new(source);
         assert_eq!(l.next_token().token_type, TokenType::ASSIGN);
