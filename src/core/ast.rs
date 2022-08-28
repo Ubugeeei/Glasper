@@ -3,11 +3,24 @@
 
 use super::token::Token;
 
-/*
- *
- * interfaces
- *
- */
+#[derive(Default)]
+pub struct Program {
+    pub statements: Vec<Statement>,
+}
+impl Program {
+    pub fn new() -> Program {
+        Program {
+            statements: Vec::new(),
+        }
+    }
+    pub fn token_literals(&self) -> String {
+        if !self.statements.is_empty() {
+            self.statements[0].token_literal()
+        } else {
+            String::from("")
+        }
+    }
+}
 
 pub trait Node {
     fn token_literal(&self) -> String;
@@ -38,31 +51,6 @@ impl Expression {
 impl Node for Expression {
     fn token_literal(&self) -> String {
         todo!()
-    }
-}
-
-/*
- *
- * conclete types
- *
- */
-
-#[derive(Default)]
-pub struct Program {
-    pub statements: Vec<Statement>,
-}
-impl Program {
-    pub fn new() -> Program {
-        Program {
-            statements: Vec::new(),
-        }
-    }
-    pub fn token_literals(&self) -> String {
-        if !self.statements.is_empty() {
-            self.statements[0].token_literal()
-        } else {
-            String::from("")
-        }
     }
 }
 
