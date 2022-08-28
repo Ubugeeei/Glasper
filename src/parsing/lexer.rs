@@ -34,8 +34,9 @@ impl Lexer {
             '0' => Token::new(TokenType::EOF, self.ch.to_string()),
             _ => {
                 if self.is_letter() {
-                    let token_type = lookup_indent(&self.ch.to_string());
-                    Token::new(token_type, self.read_identifier())
+                    let id = self.read_identifier();
+                    let token_type = lookup_indent(&id);
+                    Token::new(token_type, id)
                 } else if self.is_digit() {
                     Token::new(TokenType::INT, self.read_number())
                 } else {
@@ -113,6 +114,14 @@ pub mod tests {
         let source = String::from(" \t\n\r=");
         let mut l = Lexer::new(source);
         assert_eq!(l.next_token().token_type, TokenType::ASSIGN);
+    }
+
+    #[test]
+    fn test_keywords() {
+        let source = String::from("fn let");
+        let mut l = Lexer::new(source);
+        assert_eq!(l.next_token().token_type, TokenType::FUNCTION);
+        assert_eq!(l.next_token().token_type, TokenType::LET);
     }
 
     #[test]
