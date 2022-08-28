@@ -35,6 +35,12 @@ pub enum TokenType {
     SEMICOLON,
 
     /*
+     * combination of symbols
+     */
+    EQ,
+    NotEq,
+
+    /*
      * keywords
      */
     FUNCTION,
