@@ -111,6 +111,21 @@ pub mod tests {
     use super::*;
 
     #[test]
+    fn test_witespace() {
+        let source = String::from(" \t\n\r=");
+        let mut l = Lexer::new(source);
+        assert_eq!(l.next_token().token_type, TokenType::ASSIGN);
+    }
+
+    #[test]
+    fn test_digit() {
+        let source = String::from("42;");
+        let mut l = Lexer::new(source);
+        assert_eq!(l.next_token().token_type, TokenType::INT);
+        assert_eq!(l.next_token().token_type, TokenType::SEMICOLON);
+    }
+
+    #[test]
     fn test_symbol_token() {
         let source = String::from("=+-*/!<>(){},;");
         let mut l = Lexer::new(source);
@@ -131,19 +146,7 @@ pub mod tests {
     }
 
     #[test]
-    fn test_witespace() {
-        let source = String::from(" \t\n\r=");
-        let mut l = Lexer::new(source);
-        assert_eq!(l.next_token().token_type, TokenType::ASSIGN);
-    }
-
-    #[test]
-    fn test_digit() {
-        let source = String::from("42;");
-        let mut l = Lexer::new(source);
-        assert_eq!(l.next_token().token_type, TokenType::INT);
-        assert_eq!(l.next_token().token_type, TokenType::SEMICOLON);
-    }
+    fn test_combination_of_symbols() {}
 
     #[test]
     fn test_keywords() {
@@ -154,7 +157,7 @@ pub mod tests {
     }
 
     #[test]
-    fn test_next_tokenize() {
+    fn test_tokenize() {
         let source = String::from(
             r#"
                 let five = 5;
