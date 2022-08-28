@@ -25,25 +25,37 @@ impl Lexer {
         let tok = match self.ch {
             '\u{0}' => Token::new(TokenType::EOF, self.ch.to_string()),
 
-            '=' => Token::new(TokenType::ASSIGN, self.ch.to_string()),
-
             '+' => Token::new(TokenType::PLUS, self.ch.to_string()),
             '-' => Token::new(TokenType::MINUS, self.ch.to_string()),
             '*' => Token::new(TokenType::ASTERISK, self.ch.to_string()),
             '/' => Token::new(TokenType::SLASH, self.ch.to_string()),
 
-            '!' => Token::new(TokenType::BANG, self.ch.to_string()),
-
             '<' => Token::new(TokenType::LT, self.ch.to_string()),
             '>' => Token::new(TokenType::GT, self.ch.to_string()),
-
             ';' => Token::new(TokenType::SEMICOLON, self.ch.to_string()),
             ',' => Token::new(TokenType::COMMA, self.ch.to_string()),
-
             '(' => Token::new(TokenType::LPAREN, self.ch.to_string()),
             ')' => Token::new(TokenType::RPAREN, self.ch.to_string()),
             '{' => Token::new(TokenType::LBRACE, self.ch.to_string()),
             '}' => Token::new(TokenType::RBRACE, self.ch.to_string()),
+
+            '=' => {
+                if self.peek_char() == '=' {
+                    self.read_char();
+                    Token::new(TokenType::EQ, self.ch.to_string())
+                } else {
+                    Token::new(TokenType::ASSIGN, self.ch.to_string())
+                }
+            }
+
+            '!' => {
+                if self.peek_char() == '=' {
+                    self.read_char();
+                    Token::new(TokenType::NOT_EQ, self.ch.to_string())
+                } else {
+                    Token::new(TokenType::BANG, self.ch.to_string())
+                }
+            }
 
             _ => {
                 if self.is_letter() {
@@ -94,6 +106,14 @@ impl Lexer {
     fn skip_whitespace(&mut self) {
         while self.ch == ' ' || self.ch == '\t' || self.ch == '\n' || self.ch == '\r' {
             self.read_char();
+        }
+    }
+
+    fn peek_char(&self) -> char {
+        if self.read_position >= self.input.len() {
+            '\u{0}'
+        } else {
+            self.input.chars().nth(self.read_position).unwrap()
         }
     }
 
