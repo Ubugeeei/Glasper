@@ -35,3 +35,11 @@ impl Token {
         }
     }
 }
+
+pub fn lookup_indent(ident: &str) -> TokenType {
+    match ident {
+        "fn" => TokenType::FUNCTION,
+        "let" => TokenType::LET,
+        _ => TokenType::IDENT,
+    }
+}
