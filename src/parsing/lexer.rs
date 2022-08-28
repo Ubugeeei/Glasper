@@ -23,15 +23,28 @@ impl Lexer {
     fn next_token(&mut self) -> Token {
         self.skip_whitespace();
         let tok = match self.ch {
+            '\u{0}' => Token::new(TokenType::EOF, self.ch.to_string()),
+
             '=' => Token::new(TokenType::ASSIGN, self.ch.to_string()),
+
             '+' => Token::new(TokenType::PLUS, self.ch.to_string()),
+            '-' => Token::new(TokenType::MINUS, self.ch.to_string()),
+            '*' => Token::new(TokenType::ASTERISK, self.ch.to_string()),
+            '/' => Token::new(TokenType::SLASH, self.ch.to_string()),
+
+            '!' => Token::new(TokenType::BANG, self.ch.to_string()),
+
+            '<' => Token::new(TokenType::LT, self.ch.to_string()),
+            '>' => Token::new(TokenType::GT, self.ch.to_string()),
+
             ';' => Token::new(TokenType::SEMICOLON, self.ch.to_string()),
             ',' => Token::new(TokenType::COMMA, self.ch.to_string()),
+
             '(' => Token::new(TokenType::LPAREN, self.ch.to_string()),
             ')' => Token::new(TokenType::RPAREN, self.ch.to_string()),
             '{' => Token::new(TokenType::LBRACE, self.ch.to_string()),
             '}' => Token::new(TokenType::RBRACE, self.ch.to_string()),
-            '\u{0}' => Token::new(TokenType::EOF, self.ch.to_string()),
+
             _ => {
                 if self.is_letter() {
                     let id = self.read_identifier();
@@ -99,10 +112,16 @@ pub mod tests {
 
     #[test]
     fn test_simple_token() {
-        let source = String::from("=+(){},;");
+        let source = String::from("=+-*/!<>(){},;");
         let mut l = Lexer::new(source);
         assert_eq!(l.next_token().token_type, TokenType::ASSIGN);
         assert_eq!(l.next_token().token_type, TokenType::PLUS);
+        assert_eq!(l.next_token().token_type, TokenType::MINUS);
+        assert_eq!(l.next_token().token_type, TokenType::ASTERISK);
+        assert_eq!(l.next_token().token_type, TokenType::SLASH);
+        assert_eq!(l.next_token().token_type, TokenType::BANG);
+        assert_eq!(l.next_token().token_type, TokenType::LT);
+        assert_eq!(l.next_token().token_type, TokenType::GT);
         assert_eq!(l.next_token().token_type, TokenType::LPAREN);
         assert_eq!(l.next_token().token_type, TokenType::RPAREN);
         assert_eq!(l.next_token().token_type, TokenType::LBRACE);
