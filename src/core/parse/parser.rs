@@ -34,16 +34,20 @@ impl<'a> Parser<'a> {
         let mut program = Program::new();
 
         while self.cur_token.token_type != TokenType::Eof {
-            let statements = match self.cur_token.token_type {
-                TokenType::Let => self.parse_let_statement(),
-                TokenType::Return => self.parse_return_statement(),
-                TokenType::If => self.parse_if_statement(),
-                _ => todo!(),
-            };
+            let statements = self.parse_statement();
             program.statements.push(statements);
         }
 
         program
+    }
+
+    fn parse_statement(&mut self) -> Statement {
+        match self.cur_token.token_type {
+            TokenType::Let => self.parse_let_statement(),
+            TokenType::Return => self.parse_return_statement(),
+            TokenType::If => self.parse_if_statement(),
+            _ => todo!(),
+        }
     }
 
     fn parse_let_statement(&mut self) -> Statement {
