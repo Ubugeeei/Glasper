@@ -42,7 +42,7 @@ impl Lexer {
             '=' => {
                 if self.peek_char() == '=' {
                     self.read_char();
-                    Token::new(TokenType::Eq, self.ch.to_string())
+                    Token::new(TokenType::Eq, "==".to_string())
                 } else {
                     Token::new(TokenType::Assign, self.ch.to_string())
                 }
@@ -51,7 +51,7 @@ impl Lexer {
             '!' => {
                 if self.peek_char() == '=' {
                     self.read_char();
-                    Token::new(TokenType::NotEq, self.ch.to_string())
+                    Token::new(TokenType::NotEq, "!=".to_string())
                 } else {
                     Token::new(TokenType::Bang, self.ch.to_string())
                 }
