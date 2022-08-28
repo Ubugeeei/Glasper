@@ -20,7 +20,7 @@ impl Lexer {
     }
 
     #[allow(dead_code)]
-    fn next_token(&mut self) -> Token {
+    pub fn next_token(&mut self) -> Token {
         self.skip_whitespace();
         let tok = match self.ch {
             '\u{0}' => Token::new(TokenType::EOF, self.ch.to_string()),
