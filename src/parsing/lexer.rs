@@ -31,7 +31,7 @@ impl Lexer {
             ')' => Token::new(TokenType::RPAREN, self.ch.to_string()),
             '{' => Token::new(TokenType::LBRACE, self.ch.to_string()),
             '}' => Token::new(TokenType::RBRACE, self.ch.to_string()),
-            '0' => Token::new(TokenType::EOF, self.ch.to_string()),
+            '\u{0}' => Token::new(TokenType::EOF, self.ch.to_string()),
             _ => {
                 if self.is_letter() {
                     let id = self.read_identifier();
@@ -55,12 +55,13 @@ impl Lexer {
         while self.is_letter() {
             self.read_char();
         }
+        self.read_position -= 1;
         self.input[position..self.position].to_string()
     }
 
     fn read_char(&mut self) {
         if self.read_position >= self.input.len() {
-            self.ch = '\0';
+            self.ch = '\u{0}';
         } else {
             self.ch = self.input.chars().nth(self.read_position).unwrap();
         }
@@ -73,6 +74,7 @@ impl Lexer {
         while self.is_digit() {
             self.read_char();
         }
+        self.read_position -= 1;
         self.input[position..self.position].to_string()
     }
 
@@ -118,9 +120,10 @@ pub mod tests {
 
     #[test]
     fn test_digit() {
-        let source = String::from("42");
+        let source = String::from("42;");
         let mut l = Lexer::new(source);
         assert_eq!(l.next_token().token_type, TokenType::INT);
+        assert_eq!(l.next_token().token_type, TokenType::SEMICOLON);
     }
 
     #[test]
@@ -167,6 +170,10 @@ pub mod tests {
 
             t = l.next_token();
             assert_eq!(t.token_type, TokenType::LET);
+            assert_eq!(t.literal, String::from("let"));
+
+            t = l.next_token();
+            assert_eq!(t.token_type, TokenType::IDENT);
             assert_eq!(t.literal, String::from("ten"));
 
             t = l.next_token();
@@ -178,9 +185,17 @@ pub mod tests {
 
             t = l.next_token();
             assert_eq!(t.token_type, TokenType::SEMICOLON);
+
             t = l.next_token();
             assert_eq!(t.token_type, TokenType::LET);
+            assert_eq!(t.literal, String::from("let"));
+
+            t = l.next_token();
+            assert_eq!(t.token_type, TokenType::IDENT);
             assert_eq!(t.literal, String::from("add"));
+
+            t = l.next_token();
+            assert_eq!(t.token_type, TokenType::ASSIGN);
 
             t = l.next_token();
             assert_eq!(t.token_type, TokenType::FUNCTION);
@@ -188,6 +203,7 @@ pub mod tests {
 
             t = l.next_token();
             assert_eq!(t.token_type, TokenType::LPAREN);
+
             t = l.next_token();
             assert_eq!(t.token_type, TokenType::IDENT);
             assert_eq!(t.literal, String::from("x"));
@@ -227,6 +243,10 @@ pub mod tests {
 
             t = l.next_token();
             assert_eq!(t.token_type, TokenType::LET);
+            assert_eq!(t.literal, String::from("let"));
+
+            t = l.next_token();
+            assert_eq!(t.token_type, TokenType::IDENT);
             assert_eq!(t.literal, String::from("result"));
 
             t = l.next_token();
@@ -235,6 +255,7 @@ pub mod tests {
             t = l.next_token();
             assert_eq!(t.token_type, TokenType::IDENT);
             assert_eq!(t.literal, String::from("add"));
+
             t = l.next_token();
             assert_eq!(t.token_type, TokenType::LPAREN);
 
@@ -251,7 +272,6 @@ pub mod tests {
 
             t = l.next_token();
             assert_eq!(t.token_type, TokenType::RPAREN);
-            assert_eq!(t.literal, String::from(""));
 
             t = l.next_token();
             assert_eq!(t.token_type, TokenType::SEMICOLON);
