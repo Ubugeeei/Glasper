@@ -89,7 +89,7 @@ impl Lexer {
     }
 
     fn is_digit(&self) -> bool {
-        self.ch.is_digit(10)
+        self.ch.is_ascii_digit()
     }
 }
 

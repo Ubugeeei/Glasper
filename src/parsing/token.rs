@@ -4,7 +4,7 @@ pub struct Token {
     pub literal: String,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(PartialEq, Eq, Debug)]
 pub enum TokenType {
     ILLEGAL,
     EOF,
