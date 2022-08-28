@@ -1,7 +1,7 @@
 // TODO: remove this
 #![allow(dead_code)]
 
-use super::token::Token;
+use crate::core::tokenize::token::Token;
 
 #[derive(Default)]
 pub struct Program {
