@@ -38,7 +38,8 @@ pub enum TokenType {
      * combination of symbols
      */
     EQ,
-    NotEq,
+    #[allow(non_camel_case_types)]
+    NOT_EQ,
 
     /*
      * keywords
