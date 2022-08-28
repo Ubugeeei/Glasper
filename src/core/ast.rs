@@ -1,13 +1,21 @@
-// use super::token::Token;
-
 // TODO: remove this
 #![allow(dead_code)]
+
+use super::token::Token;
+
+/*
+ *
+ * interfaces
+ *
+ */
 
 pub trait Node {
     fn token_literal(&self) -> String;
 }
 
-pub enum Statement {}
+pub enum Statement {
+    LetStatement(LetStatement),
+}
 impl Statement {
     pub fn statement_node(&self) -> String {
         todo!()
@@ -19,7 +27,9 @@ impl Node for Statement {
     }
 }
 
-pub enum Expression {}
+pub enum Expression {
+    Identifier(Identifier),
+}
 impl Expression {
     pub fn expression_node(&self) -> String {
         todo!()
@@ -30,6 +40,12 @@ impl Node for Expression {
         todo!()
     }
 }
+
+/*
+ *
+ * conclete types
+ *
+ */
 
 #[derive(Default)]
 pub struct Program {
@@ -48,4 +64,15 @@ impl Program {
             String::from("")
         }
     }
+}
+
+pub struct LetStatement {
+    pub token: Token,
+    pub name: Identifier,
+    pub value: Expression,
+}
+
+pub struct Identifier {
+    pub token: Token,
+    pub value: String,
 }
