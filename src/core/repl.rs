@@ -14,7 +14,7 @@ pub fn start() {
     io::stdin().read_line(&mut input).unwrap();
 
     if &input == "exit()\n" {
-      println!("Bye!");
+      println!("Bye");
       break;
     }
 
