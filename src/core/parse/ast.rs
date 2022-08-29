@@ -3,7 +3,7 @@
 
 use crate::core::tokenize::token::Token;
 
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub struct Program {
     pub statements: Vec<Statement>,
 }

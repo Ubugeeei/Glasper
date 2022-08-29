@@ -1,4 +1,4 @@
-use crate::core::{lexer::Lexer, token::TokenType};
+use crate::core::{lexer::Lexer, parse::parser::Parser};
 use std::io::{self, Write};
 
 const PROMPT: &str = "> ";
@@ -19,10 +19,8 @@ pub fn start() {
         }
 
         let mut l = Lexer::new(input);
-        let mut t = l.next_token();
-        while t.token_type != TokenType::Eof {
-            println!("{:?}", t);
-            t = l.next_token();
-        }
+        let mut p = Parser::new(&mut l);
+        let program = p.parse_program();
+        dbg!(program);
     }
 }

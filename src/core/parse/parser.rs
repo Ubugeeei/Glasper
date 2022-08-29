@@ -16,7 +16,7 @@ pub struct Parser<'a> {
     peeked_token: Token,
 }
 impl<'a> Parser<'a> {
-    fn new(l: &'a mut Lexer) -> Self {
+    pub fn new(l: &'a mut Lexer) -> Self {
         let first_token = l.next_token();
         let secound_token = l.next_token();
 
@@ -32,7 +32,7 @@ impl<'a> Parser<'a> {
         self.peeked_token = self.l.next_token();
     }
 
-    fn parse_program(&mut self) -> Program {
+    pub fn parse_program(&mut self) -> Program {
         let mut program = Program::new();
 
         while self.cur_token.token_type != TokenType::Eof {
