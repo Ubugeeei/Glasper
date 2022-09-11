@@ -100,9 +100,7 @@ impl<'a> Parser<'a> {
         let value: Expression = Expression::Integer(0);
         self.next_token();
 
-        Ok(Statement::LetStatement(LetStatement::new(
-            token, name, value,
-        )))
+        Ok(Statement::Let(LetStatement::new(token, name, value)))
     }
 
     fn parse_return_statement(&mut self) -> Result<Statement, Error> {
@@ -122,9 +120,7 @@ impl<'a> Parser<'a> {
         let value: Expression = Expression::Integer(0);
         self.next_token();
 
-        Ok(Statement::ReturnStatement(ReturnStatement::new(
-            token, value,
-        )))
+        Ok(Statement::Return(ReturnStatement::new(token, value)))
     }
 
     fn parse_if_statement(&mut self) -> Result<Statement, Error> {
