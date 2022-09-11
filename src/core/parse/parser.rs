@@ -7,7 +7,7 @@ use crate::core::tokenize::token::TokenType;
 
 use super::{
     super::{lexer::Lexer, token::Token},
-    ast::{Expression, LetStatement, Precedence, Program, Statement},
+    ast::{Expression, LetStatement, Precedence, PrefixExpression, Program, Statement},
 };
 
 pub struct Parser<'a> {
@@ -135,6 +135,9 @@ impl<'a> Parser<'a> {
         let expr = match self.cur_token.token_type {
             TokenType::Ident => Expression::Identifier(self.parse_identifier()?),
             TokenType::Int => Expression::Integer(self.parse_integer()?),
+            // prefix_expression
+            TokenType::Bang => self.parse_prefix_expression()?,
+            TokenType::Minus => self.parse_prefix_expression()?,
             _ => {
                 return Err(Error::new(
                     ErrorKind::InvalidInput,
@@ -153,6 +156,15 @@ impl<'a> Parser<'a> {
 
     fn parse_integer(&mut self) -> Result<i64, Error> {
         Ok(self.cur_token.literal.parse::<i64>().unwrap())
+    }
+
+    fn parse_prefix_expression(&mut self) -> Result<Expression, Error> {
+        let token = self.cur_token.clone();
+        self.next_token();
+
+        let right = self.parse_expression(Precedence::Prefix)?;
+        let expr = Expression::Prefix(PrefixExpression::new(token.literal, Box::new(right)));
+        Ok(expr)
     }
 
     fn parse_operator_expression(&mut self) -> Expression {
@@ -262,6 +274,39 @@ pub mod tests {
             assert_eq!(
                 program.statements[0],
                 Statement::Expression(Expression::Integer(5))
+            );
+        }
+    }
+
+    #[test]
+    fn test_parse_pre_ops_expressions() {
+        {
+            let source = String::from("-5;");
+            let mut l = Lexer::new(source);
+            let mut p = Parser::new(&mut l);
+            let program = p.parse_program();
+            assert_eq!(program.statements.len(), 1);
+            assert_eq!(
+                program.statements[0],
+                Statement::Expression(Expression::Prefix(PrefixExpression::new(
+                    String::from("-"),
+                    Box::new(Expression::Integer(5))
+                )))
+            );
+        }
+
+        {
+            let source = String::from("!flag;");
+            let mut l = Lexer::new(source);
+            let mut p = Parser::new(&mut l);
+            let program = p.parse_program();
+            assert_eq!(program.statements.len(), 1);
+            assert_eq!(
+                program.statements[0],
+                Statement::Expression(Expression::Prefix(PrefixExpression::new(
+                    String::from("!"),
+                    Box::new(Expression::Identifier(String::from("flag")))
+                )))
             );
         }
     }

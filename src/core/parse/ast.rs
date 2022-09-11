@@ -54,9 +54,22 @@ impl Node for Statement {
 }
 
 #[derive(Debug, PartialEq, Eq)]
+pub struct LetStatement {
+    pub token: Token,
+    pub name: String,
+    pub value: Expression,
+}
+impl LetStatement {
+    pub fn new(token: Token, name: String, value: Expression) -> LetStatement {
+        LetStatement { token, name, value }
+    }
+}
+
+#[derive(Debug, PartialEq, Eq)]
 pub enum Expression {
     Integer(i64),
     Identifier(String),
+    Prefix(PrefixExpression),
 }
 impl Expression {
     pub fn expression_node(&self) -> String {
@@ -70,14 +83,13 @@ impl Node for Expression {
 }
 
 #[derive(Debug, PartialEq, Eq)]
-pub struct LetStatement {
-    pub token: Token,
-    pub name: String,
-    pub value: Expression,
+pub struct PrefixExpression {
+    pub operator: String,
+    pub right: Box<Expression>,
 }
-impl LetStatement {
-    pub fn new(token: Token, name: String, value: Expression) -> LetStatement {
-        LetStatement { token, name, value }
+impl PrefixExpression {
+    pub fn new(operator: String, right: Box<Expression>) -> PrefixExpression {
+        PrefixExpression { operator, right }
     }
 }
 
