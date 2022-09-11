@@ -7,7 +7,9 @@ use crate::core::tokenize::token::TokenType;
 
 use super::{
     super::{lexer::Lexer, token::Token},
-    ast::{Expression, LetStatement, Precedence, PrefixExpression, Program, Statement},
+    ast::{
+        Expression, InfixExpression, LetStatement, Precedence, PrefixExpression, Program, Statement,
+    },
 };
 
 pub struct Parser<'a> {
@@ -131,8 +133,8 @@ impl<'a> Parser<'a> {
         Ok(Statement::Expression(expr))
     }
 
-    fn parse_expression(&mut self, _precedence: Precedence) -> Result<Expression, Error> {
-        let expr = match self.cur_token.token_type {
+    fn parse_expression(&mut self, precedence: Precedence) -> Result<Expression, Error> {
+        let mut expr = match self.cur_token.token_type {
             TokenType::Ident => Expression::Identifier(self.parse_identifier()?),
             TokenType::Int => Expression::Integer(self.parse_integer()?),
             // prefix_expression
@@ -141,11 +143,20 @@ impl<'a> Parser<'a> {
             _ => {
                 return Err(Error::new(
                     ErrorKind::InvalidInput,
-                    format!("unexpected token {:?}", self.cur_token.token_type),
+                    format!(
+                        "unexpected token \"{}\" in parse_expression.",
+                        self.cur_token.literal
+                    ),
                 ))
             }
         };
 
+        while self.peeked_token.token_type != TokenType::SemiColon
+            && precedence < self.peek_precedence()
+        {
+            let infix = self.parse_infix_expression(expr)?;
+            expr = infix;
+        }
         // TODO: impl
         Ok(expr)
     }
@@ -167,14 +178,39 @@ impl<'a> Parser<'a> {
         Ok(expr)
     }
 
-    fn parse_operator_expression(&mut self) -> Expression {
-        todo!()
+    fn parse_infix_expression(&mut self, left: Expression) -> Result<Expression, Error> {
+        self.next_token();
+        let token = self.cur_token.clone();
+        self.next_token();
+
+        let right = self.parse_expression(Precedence::Lowest)?;
+        let expr = Expression::Infix(InfixExpression::new(
+            Box::new(left),
+            token.literal,
+            Box::new(right),
+        ));
+        Ok(expr)
+    }
+
+    fn peek_precedence(&self) -> Precedence {
+        match self.peeked_token.token_type {
+            TokenType::Eq => Precedence::Equals,
+            TokenType::NotEq => Precedence::Equals,
+            TokenType::LT => Precedence::LessGreater,
+            TokenType::GT => Precedence::LessGreater,
+            TokenType::Plus => Precedence::Sum,
+            TokenType::Minus => Precedence::Sum,
+            TokenType::Slash => Precedence::Product,
+            TokenType::Asterisk => Precedence::Product,
+            TokenType::LParen => Precedence::Call,
+            _ => Precedence::Lowest,
+        }
     }
 }
 
 #[cfg(test)]
 pub mod tests {
-    use crate::core::{parse::ast::InfixExpression, tokenize::token::TokenType};
+    use crate::core::tokenize::token::TokenType;
 
     use super::*;
 
@@ -313,79 +349,101 @@ pub mod tests {
 
     #[test]
     fn test_parse_infix_ops_expression() {
-        let test_case = vec![
-            (
-                String::from("1 + 2;"),
-                Statement::Expression(Expression::Infix(InfixExpression::new(
-                    Box::new(Expression::Integer(1)),
-                    String::from("+"),
-                    Box::new(Expression::Integer(2)),
-                ))),
-            ),
-            (
-                String::from("1 - 2;"),
-                Statement::Expression(Expression::Infix(InfixExpression::new(
-                    Box::new(Expression::Integer(1)),
-                    String::from("-"),
-                    Box::new(Expression::Integer(2)),
-                ))),
-            ),
-            (
-                String::from("1 * 2;"),
-                Statement::Expression(Expression::Infix(InfixExpression::new(
-                    Box::new(Expression::Integer(1)),
-                    String::from("*"),
-                    Box::new(Expression::Integer(2)),
-                ))),
-            ),
-            (
-                String::from("1 / 2;"),
-                Statement::Expression(Expression::Infix(InfixExpression::new(
-                    Box::new(Expression::Integer(1)),
-                    String::from("/"),
-                    Box::new(Expression::Integer(2)),
-                ))),
-            ),
-            (
-                String::from("1 < 2;"),
-                Statement::Expression(Expression::Infix(InfixExpression::new(
-                    Box::new(Expression::Integer(1)),
-                    String::from("<"),
-                    Box::new(Expression::Integer(2)),
-                ))),
-            ),
-            (
-                String::from("1 > 2;"),
-                Statement::Expression(Expression::Infix(InfixExpression::new(
-                    Box::new(Expression::Integer(1)),
-                    String::from(">"),
-                    Box::new(Expression::Integer(2)),
-                ))),
-            ),
-            (
-                String::from("1 == 2;"),
-                Statement::Expression(Expression::Infix(InfixExpression::new(
-                    Box::new(Expression::Integer(1)),
-                    String::from("=="),
-                    Box::new(Expression::Integer(2)),
-                ))),
-            ),
-            (
-                String::from("1 != 2;"),
-                Statement::Expression(Expression::Infix(InfixExpression::new(
-                    Box::new(Expression::Integer(1)),
-                    String::from("!="),
-                    Box::new(Expression::Integer(2)),
-                ))),
-            ),
-        ];
+        {
+            let test_case = vec![
+                (
+                    String::from("1 + 2;"),
+                    Statement::Expression(Expression::Infix(InfixExpression::new(
+                        Box::new(Expression::Integer(1)),
+                        String::from("+"),
+                        Box::new(Expression::Integer(2)),
+                    ))),
+                ),
+                (
+                    String::from("1 - 2;"),
+                    Statement::Expression(Expression::Infix(InfixExpression::new(
+                        Box::new(Expression::Integer(1)),
+                        String::from("-"),
+                        Box::new(Expression::Integer(2)),
+                    ))),
+                ),
+                (
+                    String::from("1 * 2;"),
+                    Statement::Expression(Expression::Infix(InfixExpression::new(
+                        Box::new(Expression::Integer(1)),
+                        String::from("*"),
+                        Box::new(Expression::Integer(2)),
+                    ))),
+                ),
+                (
+                    String::from("1 / 2;"),
+                    Statement::Expression(Expression::Infix(InfixExpression::new(
+                        Box::new(Expression::Integer(1)),
+                        String::from("/"),
+                        Box::new(Expression::Integer(2)),
+                    ))),
+                ),
+                (
+                    String::from("1 < 2;"),
+                    Statement::Expression(Expression::Infix(InfixExpression::new(
+                        Box::new(Expression::Integer(1)),
+                        String::from("<"),
+                        Box::new(Expression::Integer(2)),
+                    ))),
+                ),
+                (
+                    String::from("1 > 2;"),
+                    Statement::Expression(Expression::Infix(InfixExpression::new(
+                        Box::new(Expression::Integer(1)),
+                        String::from(">"),
+                        Box::new(Expression::Integer(2)),
+                    ))),
+                ),
+                (
+                    String::from("1 == 2;"),
+                    Statement::Expression(Expression::Infix(InfixExpression::new(
+                        Box::new(Expression::Integer(1)),
+                        String::from("=="),
+                        Box::new(Expression::Integer(2)),
+                    ))),
+                ),
+                (
+                    String::from("1 != 2;"),
+                    Statement::Expression(Expression::Infix(InfixExpression::new(
+                        Box::new(Expression::Integer(1)),
+                        String::from("!="),
+                        Box::new(Expression::Integer(2)),
+                    ))),
+                ),
+            ];
 
-        for (source, expected) in test_case {
+            for (source, expected) in test_case {
+                let mut l = Lexer::new(source);
+                let mut p = Parser::new(&mut l);
+                let program = p.parse_program();
+                assert_eq!(program.statements.len(), 1);
+                assert_eq!(program.statements[0], expected);
+            }
+        }
+
+        {
+            let source = String::from("1 + 2 * 3;");
             let mut l = Lexer::new(source);
             let mut p = Parser::new(&mut l);
             let program = p.parse_program();
             assert_eq!(program.statements.len(), 1);
-            assert_eq!(program.statements[0], expected);
+            assert_eq!(
+                program.statements[0],
+                Statement::Expression(Expression::Infix(InfixExpression::new(
+                    Box::new(Expression::Integer(1)),
+                    String::from("+"),
+                    Box::new(Expression::Infix(InfixExpression::new(
+                        Box::new(Expression::Integer(2)),
+                        String::from("*"),
+                        Box::new(Expression::Integer(3)),
+                    )))
+                )))
+            );
         }
     }
 }

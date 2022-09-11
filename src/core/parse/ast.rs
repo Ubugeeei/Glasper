@@ -113,7 +113,7 @@ impl InfixExpression {
 #[derive(Debug, PartialEq, Eq, PartialOrd)]
 pub enum Precedence {
     Lowest,
-    Equals,      // ==
+    Equals,      // == or !==
     LessGreater, // > or <
     Sum,         // +
     Product,     // *
