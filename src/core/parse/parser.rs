@@ -7,7 +7,9 @@ use crate::core::tokenize::token::TokenType;
 
 use super::{
     super::{lexer::Lexer, token::Token},
-    ast::{Expression, LetStatement, Precedence, PrefixExpression, Program, Statement},
+    ast::{
+        Expression, InfixExpression, LetStatement, Precedence, PrefixExpression, Program, Statement,
+    },
 };
 
 pub struct Parser<'a> {
@@ -38,7 +40,10 @@ impl<'a> Parser<'a> {
         while self.cur_token.token_type != TokenType::Eof {
             let res = self.parse_statement();
             match res {
-                Ok(stmt) => program.statements.push(stmt),
+                Ok(stmt) => {
+                    program.statements.push(stmt);
+                    self.next_token();
+                }
                 Err(err) => {
                     println!("{}", err);
                     break;
@@ -62,14 +67,10 @@ impl<'a> Parser<'a> {
     }
 
     fn parse_let_statement(&mut self) -> Result<Statement, Error> {
+        self.next_token();
+
         // guard
-        if self.cur_token.token_type != TokenType::Let {
-            return Err(Error::new(
-                ErrorKind::InvalidInput,
-                format!("expected token 'let' but found {}", self.cur_token.literal),
-            ));
-        }
-        if self.peeked_token.token_type != TokenType::Ident {
+        if self.cur_token.token_type != TokenType::Ident {
             return Err(Error::new(
                 ErrorKind::InvalidInput,
                 format!(
@@ -78,61 +79,46 @@ impl<'a> Parser<'a> {
                 ),
             ));
         }
+        let name = self.cur_token.literal.clone();
 
-        let token = self.cur_token.clone();
-
-        self.next_token();
-        let name = self.cur_token.literal.to_string();
-
-        self.next_token();
-        // guard
-        if self.cur_token.token_type != TokenType::Assign {
+        if self.peeked_token.token_type != TokenType::Assign {
             return Err(Error::new(
                 ErrorKind::InvalidInput,
                 format!("expected token '=' but found {}", self.cur_token.literal),
             ));
         }
 
-        // TODO: parse expression
-        while self.cur_token.token_type != TokenType::SemiColon {
-            self.next_token();
-        }
-        let value: Expression = Expression::Integer(0);
+        // skip assign
         self.next_token();
 
-        Ok(Statement::Let(LetStatement::new(token, name, value)))
+        self.next_token();
+        let value: Expression = self.parse_expression(Precedence::Lowest)?;
+        if self.peeked_token.token_type == TokenType::SemiColon {
+            self.next_token()
+        }
+        Ok(Statement::Let(LetStatement::new(name, value)))
     }
 
     fn parse_return_statement(&mut self) -> Result<Statement, Error> {
-        // guard
-        if self.cur_token.token_type != TokenType::Return {
-            return Err(Error::new(
-                ErrorKind::InvalidInput,
-                format!("expected token 'let' but found {}", self.cur_token.literal),
-            ));
-        }
-
-        // TODO: parse expression
-        while self.cur_token.token_type != TokenType::SemiColon {
-            self.next_token();
-        }
-        let value = Expression::Integer(0);
         self.next_token();
-
+        let value: Expression = self.parse_expression(Precedence::Lowest)?;
+        if self.peeked_token.token_type == TokenType::SemiColon {
+            self.next_token()
+        }
         Ok(Statement::Return(value))
     }
 
     fn parse_expression_statement(&mut self) -> Result<Statement, Error> {
         let expr = self.parse_expression(Precedence::Lowest)?;
         if self.peeked_token.token_type == TokenType::SemiColon {
-            self.next_token();
+            self.next_token()
         }
 
         Ok(Statement::Expression(expr))
     }
 
-    fn parse_expression(&mut self, _precedence: Precedence) -> Result<Expression, Error> {
-        let expr = match self.cur_token.token_type {
+    fn parse_expression(&mut self, precedence: Precedence) -> Result<Expression, Error> {
+        let mut expr = match self.cur_token.token_type {
             TokenType::Ident => Expression::Identifier(self.parse_identifier()?),
             TokenType::Int => Expression::Integer(self.parse_integer()?),
             // prefix_expression
@@ -141,11 +127,21 @@ impl<'a> Parser<'a> {
             _ => {
                 return Err(Error::new(
                     ErrorKind::InvalidInput,
-                    format!("unexpected token {:?}", self.cur_token.token_type),
+                    format!(
+                        "unexpected token \"{}\" in parse_expression.",
+                        self.cur_token.literal
+                    ),
                 ))
             }
         };
 
+        while self.peeked_token.token_type != TokenType::SemiColon
+            && precedence < self.peek_precedence()
+        {
+            self.next_token();
+            let infix = self.parse_infix_expression(expr)?;
+            expr = infix;
+        }
         // TODO: impl
         Ok(expr)
     }
@@ -167,15 +163,29 @@ impl<'a> Parser<'a> {
         Ok(expr)
     }
 
-    fn parse_operator_expression(&mut self) -> Expression {
-        todo!()
+    fn parse_infix_expression(&mut self, left: Expression) -> Result<Expression, Error> {
+        let token = self.cur_token.clone();
+        let precedence = self.current_precedence();
+        self.next_token();
+        let right = self.parse_expression(precedence)?;
+        let expr = Expression::Infix(InfixExpression::new(
+            Box::new(left),
+            token.literal,
+            Box::new(right),
+        ));
+        Ok(expr)
+    }
+
+    fn current_precedence(&self) -> Precedence {
+        self.cur_token.clone().get_precedence()
+    }
+    fn peek_precedence(&self) -> Precedence {
+        self.peeked_token.clone().get_precedence()
     }
 }
 
 #[cfg(test)]
 pub mod tests {
-    use crate::core::tokenize::token::TokenType;
-
     use super::*;
 
     #[test]
@@ -307,6 +317,150 @@ pub mod tests {
                     String::from("!"),
                     Box::new(Expression::Identifier(String::from("flag")))
                 )))
+            );
+        }
+    }
+
+    #[test]
+    fn test_parse_infix_ops_expression() {
+        {
+            let test_case = vec![
+                (
+                    String::from("1 + 2;"),
+                    Statement::Expression(Expression::Infix(InfixExpression::new(
+                        Box::new(Expression::Integer(1)),
+                        String::from("+"),
+                        Box::new(Expression::Integer(2)),
+                    ))),
+                ),
+                (
+                    String::from("1 - 2;"),
+                    Statement::Expression(Expression::Infix(InfixExpression::new(
+                        Box::new(Expression::Integer(1)),
+                        String::from("-"),
+                        Box::new(Expression::Integer(2)),
+                    ))),
+                ),
+                (
+                    String::from("1 * 2;"),
+                    Statement::Expression(Expression::Infix(InfixExpression::new(
+                        Box::new(Expression::Integer(1)),
+                        String::from("*"),
+                        Box::new(Expression::Integer(2)),
+                    ))),
+                ),
+                (
+                    String::from("1 / 2;"),
+                    Statement::Expression(Expression::Infix(InfixExpression::new(
+                        Box::new(Expression::Integer(1)),
+                        String::from("/"),
+                        Box::new(Expression::Integer(2)),
+                    ))),
+                ),
+                (
+                    String::from("1 < 2;"),
+                    Statement::Expression(Expression::Infix(InfixExpression::new(
+                        Box::new(Expression::Integer(1)),
+                        String::from("<"),
+                        Box::new(Expression::Integer(2)),
+                    ))),
+                ),
+                (
+                    String::from("1 > 2;"),
+                    Statement::Expression(Expression::Infix(InfixExpression::new(
+                        Box::new(Expression::Integer(1)),
+                        String::from(">"),
+                        Box::new(Expression::Integer(2)),
+                    ))),
+                ),
+                (
+                    String::from("1 == 2;"),
+                    Statement::Expression(Expression::Infix(InfixExpression::new(
+                        Box::new(Expression::Integer(1)),
+                        String::from("=="),
+                        Box::new(Expression::Integer(2)),
+                    ))),
+                ),
+                (
+                    String::from("1 != 2;"),
+                    Statement::Expression(Expression::Infix(InfixExpression::new(
+                        Box::new(Expression::Integer(1)),
+                        String::from("!="),
+                        Box::new(Expression::Integer(2)),
+                    ))),
+                ),
+            ];
+
+            for (source, expected) in test_case {
+                let mut l = Lexer::new(source);
+                let mut p = Parser::new(&mut l);
+                let program = p.parse_program();
+                assert_eq!(program.statements.len(), 1);
+                assert_eq!(program.statements[0], expected);
+            }
+        }
+
+        {
+            let source = String::from("1 + 2 * 3;");
+            let mut l = Lexer::new(source);
+            let mut p = Parser::new(&mut l);
+            let program = p.parse_program();
+            assert_eq!(program.statements.len(), 1);
+            assert_eq!(
+                program.statements[0],
+                Statement::Expression(Expression::Infix(InfixExpression::new(
+                    Box::new(Expression::Integer(1)),
+                    String::from("+"),
+                    Box::new(Expression::Infix(InfixExpression::new(
+                        Box::new(Expression::Integer(2)),
+                        String::from("*"),
+                        Box::new(Expression::Integer(3)),
+                    )))
+                )))
+            );
+        }
+
+        {
+            let source = String::from("1 * 2 + 3;");
+            let mut l = Lexer::new(source);
+            let mut p = Parser::new(&mut l);
+            let program = p.parse_program();
+            assert_eq!(program.statements.len(), 1);
+            assert_eq!(
+                program.statements[0],
+                Statement::Expression(Expression::Infix(InfixExpression::new(
+                    Box::new(Expression::Infix(InfixExpression::new(
+                        Box::new(Expression::Integer(1)),
+                        String::from("*"),
+                        Box::new(Expression::Integer(2)),
+                    ))),
+                    String::from("+"),
+                    Box::new(Expression::Integer(3)),
+                )))
+            );
+        }
+
+        {
+            let source = String::from("a * 2 + 3 != 11;");
+            let mut l = Lexer::new(source);
+            let mut p = Parser::new(&mut l);
+            let program = p.parse_program();
+            assert_eq!(program.statements.len(), 1);
+            assert_eq!(
+                program.statements[0],
+                Statement::Expression(Expression::Infix(InfixExpression::new(
+                    Box::new(Expression::Infix(InfixExpression::new(
+                        Box::new(Expression::Infix(InfixExpression::new(
+                            Box::new(Expression::Identifier(String::from("a"))),
+                            String::from("*"),
+                            Box::new(Expression::Integer(2)),
+                        ))),
+                        String::from("+"),
+                        Box::new(Expression::Integer(3)),
+                    ))),
+                    String::from("!="),
+                    Box::new(Expression::Integer(11)),
+                ))),
             );
         }
     }

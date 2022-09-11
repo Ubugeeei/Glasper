@@ -3,8 +3,6 @@
 
 use std::fmt::Debug;
 
-use crate::core::tokenize::token::Token;
-
 #[derive(Default, Debug)]
 pub struct Program {
     pub statements: Vec<Statement>,
@@ -55,13 +53,12 @@ impl Node for Statement {
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct LetStatement {
-    pub token: Token,
     pub name: String,
     pub value: Expression,
 }
 impl LetStatement {
-    pub fn new(token: Token, name: String, value: Expression) -> LetStatement {
-        LetStatement { token, name, value }
+    pub fn new(name: String, value: Expression) -> LetStatement {
+        LetStatement { name, value }
     }
 }
 
@@ -70,6 +67,7 @@ pub enum Expression {
     Integer(i64),
     Identifier(String),
     Prefix(PrefixExpression),
+    Infix(InfixExpression),
 }
 impl Expression {
     pub fn expression_node(&self) -> String {
@@ -93,10 +91,26 @@ impl PrefixExpression {
     }
 }
 
+#[derive(Debug, PartialEq, Eq)]
+pub struct InfixExpression {
+    pub left: Box<Expression>,
+    pub operator: String,
+    pub right: Box<Expression>,
+}
+impl InfixExpression {
+    pub fn new(left: Box<Expression>, operator: String, right: Box<Expression>) -> InfixExpression {
+        InfixExpression {
+            left,
+            operator,
+            right,
+        }
+    }
+}
+
 #[derive(Debug, PartialEq, Eq, PartialOrd)]
 pub enum Precedence {
     Lowest,
-    Equals,      // ==
+    Equals,      // == or !==
     LessGreater, // > or <
     Sum,         // +
     Product,     // *
