@@ -24,6 +24,11 @@ impl Program {
 
 pub trait Node {
     fn token_literal(&self) -> String;
+
+    /// for debugging
+    fn string(&self, program: Program) -> String {
+        format!("{:?}", program)
+    }
 }
 
 #[derive(Debug)]
