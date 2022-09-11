@@ -29,6 +29,7 @@ pub trait Node {
 #[derive(Debug)]
 pub enum Statement {
     LetStatement(LetStatement),
+    ReturnStatement(ReturnStatement),
 }
 impl Statement {
     pub fn statement_node(&self) -> String {
@@ -66,6 +67,20 @@ pub struct LetStatement {
 impl LetStatement {
     pub fn new(token: Token, name: Identifier, value: Expression) -> LetStatement {
         LetStatement { token, name, value }
+    }
+}
+
+#[derive(Debug)]
+pub struct ReturnStatement {
+    pub token: Token,
+    pub return_value: Expression,
+}
+impl ReturnStatement {
+    pub fn new(token: Token, return_value: Expression) -> ReturnStatement {
+        ReturnStatement {
+            token,
+            return_value,
+        }
     }
 }
 
