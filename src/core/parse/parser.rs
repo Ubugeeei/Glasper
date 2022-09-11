@@ -162,7 +162,7 @@ impl<'a> Parser<'a> {
 
 #[cfg(test)]
 pub mod tests {
-    use crate::core::tokenize::token::TokenType;
+    use crate::core::{parse::ast::PrefixExpression, tokenize::token::TokenType};
 
     use super::*;
 
@@ -262,6 +262,39 @@ pub mod tests {
             assert_eq!(
                 program.statements[0],
                 Statement::Expression(Expression::Integer(5))
+            );
+        }
+    }
+
+    #[test]
+    fn test_parse_pre_ops_expressions() {
+        {
+            let source = String::from("-5;");
+            let mut l = Lexer::new(source);
+            let mut p = Parser::new(&mut l);
+            let program = p.parse_program();
+            assert_eq!(program.statements.len(), 1);
+            assert_eq!(
+                program.statements[0],
+                Statement::Expression(Expression::Prefix(PrefixExpression::new(
+                    String::from("-"),
+                    Box::new(Expression::Integer(5))
+                )))
+            );
+        }
+
+        {
+            let source = String::from("!flag;");
+            let mut l = Lexer::new(source);
+            let mut p = Parser::new(&mut l);
+            let program = p.parse_program();
+            assert_eq!(program.statements.len(), 1);
+            assert_eq!(
+                program.statements[0],
+                Statement::Expression(Expression::Prefix(PrefixExpression::new(
+                    String::from("!"),
+                    Box::new(Expression::Identifier(String::from("flag")))
+                )))
             );
         }
     }
