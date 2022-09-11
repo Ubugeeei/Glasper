@@ -70,6 +70,7 @@ pub enum Expression {
     Integer(i64),
     Identifier(String),
     Prefix(PrefixExpression),
+    Infix(InfixExpression),
 }
 impl Expression {
     pub fn expression_node(&self) -> String {
@@ -90,6 +91,22 @@ pub struct PrefixExpression {
 impl PrefixExpression {
     pub fn new(operator: String, right: Box<Expression>) -> PrefixExpression {
         PrefixExpression { operator, right }
+    }
+}
+
+#[derive(Debug, PartialEq, Eq)]
+pub struct InfixExpression {
+    pub left: Box<Expression>,
+    pub operator: String,
+    pub right: Box<Expression>,
+}
+impl InfixExpression {
+    pub fn new(left: Box<Expression>, operator: String, right: Box<Expression>) -> InfixExpression {
+        InfixExpression {
+            left,
+            operator,
+            right,
+        }
     }
 }
 
