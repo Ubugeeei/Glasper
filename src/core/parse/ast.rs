@@ -28,11 +28,19 @@ pub trait Node: Debug {
     fn token_literal(&self) -> String;
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum Statement {
     Let(LetStatement),
-    Return(ReturnStatement),
-    Expression(ExpressionStatement),
+    Return(Expression),
+    Expression(Expression),
+    // TODO: impl
+    // if
+    // switch
+    // for
+    // while
+    // break
+    // continue
+    // block
 }
 impl Statement {
     pub fn statement_node(&self) -> String {
@@ -45,10 +53,10 @@ impl Node for Statement {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum Expression {
     Integer(i32),
-    Identifier(Identifier),
+    Identifier(String),
 }
 impl Expression {
     pub fn expression_node(&self) -> String {
@@ -61,53 +69,25 @@ impl Node for Expression {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct LetStatement {
     pub token: Token,
-    pub name: Identifier,
+    pub name: String,
     pub value: Expression,
 }
 impl LetStatement {
-    pub fn new(token: Token, name: Identifier, value: Expression) -> LetStatement {
+    pub fn new(token: Token, name: String, value: Expression) -> LetStatement {
         LetStatement { token, name, value }
     }
 }
 
-#[derive(Debug)]
-pub struct ReturnStatement {
-    pub token: Token,
-    pub return_value: Expression,
-}
-impl ReturnStatement {
-    pub fn new(token: Token, return_value: Expression) -> ReturnStatement {
-        ReturnStatement {
-            token,
-            return_value,
-        }
-    }
-}
-
-#[derive(Debug)]
-pub struct ExpressionStatement {
-    pub first_token: Token,
-    pub expression: Expression,
-}
-impl ExpressionStatement {
-    pub fn new(first_token: Token, expression: Expression) -> ExpressionStatement {
-        ExpressionStatement {
-            first_token,
-            expression,
-        }
-    }
-}
-
-#[derive(Debug)]
-pub struct Identifier {
-    pub token: Token,
-    pub value: String,
-}
-impl Identifier {
-    pub fn new(token: Token, value: String) -> Identifier {
-        Identifier { token, value }
-    }
+#[derive(Debug, PartialEq, PartialOrd)]
+pub enum Precedence {
+    Lowest,
+    Equals,      // ==
+    LessGreater, // > or <
+    Sum,         // +
+    Product,     // *
+    Prefix,      // -X or !X
+    Call,        // myFunction(x)
 }
