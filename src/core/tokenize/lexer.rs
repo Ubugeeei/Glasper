@@ -197,8 +197,12 @@ pub mod tests {
                 let five = 5;
                 let ten = 10;
 
+                function zero() {
+                    return 0;
+                }
+
                 let add = function(x, y) {
-                    x + y;
+                    return x + y;
                 };
 
                 let result = add(five, ten);
@@ -242,6 +246,35 @@ pub mod tests {
         assert_eq!(t.token_type, TokenType::SemiColon);
 
         t = l.next_token();
+        assert_eq!(t.token_type, TokenType::Function);
+
+        t = l.next_token();
+        assert_eq!(t.token_type, TokenType::Ident);
+        assert_eq!(t.literal, String::from("zero"));
+
+        t = l.next_token();
+        assert_eq!(t.token_type, TokenType::LParen);
+
+        t = l.next_token();
+        assert_eq!(t.token_type, TokenType::RParen);
+
+        t = l.next_token();
+        assert_eq!(t.token_type, TokenType::LBrace);
+
+        t = l.next_token();
+        assert_eq!(t.token_type, TokenType::Return);
+
+        t = l.next_token();
+        assert_eq!(t.token_type, TokenType::Int);
+        assert_eq!(t.literal, String::from("0"));
+
+        t = l.next_token();
+        assert_eq!(t.token_type, TokenType::SemiColon);
+
+        t = l.next_token();
+        assert_eq!(t.token_type, TokenType::RBrace);
+
+        t = l.next_token();
         assert_eq!(t.token_type, TokenType::Let);
         assert_eq!(t.literal, String::from("let"));
 
@@ -275,6 +308,9 @@ pub mod tests {
 
         t = l.next_token();
         assert_eq!(t.token_type, TokenType::LBrace);
+
+        t = l.next_token();
+        assert_eq!(t.token_type, TokenType::Return);
 
         t = l.next_token();
         assert_eq!(t.token_type, TokenType::Ident);

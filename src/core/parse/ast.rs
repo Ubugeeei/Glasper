@@ -1,6 +1,8 @@
 // TODO: remove this
 #![allow(dead_code)]
 
+use std::fmt::Debug;
+
 use crate::core::tokenize::token::Token;
 
 #[derive(Default, Debug)]
@@ -22,14 +24,15 @@ impl Program {
     }
 }
 
-pub trait Node {
+pub trait Node: Debug {
     fn token_literal(&self) -> String;
 }
 
 #[derive(Debug)]
 pub enum Statement {
-    LetStatement(LetStatement),
-    ReturnStatement(ReturnStatement),
+    Let(LetStatement),
+    Return(ReturnStatement),
+    Expression(ExpressionStatement),
 }
 impl Statement {
     pub fn statement_node(&self) -> String {
@@ -80,6 +83,20 @@ impl ReturnStatement {
         ReturnStatement {
             token,
             return_value,
+        }
+    }
+}
+
+#[derive(Debug)]
+pub struct ExpressionStatement {
+    pub first_token: Token,
+    pub expression: Expression,
+}
+impl ExpressionStatement {
+    pub fn new(first_token: Token, expression: Expression) -> ExpressionStatement {
+        ExpressionStatement {
+            first_token,
+            expression,
         }
     }
 }
