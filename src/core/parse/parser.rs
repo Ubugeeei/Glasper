@@ -7,7 +7,7 @@ use crate::core::tokenize::token::TokenType;
 
 use super::{
     super::{lexer::Lexer, token::Token},
-    ast::{Expression, LetStatement, Precedence, Program, Statement},
+    ast::{Expression, LetStatement, Precedence, PrefixExpression, Program, Statement},
 };
 
 pub struct Parser<'a> {
@@ -135,6 +135,9 @@ impl<'a> Parser<'a> {
         let expr = match self.cur_token.token_type {
             TokenType::Ident => Expression::Identifier(self.parse_identifier()?),
             TokenType::Int => Expression::Integer(self.parse_integer()?),
+            // prefix_expression
+            TokenType::Bang => self.parse_prefix_expression()?,
+            TokenType::Minus => self.parse_prefix_expression()?,
             _ => {
                 return Err(Error::new(
                     ErrorKind::InvalidInput,
@@ -155,6 +158,15 @@ impl<'a> Parser<'a> {
         Ok(self.cur_token.literal.parse::<i64>().unwrap())
     }
 
+    fn parse_prefix_expression(&mut self) -> Result<Expression, Error> {
+        let token = self.cur_token.clone();
+        self.next_token();
+
+        let right = self.parse_expression(Precedence::Prefix)?;
+        let expr = Expression::Prefix(PrefixExpression::new(token.literal, Box::new(right)));
+        Ok(expr)
+    }
+
     fn parse_operator_expression(&mut self) -> Expression {
         todo!()
     }
@@ -162,7 +174,7 @@ impl<'a> Parser<'a> {
 
 #[cfg(test)]
 pub mod tests {
-    use crate::core::{parse::ast::PrefixExpression, tokenize::token::TokenType};
+    use crate::core::tokenize::token::TokenType;
 
     use super::*;
 
