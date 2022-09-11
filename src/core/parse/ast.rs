@@ -3,8 +3,6 @@
 
 use std::fmt::Debug;
 
-use crate::core::tokenize::token::Token;
-
 #[derive(Default, Debug)]
 pub struct Program {
     pub statements: Vec<Statement>,
@@ -55,13 +53,12 @@ impl Node for Statement {
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct LetStatement {
-    pub token: Token,
     pub name: String,
     pub value: Expression,
 }
 impl LetStatement {
-    pub fn new(token: Token, name: String, value: Expression) -> LetStatement {
-        LetStatement { token, name, value }
+    pub fn new(name: String, value: Expression) -> LetStatement {
+        LetStatement { name, value }
     }
 }
 

@@ -1,5 +1,7 @@
 #![allow(non_camel_case_types)]
 
+use crate::core::parse::ast::Precedence;
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Token {
     pub token_type: TokenType,
@@ -59,6 +61,21 @@ impl Token {
         Token {
             token_type,
             literal,
+        }
+    }
+
+    pub fn get_precedence(&mut self) -> Precedence {
+        match self.token_type {
+            TokenType::Eq => Precedence::Equals,
+            TokenType::NotEq => Precedence::Equals,
+            TokenType::LT => Precedence::LessGreater,
+            TokenType::GT => Precedence::LessGreater,
+            TokenType::Plus => Precedence::Sum,
+            TokenType::Minus => Precedence::Sum,
+            TokenType::Slash => Precedence::Product,
+            TokenType::Asterisk => Precedence::Product,
+            TokenType::LParen => Precedence::Call,
+            _ => Precedence::Lowest,
         }
     }
 }

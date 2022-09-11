@@ -40,7 +40,10 @@ impl<'a> Parser<'a> {
         while self.cur_token.token_type != TokenType::Eof {
             let res = self.parse_statement();
             match res {
-                Ok(stmt) => program.statements.push(stmt),
+                Ok(stmt) => {
+                    program.statements.push(stmt);
+                    self.next_token();
+                }
                 Err(err) => {
                     println!("{}", err);
                     break;
@@ -64,14 +67,10 @@ impl<'a> Parser<'a> {
     }
 
     fn parse_let_statement(&mut self) -> Result<Statement, Error> {
+        self.next_token();
+
         // guard
-        if self.cur_token.token_type != TokenType::Let {
-            return Err(Error::new(
-                ErrorKind::InvalidInput,
-                format!("expected token 'let' but found {}", self.cur_token.literal),
-            ));
-        }
-        if self.peeked_token.token_type != TokenType::Ident {
+        if self.cur_token.token_type != TokenType::Ident {
             return Err(Error::new(
                 ErrorKind::InvalidInput,
                 format!(
@@ -80,48 +79,39 @@ impl<'a> Parser<'a> {
                 ),
             ));
         }
+        let name = self.cur_token.literal.clone();
 
-        let token = self.cur_token.clone();
-
-        self.next_token();
-        let name = self.cur_token.literal.to_string();
-
-        self.next_token();
-        // guard
-        if self.cur_token.token_type != TokenType::Assign {
+        if self.peeked_token.token_type != TokenType::Assign {
             return Err(Error::new(
                 ErrorKind::InvalidInput,
                 format!("expected token '=' but found {}", self.cur_token.literal),
             ));
         }
 
-        self.next_token();
-        let value: Expression = self.parse_expression(Precedence::Lowest)?;
+        // skip assign
         self.next_token();
 
-        Ok(Statement::Let(LetStatement::new(token, name, value)))
+        self.next_token();
+        let value: Expression = self.parse_expression(Precedence::Lowest)?;
+        if self.peeked_token.token_type == TokenType::SemiColon {
+            self.next_token()
+        }
+        Ok(Statement::Let(LetStatement::new(name, value)))
     }
 
     fn parse_return_statement(&mut self) -> Result<Statement, Error> {
-        // guard
-        if self.cur_token.token_type != TokenType::Return {
-            return Err(Error::new(
-                ErrorKind::InvalidInput,
-                format!("expected token 'let' but found {}", self.cur_token.literal),
-            ));
-        }
-
         self.next_token();
         let value: Expression = self.parse_expression(Precedence::Lowest)?;
-        self.next_token();
-
+        if self.peeked_token.token_type == TokenType::SemiColon {
+            self.next_token()
+        }
         Ok(Statement::Return(value))
     }
 
     fn parse_expression_statement(&mut self) -> Result<Statement, Error> {
         let expr = self.parse_expression(Precedence::Lowest)?;
         if self.peeked_token.token_type == TokenType::SemiColon {
-            self.next_token();
+            self.next_token()
         }
 
         Ok(Statement::Expression(expr))
@@ -148,6 +138,7 @@ impl<'a> Parser<'a> {
         while self.peeked_token.token_type != TokenType::SemiColon
             && precedence < self.peek_precedence()
         {
+            self.next_token();
             let infix = self.parse_infix_expression(expr)?;
             expr = infix;
         }
@@ -173,11 +164,10 @@ impl<'a> Parser<'a> {
     }
 
     fn parse_infix_expression(&mut self, left: Expression) -> Result<Expression, Error> {
-        self.next_token();
         let token = self.cur_token.clone();
+        let precedence = self.current_precedence();
         self.next_token();
-
-        let right = self.parse_expression(Precedence::Lowest)?;
+        let right = self.parse_expression(precedence)?;
         let expr = Expression::Infix(InfixExpression::new(
             Box::new(left),
             token.literal,
@@ -186,26 +176,16 @@ impl<'a> Parser<'a> {
         Ok(expr)
     }
 
+    fn current_precedence(&self) -> Precedence {
+        self.cur_token.clone().get_precedence()
+    }
     fn peek_precedence(&self) -> Precedence {
-        match self.peeked_token.token_type {
-            TokenType::Eq => Precedence::Equals,
-            TokenType::NotEq => Precedence::Equals,
-            TokenType::LT => Precedence::LessGreater,
-            TokenType::GT => Precedence::LessGreater,
-            TokenType::Plus => Precedence::Sum,
-            TokenType::Minus => Precedence::Sum,
-            TokenType::Slash => Precedence::Product,
-            TokenType::Asterisk => Precedence::Product,
-            TokenType::LParen => Precedence::Call,
-            _ => Precedence::Lowest,
-        }
+        self.peeked_token.clone().get_precedence()
     }
 }
 
 #[cfg(test)]
 pub mod tests {
-    use crate::core::tokenize::token::TokenType;
-
     use super::*;
 
     #[test]
@@ -437,6 +417,50 @@ pub mod tests {
                         Box::new(Expression::Integer(3)),
                     )))
                 )))
+            );
+        }
+
+        {
+            let source = String::from("1 * 2 + 3;");
+            let mut l = Lexer::new(source);
+            let mut p = Parser::new(&mut l);
+            let program = p.parse_program();
+            assert_eq!(program.statements.len(), 1);
+            assert_eq!(
+                program.statements[0],
+                Statement::Expression(Expression::Infix(InfixExpression::new(
+                    Box::new(Expression::Infix(InfixExpression::new(
+                        Box::new(Expression::Integer(1)),
+                        String::from("*"),
+                        Box::new(Expression::Integer(2)),
+                    ))),
+                    String::from("+"),
+                    Box::new(Expression::Integer(3)),
+                )))
+            );
+        }
+
+        {
+            let source = String::from("a * 2 + 3 != 11;");
+            let mut l = Lexer::new(source);
+            let mut p = Parser::new(&mut l);
+            let program = p.parse_program();
+            assert_eq!(program.statements.len(), 1);
+            assert_eq!(
+                program.statements[0],
+                Statement::Expression(Expression::Infix(InfixExpression::new(
+                    Box::new(Expression::Infix(InfixExpression::new(
+                        Box::new(Expression::Infix(InfixExpression::new(
+                            Box::new(Expression::Identifier(String::from("a"))),
+                            String::from("*"),
+                            Box::new(Expression::Integer(2)),
+                        ))),
+                        String::from("+"),
+                        Box::new(Expression::Integer(3)),
+                    ))),
+                    String::from("!="),
+                    Box::new(Expression::Integer(11)),
+                ))),
             );
         }
     }
