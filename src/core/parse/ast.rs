@@ -28,7 +28,7 @@ pub trait Node: Debug {
     fn token_literal(&self) -> String;
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum Statement {
     Let(LetStatement),
     Return(Expression),
@@ -53,7 +53,7 @@ impl Node for Statement {
     }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum Expression {
     Integer(i32),
     Identifier(String),
@@ -69,7 +69,7 @@ impl Node for Expression {
     }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq)]
 pub struct LetStatement {
     pub token: Token,
     pub name: String,
@@ -81,7 +81,7 @@ impl LetStatement {
     }
 }
 
-#[derive(Debug, PartialEq, PartialOrd)]
+#[derive(Debug, PartialEq, Eq, PartialOrd)]
 pub enum Precedence {
     Lowest,
     Equals,      // ==
