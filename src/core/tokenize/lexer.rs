@@ -179,7 +179,7 @@ pub mod tests {
 
     #[test]
     fn test_keywords() {
-        let source = String::from("fn let true false if else return");
+        let source = String::from("function let true false if else return");
         let mut l = Lexer::new(source);
         assert_eq!(l.next_token().token_type, TokenType::Function);
         assert_eq!(l.next_token().token_type, TokenType::Let);
@@ -197,7 +197,7 @@ pub mod tests {
                 let five = 5;
                 let ten = 10;
 
-                let add = fn(x, y) {
+                let add = function(x, y) {
                     x + y;
                 };
 
@@ -254,7 +254,7 @@ pub mod tests {
 
         t = l.next_token();
         assert_eq!(t.token_type, TokenType::Function);
-        assert_eq!(t.literal, String::from("fn"));
+        assert_eq!(t.literal, String::from("function"));
 
         t = l.next_token();
         assert_eq!(t.token_type, TokenType::LParen);

@@ -65,7 +65,7 @@ impl Token {
 
 pub fn lookup_indent(ident: &str) -> TokenType {
     match ident {
-        "fn" => TokenType::Function,
+        "function" => TokenType::Function,
         "let" => TokenType::Let,
         "true" => TokenType::True,
         "false" => TokenType::False,
