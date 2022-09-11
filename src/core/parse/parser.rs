@@ -18,12 +18,12 @@ pub struct Parser<'a> {
 impl<'a> Parser<'a> {
     pub fn new(l: &'a mut Lexer) -> Self {
         let first_token = l.next_token();
-        let secound_token = l.next_token();
+        let second_token = l.next_token();
 
         Parser {
             l,
             cur_token: first_token,
-            peeked_token: secound_token,
+            peeked_token: second_token,
         }
     }
 
@@ -62,11 +62,11 @@ impl<'a> Parser<'a> {
     }
 
     fn parse_let_statement(&mut self) -> Result<Statement, Error> {
-        // gurd
+        // guard
         if self.cur_token.token_type != TokenType::Let {
             return Err(Error::new(
                 ErrorKind::InvalidInput,
-                format!("expected tolen 'let' but found {}", self.cur_token.literal),
+                format!("expected token 'let' but found {}", self.cur_token.literal),
             ));
         }
         if self.peeked_token.token_type != TokenType::Ident {
@@ -110,7 +110,7 @@ impl<'a> Parser<'a> {
         if self.cur_token.token_type != TokenType::Return {
             return Err(Error::new(
                 ErrorKind::InvalidInput,
-                format!("expected tolen 'let' but found {}", self.cur_token.literal),
+                format!("expected token 'let' but found {}", self.cur_token.literal),
             ));
         }
         let token = self.cur_token.clone();
