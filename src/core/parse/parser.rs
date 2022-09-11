@@ -95,11 +95,8 @@ impl<'a> Parser<'a> {
             ));
         }
 
-        // TODO: parse expression
-        while self.cur_token.token_type != TokenType::SemiColon {
-            self.next_token();
-        }
-        let value: Expression = Expression::Integer(0);
+        self.next_token();
+        let value: Expression = self.parse_expression(Precedence::Lowest)?;
         self.next_token();
 
         Ok(Statement::Let(LetStatement::new(token, name, value)))
@@ -114,11 +111,8 @@ impl<'a> Parser<'a> {
             ));
         }
 
-        // TODO: parse expression
-        while self.cur_token.token_type != TokenType::SemiColon {
-            self.next_token();
-        }
-        let value = Expression::Integer(0);
+        self.next_token();
+        let value: Expression = self.parse_expression(Precedence::Lowest)?;
         self.next_token();
 
         Ok(Statement::Return(value))
