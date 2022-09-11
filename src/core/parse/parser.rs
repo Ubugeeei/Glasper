@@ -7,7 +7,7 @@ use crate::core::tokenize::token::TokenType;
 
 use super::{
     super::{lexer::Lexer, token::Token},
-    ast::{Expression, Identifier, LetStatement, Program, Statement},
+    ast::{Expression, Identifier, LetStatement, Program, ReturnStatement, Statement},
 };
 
 pub struct Parser<'a> {
@@ -52,7 +52,7 @@ impl<'a> Parser<'a> {
     fn parse_statement(&mut self) -> Result<Statement, Error> {
         match self.cur_token.token_type {
             TokenType::Let => self.parse_let_statement(),
-            // TokenType::Return => self.parse_return_statement(),
+            TokenType::Return => self.parse_return_statement(),
             // TokenType::If => self.parse_if_statement(),
             _ => Err(Error::new(
                 ErrorKind::InvalidInput,
@@ -85,7 +85,7 @@ impl<'a> Parser<'a> {
         let name = Identifier::new(self.cur_token.clone(), self.cur_token.clone().literal);
 
         self.next_token();
-        // gurd
+        // guard
         if self.cur_token.token_type != TokenType::Assign {
             return Err(Error::new(
                 ErrorKind::InvalidInput,
@@ -93,7 +93,7 @@ impl<'a> Parser<'a> {
             ));
         }
 
-        // TODO: impl
+        // TODO: parse expression
         while self.cur_token.token_type != TokenType::SemiColon {
             self.next_token();
         }
@@ -106,7 +106,25 @@ impl<'a> Parser<'a> {
     }
 
     fn parse_return_statement(&mut self) -> Result<Statement, Error> {
-        todo!()
+        // guard
+        if self.cur_token.token_type != TokenType::Return {
+            return Err(Error::new(
+                ErrorKind::InvalidInput,
+                format!("expected tolen 'let' but found {}", self.cur_token.literal),
+            ));
+        }
+        let token = self.cur_token.clone();
+
+        // TODO: parse expression
+        while self.cur_token.token_type != TokenType::SemiColon {
+            self.next_token();
+        }
+        let value: Expression = Expression::Integer(0);
+        self.next_token();
+
+        Ok(Statement::ReturnStatement(ReturnStatement::new(
+            token, value,
+        )))
     }
 
     fn parse_if_statement(&mut self) -> Result<Statement, Error> {
@@ -182,6 +200,23 @@ pub mod tests {
             let mut p = Parser::new(&mut l);
             let program = p.parse_program();
             assert_eq!(program.statements.len(), 0);
+        }
+    }
+
+    #[test]
+    fn test_parse_return_statements() {
+        // Ok
+        {
+            let source = String::from(
+                r#"
+                    return 5;
+                    return 10;
+        "#,
+            );
+            let mut l = Lexer::new(source);
+            let mut p = Parser::new(&mut l);
+            let program = p.parse_program();
+            assert_eq!(program.statements.len(), 2);
         }
     }
 }
