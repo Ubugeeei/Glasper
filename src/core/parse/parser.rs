@@ -134,6 +134,7 @@ impl<'a> Parser<'a> {
     fn parse_expression(&mut self, _precedence: Precedence) -> Result<Expression, Error> {
         let expr = match self.cur_token.token_type {
             TokenType::Ident => Expression::Identifier(self.parse_identifier()?),
+            TokenType::Int => Expression::Integer(self.parse_integer()?),
             _ => {
                 return Err(Error::new(
                     ErrorKind::InvalidInput,
@@ -148,6 +149,10 @@ impl<'a> Parser<'a> {
 
     fn parse_identifier(&mut self) -> Result<String, Error> {
         Ok(self.cur_token.literal.to_string())
+    }
+
+    fn parse_integer(&mut self) -> Result<i64, Error> {
+        Ok(self.cur_token.literal.parse::<i64>().unwrap())
     }
 
     fn parse_operator_expression(&mut self) -> Expression {
@@ -242,6 +247,21 @@ pub mod tests {
             assert_eq!(
                 program.statements[0],
                 Statement::Expression(Expression::Identifier(String::from("myVar")))
+            );
+        }
+    }
+
+    #[test]
+    fn test_parse_integer_expression() {
+        {
+            let source = String::from("5;");
+            let mut l = Lexer::new(source);
+            let mut p = Parser::new(&mut l);
+            let program = p.parse_program();
+            assert_eq!(program.statements.len(), 1);
+            assert_eq!(
+                program.statements[0],
+                Statement::Expression(Expression::Integer(5))
             );
         }
     }

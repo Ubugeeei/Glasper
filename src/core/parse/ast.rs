@@ -55,7 +55,7 @@ impl Node for Statement {
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum Expression {
-    Integer(i32),
+    Integer(i64),
     Identifier(String),
 }
 impl Expression {
