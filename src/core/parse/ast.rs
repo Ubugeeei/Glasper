@@ -1,6 +1,8 @@
 // TODO: remove this
 #![allow(dead_code)]
 
+use std::fmt::Debug;
+
 use crate::core::tokenize::token::Token;
 
 #[derive(Default, Debug)]
@@ -22,13 +24,8 @@ impl Program {
     }
 }
 
-pub trait Node {
+pub trait Node: Debug {
     fn token_literal(&self) -> String;
-
-    /// for debugging
-    fn string(&self, program: Program) -> String {
-        format!("{:?}", program)
-    }
 }
 
 #[derive(Debug)]
