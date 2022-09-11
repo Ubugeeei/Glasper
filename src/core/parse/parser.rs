@@ -7,7 +7,7 @@ use crate::core::tokenize::token::TokenType;
 
 use super::{
     super::{lexer::Lexer, token::Token},
-    ast::{Expression, Identifier, LetStatement, Program, ReturnStatement, Statement},
+    ast::{Expression, LetStatement, Precedence, Program, Statement},
 };
 
 pub struct Parser<'a> {
@@ -53,11 +53,11 @@ impl<'a> Parser<'a> {
         match self.cur_token.token_type {
             TokenType::Let => self.parse_let_statement(),
             TokenType::Return => self.parse_return_statement(),
-            // TokenType::If => self.parse_if_statement(),
-            _ => Err(Error::new(
-                ErrorKind::InvalidInput,
-                format!("unexpected token {:?}", self.cur_token.token_type),
-            )),
+            _ => self.parse_expression_statement(),
+            // _ => Err(Error::new(
+            //     ErrorKind::InvalidInput,
+            //     format!("unexpected token {:?}", self.cur_token.token_type),
+            // )),
         }
     }
 
@@ -82,7 +82,7 @@ impl<'a> Parser<'a> {
         let token = self.cur_token.clone();
 
         self.next_token();
-        let name = Identifier::new(self.cur_token.clone(), self.cur_token.clone().literal);
+        let name = self.cur_token.literal.to_string();
 
         self.next_token();
         // guard
@@ -111,28 +111,43 @@ impl<'a> Parser<'a> {
                 format!("expected token 'let' but found {}", self.cur_token.literal),
             ));
         }
-        let token = self.cur_token.clone();
 
         // TODO: parse expression
         while self.cur_token.token_type != TokenType::SemiColon {
             self.next_token();
         }
-        let value: Expression = Expression::Integer(0);
+        let value = Expression::Integer(0);
         self.next_token();
 
-        Ok(Statement::Return(ReturnStatement::new(token, value)))
+        Ok(Statement::Return(value))
     }
 
-    fn parse_if_statement(&mut self) -> Result<Statement, Error> {
-        todo!()
+    fn parse_expression_statement(&mut self) -> Result<Statement, Error> {
+        let expr = self.parse_expression(Precedence::Lowest)?;
+        if self.peeked_token.token_type == TokenType::SemiColon {
+            self.next_token();
+        }
+
+        Ok(Statement::Expression(expr))
     }
 
-    fn parse_identifier(&mut self) -> Identifier {
-        todo!()
+    fn parse_expression(&mut self, _precedence: Precedence) -> Result<Expression, Error> {
+        let expr = match self.cur_token.token_type {
+            TokenType::Ident => Expression::Identifier(self.parse_identifier()?),
+            _ => {
+                return Err(Error::new(
+                    ErrorKind::InvalidInput,
+                    format!("unexpected token {:?}", self.cur_token.token_type),
+                ))
+            }
+        };
+
+        // TODO: impl
+        Ok(expr)
     }
 
-    fn parse_expression(&mut self) -> Expression {
-        todo!()
+    fn parse_identifier(&mut self) -> Result<String, Error> {
+        Ok(self.cur_token.literal.to_string())
     }
 
     fn parse_operator_expression(&mut self) -> Expression {
@@ -213,6 +228,21 @@ pub mod tests {
             let mut p = Parser::new(&mut l);
             let program = p.parse_program();
             assert_eq!(program.statements.len(), 2);
+        }
+    }
+
+    #[test]
+    fn test_parse_identifier_expression() {
+        {
+            let source = String::from("myVar;");
+            let mut l = Lexer::new(source);
+            let mut p = Parser::new(&mut l);
+            let program = p.parse_program();
+            assert_eq!(program.statements.len(), 1);
+            assert_eq!(
+                program.statements[0],
+                Statement::Expression(Expression::Identifier(String::from("myVar")))
+            );
         }
     }
 }

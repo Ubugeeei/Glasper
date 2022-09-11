@@ -1,6 +1,6 @@
 #![allow(non_camel_case_types)]
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Token {
     pub token_type: TokenType,
     pub literal: String,
