@@ -223,7 +223,19 @@ pub mod tests {
             let mut p = Parser::new(&mut l);
             let program = p.parse_program();
             assert_eq!(program.statements.len(), 2);
-            // TODO: test
+            assert_eq!(
+                program.statements,
+                vec![
+                    Statement::Let(LetStatement::new(
+                        String::from("five"),
+                        Expression::Integer(5)
+                    )),
+                    Statement::Let(LetStatement::new(
+                        String::from("ten"),
+                        Expression::Integer(10)
+                    ))
+                ]
+            );
         }
 
         // Err
