@@ -112,8 +112,8 @@ pub enum Precedence {
     Lowest,
     Equals,      // == or !==
     LessGreater, // > or <
-    Sum,         // +
-    Product,     // *
+    Sum,         // + or -
+    Product,     // * or /
     Prefix,      // -X or !X
     Call,        // myFunction(x)
 }
