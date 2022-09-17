@@ -401,6 +401,18 @@ pub mod tests {
                         Box::new(Expression::Integer(2)),
                     ))),
                 ),
+                (
+                    String::from("true;"),
+                    Statement::Expression(Expression::Boolean(true)),
+                ),
+                (
+                    String::from("false != true;"),
+                    Statement::Expression(Expression::Infix(InfixExpression::new(
+                        Box::new(Expression::Boolean(false)),
+                        String::from("!="),
+                        Box::new(Expression::Boolean(true)),
+                    ))),
+                ),
             ];
 
             for (source, expected) in test_case {
