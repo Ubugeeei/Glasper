@@ -57,6 +57,7 @@ impl<'a> Parser<'a> {
     fn parse_statement(&mut self) -> Result<Statement, Error> {
         match self.cur_token.token_type {
             TokenType::Let => self.parse_let_statement(),
+            TokenType::If => self.parse_if_statement(),
             TokenType::Return => self.parse_return_statement(),
             _ => self.parse_expression_statement(),
             // _ => Err(Error::new(
@@ -97,6 +98,10 @@ impl<'a> Parser<'a> {
             self.next_token()
         }
         Ok(Statement::Let(LetStatement::new(name, value)))
+    }
+
+    fn parse_if_statement(&mut self) -> Result<Statement, Error> {
+        todo!()
     }
 
     fn parse_return_statement(&mut self) -> Result<Statement, Error> {
@@ -224,6 +229,8 @@ impl<'a> Parser<'a> {
 
 #[cfg(test)]
 pub mod tests {
+    use crate::core::parse::ast::{BlockStatement, IfStatement};
+
     use super::*;
 
     #[test]
@@ -288,6 +295,65 @@ pub mod tests {
             let mut p = Parser::new(&mut l);
             let program = p.parse_program();
             assert_eq!(program.statements.len(), 0);
+        }
+    }
+
+    #[test]
+    fn test_parse_if_statements() {
+        let case = vec![
+            (
+                String::from(
+                    r#"
+                        if (x < y) {
+                            let a = 1;
+                        } else {
+                            let a = 2;
+                        }
+                    "#,
+                ),
+                vec![Statement::If(IfStatement::new(
+                    Expression::Infix(InfixExpression::new(
+                        Box::new(Expression::Identifier(String::from("x"))),
+                        String::from("<"),
+                        Box::new(Expression::Identifier(String::from("y"))),
+                    )),
+                    BlockStatement::new(vec![Statement::Let(LetStatement::new(
+                        String::from("a"),
+                        Expression::Integer(1),
+                    ))]),
+                    Some(BlockStatement::new(vec![Statement::Let(
+                        LetStatement::new(String::from("a"), Expression::Integer(2)),
+                    )])),
+                ))],
+            ),
+            (
+                String::from(
+                    r#"
+                        if (x < y) {
+                            let a = 1;
+                        }
+                    "#,
+                ),
+                vec![Statement::If(IfStatement::new(
+                    Expression::Infix(InfixExpression::new(
+                        Box::new(Expression::Identifier(String::from("x"))),
+                        String::from("<"),
+                        Box::new(Expression::Identifier(String::from("y"))),
+                    )),
+                    BlockStatement::new(vec![Statement::Let(LetStatement::new(
+                        String::from("a"),
+                        Expression::Integer(1),
+                    ))]),
+                    None,
+                ))],
+            ),
+        ];
+
+        for (source, expected) in case {
+            let mut l = Lexer::new(source);
+            let mut p = Parser::new(&mut l);
+            let program = p.parse_program();
+            assert_eq!(program.statements, expected);
         }
     }
 
