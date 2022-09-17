@@ -52,6 +52,11 @@ impl Node for Statement {
 }
 
 #[derive(Debug, PartialEq, Eq)]
+pub struct BlockStatement {
+    pub statements: Vec<Statement>,
+}
+
+#[derive(Debug, PartialEq, Eq)]
 pub struct LetStatement {
     pub name: String,
     pub value: Expression,
@@ -59,6 +64,26 @@ pub struct LetStatement {
 impl LetStatement {
     pub fn new(name: String, value: Expression) -> LetStatement {
         LetStatement { name, value }
+    }
+}
+
+#[derive(Debug, PartialEq, Eq)]
+pub struct IfStatement {
+    pub condition: Expression,
+    pub consequence: BlockStatement,
+    pub alternative: Option<BlockStatement>,
+}
+impl IfStatement {
+    pub fn new(
+        condition: Expression,
+        consequence: BlockStatement,
+        alternative: Option<BlockStatement>,
+    ) -> IfStatement {
+        IfStatement {
+            condition,
+            consequence,
+            alternative,
+        }
     }
 }
 
@@ -104,26 +129,6 @@ impl InfixExpression {
             left,
             operator,
             right,
-        }
-    }
-}
-
-#[derive(Debug, PartialEq, Eq)]
-pub struct IfStatement {
-    pub condition: Expression,
-    pub consequence: Vec<Statement>,
-    pub alternative: Option<Vec<Statement>>,
-}
-impl IfStatement {
-    pub fn new(
-        condition: Expression,
-        consequence: Vec<Statement>,
-        alternative: Option<Vec<Statement>>,
-    ) -> IfStatement {
-        IfStatement {
-            condition,
-            consequence,
-            alternative,
         }
     }
 }
