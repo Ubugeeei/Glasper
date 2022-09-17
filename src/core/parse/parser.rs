@@ -8,7 +8,8 @@ use crate::core::tokenize::token::TokenType;
 use super::{
     super::{lexer::Lexer, token::Token},
     ast::{
-        Expression, InfixExpression, LetStatement, Precedence, PrefixExpression, Program, Statement,
+        BlockStatement, Expression, IfStatement, InfixExpression, LetStatement, Precedence,
+        PrefixExpression, Program, Statement,
     },
 };
 
@@ -101,7 +102,94 @@ impl<'a> Parser<'a> {
     }
 
     fn parse_if_statement(&mut self) -> Result<Statement, Error> {
-        todo!()
+        // guard
+        if self.peeked_token.token_type != TokenType::LParen {
+            return Err(Error::new(
+                ErrorKind::InvalidInput,
+                format!("expected token '(' but found {}", self.peeked_token.literal),
+            ));
+        }
+        self.next_token(); // skip '('
+
+        // parse condition
+        self.next_token();
+        let condition = self.parse_expression(Precedence::Lowest)?;
+
+        // guard
+        if self.peeked_token.token_type != TokenType::RParen {
+            return Err(Error::new(
+                ErrorKind::InvalidInput,
+                format!("expected token ')' but found {}", self.peeked_token.literal),
+            ));
+        }
+
+        self.next_token(); // skip ')'
+
+        // TODO: parse non block statement
+        if self.peeked_token.token_type != TokenType::LBrace {
+            return Err(Error::new(
+                ErrorKind::InvalidInput,
+                format!(
+                    "expected token '{{' but found {} in parse_if_statement",
+                    self.peeked_token.literal
+                ),
+            ));
+        }
+
+        // parse consequence
+        let consequence = BlockStatement::new(self.parse_block_statement()?);
+
+        // parse alternative
+        let alternative = if self.peeked_token.token_type == TokenType::Else {
+            self.next_token();
+            // TODO: parse non block statement
+            if self.peeked_token.token_type != TokenType::LBrace {
+                return Err(Error::new(
+                    ErrorKind::InvalidInput,
+                    format!(
+                        "expected token '{{' but found {}",
+                        self.peeked_token.literal
+                    ),
+                ));
+            }
+
+            Some(BlockStatement::new(self.parse_block_statement()?))
+        } else {
+            None
+        };
+
+        Ok(Statement::If(IfStatement::new(
+            condition,
+            consequence,
+            alternative,
+        )))
+    }
+
+    fn parse_block_statement(&mut self) -> Result<Vec<Statement>, Error> {
+        // guard
+        if self.peeked_token.token_type != TokenType::LBrace {
+            return Err(Error::new(
+                ErrorKind::InvalidInput,
+                format!(
+                    "expected token '{{' but found {}",
+                    self.peeked_token.literal
+                ),
+            ));
+        }
+
+        self.next_token(); // skip '{'
+
+        let mut statements = vec![];
+        self.next_token();
+        while self.cur_token.token_type != TokenType::RBrace
+            && self.cur_token.token_type != TokenType::Eof
+        {
+            let stmt = self.parse_statement()?;
+            statements.push(stmt);
+            self.next_token();
+        }
+
+        Ok(statements)
     }
 
     fn parse_return_statement(&mut self) -> Result<Statement, Error> {
@@ -229,8 +317,6 @@ impl<'a> Parser<'a> {
 
 #[cfg(test)]
 pub mod tests {
-    use crate::core::parse::ast::{BlockStatement, IfStatement};
-
     use super::*;
 
     #[test]
