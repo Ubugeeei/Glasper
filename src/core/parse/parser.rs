@@ -316,6 +316,41 @@ pub mod tests {
     }
 
     #[test]
+    fn test_parse_boolean_expression() {
+        {
+            let case = vec![
+                (
+                    String::from("true;"),
+                    Statement::Expression(Expression::Boolean(true)),
+                ),
+                (
+                    String::from("false != true;"),
+                    Statement::Expression(Expression::Infix(InfixExpression::new(
+                        Box::new(Expression::Boolean(false)),
+                        String::from("!="),
+                        Box::new(Expression::Boolean(true)),
+                    ))),
+                ),
+                (
+                    String::from("!false;"),
+                    Statement::Expression(Expression::Prefix(PrefixExpression::new(
+                        String::from("!"),
+                        Box::new(Expression::Boolean(false)),
+                    ))),
+                ),
+            ];
+
+            for (source, expected) in case {
+                let mut l = Lexer::new(source);
+                let mut p = Parser::new(&mut l);
+                let program = p.parse_program();
+                assert_eq!(program.statements.len(), 1);
+                assert_eq!(program.statements[0], expected);
+            }
+        }
+    }
+
+    #[test]
     fn test_parse_pre_ops_expressions() {
         {
             let source = String::from("-5;");
@@ -414,25 +449,6 @@ pub mod tests {
                         Box::new(Expression::Integer(1)),
                         String::from("!="),
                         Box::new(Expression::Integer(2)),
-                    ))),
-                ),
-                (
-                    String::from("true;"),
-                    Statement::Expression(Expression::Boolean(true)),
-                ),
-                (
-                    String::from("false != true;"),
-                    Statement::Expression(Expression::Infix(InfixExpression::new(
-                        Box::new(Expression::Boolean(false)),
-                        String::from("!="),
-                        Box::new(Expression::Boolean(true)),
-                    ))),
-                ),
-                (
-                    String::from("!false;"),
-                    Statement::Expression(Expression::Prefix(PrefixExpression::new(
-                        String::from("!"),
-                        Box::new(Expression::Boolean(false)),
                     ))),
                 ),
             ];
