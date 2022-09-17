@@ -125,6 +125,10 @@ impl<'a> Parser<'a> {
             // prefix_expression
             TokenType::Bang => self.parse_prefix_expression()?,
             TokenType::Minus => self.parse_prefix_expression()?,
+
+            // grouped
+            TokenType::LParen => self.parse_grouped_expression()?,
+
             _ => {
                 return Err(Error::new(
                     ErrorKind::InvalidInput,
@@ -189,6 +193,25 @@ impl<'a> Parser<'a> {
             Box::new(right),
         ));
         Ok(expr)
+    }
+
+    fn parse_grouped_expression(&mut self) -> Result<Expression, Error> {
+        self.next_token();
+        let expr = self.parse_expression(Precedence::Lowest)?;
+
+        if self.peeked_token.token_type == TokenType::RParen {
+            // skip r paren
+            self.next_token();
+            Ok(expr)
+        } else {
+            Err(Error::new(
+                ErrorKind::InvalidInput,
+                format!(
+                    "expected token ')' but found '{}'",
+                    self.peeked_token.literal
+                ),
+            ))
+        }
     }
 
     fn current_precedence(&self) -> Precedence {
