@@ -108,6 +108,26 @@ impl InfixExpression {
     }
 }
 
+#[derive(Debug, PartialEq, Eq)]
+pub struct IfStatement {
+    pub condition: Expression,
+    pub consequence: Vec<Statement>,
+    pub alternative: Option<Vec<Statement>>,
+}
+impl IfStatement {
+    pub fn new(
+        condition: Expression,
+        consequence: Vec<Statement>,
+        alternative: Option<Vec<Statement>>,
+    ) -> IfStatement {
+        IfStatement {
+            condition,
+            consequence,
+            alternative,
+        }
+    }
+}
+
 #[derive(Debug, PartialEq, Eq, PartialOrd)]
 pub enum Precedence {
     Lowest,
