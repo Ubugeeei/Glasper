@@ -125,6 +125,10 @@ impl<'a> Parser<'a> {
             // prefix_expression
             TokenType::Bang => self.parse_prefix_expression()?,
             TokenType::Minus => self.parse_prefix_expression()?,
+
+            // grouped
+            TokenType::LParen => self.parse_grouped_expression()?,
+
             _ => {
                 return Err(Error::new(
                     ErrorKind::InvalidInput,
@@ -189,6 +193,25 @@ impl<'a> Parser<'a> {
             Box::new(right),
         ));
         Ok(expr)
+    }
+
+    fn parse_grouped_expression(&mut self) -> Result<Expression, Error> {
+        self.next_token();
+        let expr = self.parse_expression(Precedence::Lowest)?;
+
+        if self.peeked_token.token_type == TokenType::RParen {
+            // skip r paren
+            self.next_token();
+            Ok(expr)
+        } else {
+            Err(Error::new(
+                ErrorKind::InvalidInput,
+                format!(
+                    "expected token ')' but found '{}'",
+                    self.peeked_token.literal
+                ),
+            ))
+        }
     }
 
     fn current_precedence(&self) -> Precedence {
@@ -316,6 +339,41 @@ pub mod tests {
     }
 
     #[test]
+    fn test_parse_boolean_expression() {
+        {
+            let case = vec![
+                (
+                    String::from("true;"),
+                    Statement::Expression(Expression::Boolean(true)),
+                ),
+                (
+                    String::from("false != true;"),
+                    Statement::Expression(Expression::Infix(InfixExpression::new(
+                        Box::new(Expression::Boolean(false)),
+                        String::from("!="),
+                        Box::new(Expression::Boolean(true)),
+                    ))),
+                ),
+                (
+                    String::from("!false;"),
+                    Statement::Expression(Expression::Prefix(PrefixExpression::new(
+                        String::from("!"),
+                        Box::new(Expression::Boolean(false)),
+                    ))),
+                ),
+            ];
+
+            for (source, expected) in case {
+                let mut l = Lexer::new(source);
+                let mut p = Parser::new(&mut l);
+                let program = p.parse_program();
+                assert_eq!(program.statements.len(), 1);
+                assert_eq!(program.statements[0], expected);
+            }
+        }
+    }
+
+    #[test]
     fn test_parse_pre_ops_expressions() {
         {
             let source = String::from("-5;");
@@ -416,25 +474,6 @@ pub mod tests {
                         Box::new(Expression::Integer(2)),
                     ))),
                 ),
-                (
-                    String::from("true;"),
-                    Statement::Expression(Expression::Boolean(true)),
-                ),
-                (
-                    String::from("false != true;"),
-                    Statement::Expression(Expression::Infix(InfixExpression::new(
-                        Box::new(Expression::Boolean(false)),
-                        String::from("!="),
-                        Box::new(Expression::Boolean(true)),
-                    ))),
-                ),
-                (
-                    String::from("!false;"),
-                    Statement::Expression(Expression::Prefix(PrefixExpression::new(
-                        String::from("!"),
-                        Box::new(Expression::Boolean(false)),
-                    ))),
-                ),
             ];
 
             for (source, expected) in test_case {
@@ -508,6 +547,88 @@ pub mod tests {
                     Box::new(Expression::Integer(11)),
                 ))),
             );
+        }
+    }
+
+    #[test]
+    fn test_parse_grouped_expression() {
+        let case = vec![
+            (
+                String::from("(1 + 2) + 3 + 4;"),
+                Statement::Expression(Expression::Infix(InfixExpression::new(
+                    Box::new(Expression::Infix(InfixExpression::new(
+                        Box::new(Expression::Infix(InfixExpression::new(
+                            Box::new(Expression::Integer(1)),
+                            String::from("+"),
+                            Box::new(Expression::Integer(2)),
+                        ))),
+                        String::from("+"),
+                        Box::new(Expression::Integer(3)),
+                    ))),
+                    String::from("+"),
+                    Box::new(Expression::Integer(4)),
+                ))),
+            ),
+            (
+                String::from("1 + (2 + 3) + 4;"),
+                Statement::Expression(Expression::Infix(InfixExpression::new(
+                    Box::new(Expression::Infix(InfixExpression::new(
+                        Box::new(Expression::Integer(1)),
+                        String::from("+"),
+                        Box::new(Expression::Infix(InfixExpression::new(
+                            Box::new(Expression::Integer(2)),
+                            String::from("+"),
+                            Box::new(Expression::Integer(3)),
+                        ))),
+                    ))),
+                    String::from("+"),
+                    Box::new(Expression::Integer(4)),
+                ))),
+            ),
+            (
+                String::from("1 + 2 + (3 + 4);"),
+                Statement::Expression(Expression::Infix(InfixExpression::new(
+                    Box::new(Expression::Infix(InfixExpression::new(
+                        Box::new(Expression::Integer(1)),
+                        String::from("+"),
+                        Box::new(Expression::Integer(2)),
+                    ))),
+                    String::from("+"),
+                    Box::new(Expression::Infix(InfixExpression::new(
+                        Box::new(Expression::Integer(3)),
+                        String::from("+"),
+                        Box::new(Expression::Integer(4)),
+                    ))),
+                ))),
+            ),
+            (
+                String::from("0 + ((1 + 2) + (3 + 4));"),
+                Statement::Expression(Expression::Infix(InfixExpression::new(
+                    Box::new(Expression::Integer(0)),
+                    String::from("+"),
+                    Box::new(Expression::Infix(InfixExpression::new(
+                        Box::new(Expression::Infix(InfixExpression::new(
+                            Box::new(Expression::Integer(1)),
+                            String::from("+"),
+                            Box::new(Expression::Integer(2)),
+                        ))),
+                        String::from("+"),
+                        Box::new(Expression::Infix(InfixExpression::new(
+                            Box::new(Expression::Integer(3)),
+                            String::from("+"),
+                            Box::new(Expression::Integer(4)),
+                        ))),
+                    ))),
+                ))),
+            ),
+        ];
+
+        for (source, expected) in case {
+            let mut l = Lexer::new(source);
+            let mut p = Parser::new(&mut l);
+            let program = p.parse_program();
+            assert_eq!(program.statements.len(), 1);
+            assert_eq!(program.statements[0], expected);
         }
     }
 }
