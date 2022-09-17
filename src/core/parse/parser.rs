@@ -428,6 +428,13 @@ pub mod tests {
                         Box::new(Expression::Boolean(true)),
                     ))),
                 ),
+                (
+                    String::from("!false;"),
+                    Statement::Expression(Expression::Prefix(PrefixExpression::new(
+                        String::from("!"),
+                        Box::new(Expression::Boolean(false)),
+                    ))),
+                ),
             ];
 
             for (source, expected) in test_case {
