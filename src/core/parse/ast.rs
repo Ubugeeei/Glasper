@@ -66,6 +66,7 @@ impl LetStatement {
 pub enum Expression {
     Integer(i64),
     Identifier(String),
+    Boolean(bool),
     Prefix(PrefixExpression),
     Infix(InfixExpression),
 }
