@@ -31,8 +31,8 @@ pub enum Statement {
     Let(LetStatement),
     Return(Expression),
     Expression(Expression),
+    If(IfStatement),
     // TODO: impl
-    // if
     // switch
     // for
     // while
@@ -52,6 +52,16 @@ impl Node for Statement {
 }
 
 #[derive(Debug, PartialEq, Eq)]
+pub struct BlockStatement {
+    pub statements: Vec<Statement>,
+}
+impl BlockStatement {
+    pub fn new(statements: Vec<Statement>) -> BlockStatement {
+        BlockStatement { statements }
+    }
+}
+
+#[derive(Debug, PartialEq, Eq)]
 pub struct LetStatement {
     pub name: String,
     pub value: Expression,
@@ -59,6 +69,26 @@ pub struct LetStatement {
 impl LetStatement {
     pub fn new(name: String, value: Expression) -> LetStatement {
         LetStatement { name, value }
+    }
+}
+
+#[derive(Debug, PartialEq, Eq)]
+pub struct IfStatement {
+    pub condition: Expression,
+    pub consequence: BlockStatement,
+    pub alternative: Option<BlockStatement>,
+}
+impl IfStatement {
+    pub fn new(
+        condition: Expression,
+        consequence: BlockStatement,
+        alternative: Option<BlockStatement>,
+    ) -> IfStatement {
+        IfStatement {
+            condition,
+            consequence,
+            alternative,
+        }
     }
 }
 

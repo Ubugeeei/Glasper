@@ -8,7 +8,8 @@ use crate::core::tokenize::token::TokenType;
 use super::{
     super::{lexer::Lexer, token::Token},
     ast::{
-        Expression, InfixExpression, LetStatement, Precedence, PrefixExpression, Program, Statement,
+        BlockStatement, Expression, IfStatement, InfixExpression, LetStatement, Precedence,
+        PrefixExpression, Program, Statement,
     },
 };
 
@@ -57,6 +58,7 @@ impl<'a> Parser<'a> {
     fn parse_statement(&mut self) -> Result<Statement, Error> {
         match self.cur_token.token_type {
             TokenType::Let => self.parse_let_statement(),
+            TokenType::If => self.parse_if_statement(),
             TokenType::Return => self.parse_return_statement(),
             _ => self.parse_expression_statement(),
             // _ => Err(Error::new(
@@ -97,6 +99,97 @@ impl<'a> Parser<'a> {
             self.next_token()
         }
         Ok(Statement::Let(LetStatement::new(name, value)))
+    }
+
+    fn parse_if_statement(&mut self) -> Result<Statement, Error> {
+        // guard
+        if self.peeked_token.token_type != TokenType::LParen {
+            return Err(Error::new(
+                ErrorKind::InvalidInput,
+                format!("expected token '(' but found {}", self.peeked_token.literal),
+            ));
+        }
+        self.next_token(); // skip '('
+
+        // parse condition
+        self.next_token();
+        let condition = self.parse_expression(Precedence::Lowest)?;
+
+        // guard
+        if self.peeked_token.token_type != TokenType::RParen {
+            return Err(Error::new(
+                ErrorKind::InvalidInput,
+                format!("expected token ')' but found {}", self.peeked_token.literal),
+            ));
+        }
+
+        self.next_token(); // skip ')'
+
+        // TODO: parse non block statement
+        if self.peeked_token.token_type != TokenType::LBrace {
+            return Err(Error::new(
+                ErrorKind::InvalidInput,
+                format!(
+                    "expected token '{{' but found {} in parse_if_statement",
+                    self.peeked_token.literal
+                ),
+            ));
+        }
+
+        // parse consequence
+        let consequence = BlockStatement::new(self.parse_block_statement()?);
+
+        // parse alternative
+        let alternative = if self.peeked_token.token_type == TokenType::Else {
+            self.next_token();
+            // TODO: parse non block statement
+            if self.peeked_token.token_type != TokenType::LBrace {
+                return Err(Error::new(
+                    ErrorKind::InvalidInput,
+                    format!(
+                        "expected token '{{' but found {}",
+                        self.peeked_token.literal
+                    ),
+                ));
+            }
+
+            Some(BlockStatement::new(self.parse_block_statement()?))
+        } else {
+            None
+        };
+
+        Ok(Statement::If(IfStatement::new(
+            condition,
+            consequence,
+            alternative,
+        )))
+    }
+
+    fn parse_block_statement(&mut self) -> Result<Vec<Statement>, Error> {
+        // guard
+        if self.peeked_token.token_type != TokenType::LBrace {
+            return Err(Error::new(
+                ErrorKind::InvalidInput,
+                format!(
+                    "expected token '{{' but found {}",
+                    self.peeked_token.literal
+                ),
+            ));
+        }
+
+        self.next_token(); // skip '{'
+
+        let mut statements = vec![];
+        self.next_token();
+        while self.cur_token.token_type != TokenType::RBrace
+            && self.cur_token.token_type != TokenType::Eof
+        {
+            let stmt = self.parse_statement()?;
+            statements.push(stmt);
+            self.next_token();
+        }
+
+        Ok(statements)
     }
 
     fn parse_return_statement(&mut self) -> Result<Statement, Error> {
@@ -288,6 +381,65 @@ pub mod tests {
             let mut p = Parser::new(&mut l);
             let program = p.parse_program();
             assert_eq!(program.statements.len(), 0);
+        }
+    }
+
+    #[test]
+    fn test_parse_if_statements() {
+        let case = vec![
+            (
+                String::from(
+                    r#"
+                        if (x < y) {
+                            let a = 1;
+                        } else {
+                            let a = 2;
+                        }
+                    "#,
+                ),
+                vec![Statement::If(IfStatement::new(
+                    Expression::Infix(InfixExpression::new(
+                        Box::new(Expression::Identifier(String::from("x"))),
+                        String::from("<"),
+                        Box::new(Expression::Identifier(String::from("y"))),
+                    )),
+                    BlockStatement::new(vec![Statement::Let(LetStatement::new(
+                        String::from("a"),
+                        Expression::Integer(1),
+                    ))]),
+                    Some(BlockStatement::new(vec![Statement::Let(
+                        LetStatement::new(String::from("a"), Expression::Integer(2)),
+                    )])),
+                ))],
+            ),
+            (
+                String::from(
+                    r#"
+                        if (x < y) {
+                            let a = 1;
+                        }
+                    "#,
+                ),
+                vec![Statement::If(IfStatement::new(
+                    Expression::Infix(InfixExpression::new(
+                        Box::new(Expression::Identifier(String::from("x"))),
+                        String::from("<"),
+                        Box::new(Expression::Identifier(String::from("y"))),
+                    )),
+                    BlockStatement::new(vec![Statement::Let(LetStatement::new(
+                        String::from("a"),
+                        Expression::Integer(1),
+                    ))]),
+                    None,
+                ))],
+            ),
+        ];
+
+        for (source, expected) in case {
+            let mut l = Lexer::new(source);
+            let mut p = Parser::new(&mut l);
+            let program = p.parse_program();
+            assert_eq!(program.statements, expected);
         }
     }
 
