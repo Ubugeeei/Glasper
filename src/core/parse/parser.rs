@@ -121,6 +121,7 @@ impl<'a> Parser<'a> {
         let mut expr = match self.cur_token.token_type {
             TokenType::Ident => Expression::Identifier(self.parse_identifier()?),
             TokenType::Int => Expression::Integer(self.parse_integer()?),
+            TokenType::True | TokenType::False => Expression::Boolean(self.parse_boolean()?),
             // prefix_expression
             TokenType::Bang => self.parse_prefix_expression()?,
             TokenType::Minus => self.parse_prefix_expression()?,
@@ -152,6 +153,20 @@ impl<'a> Parser<'a> {
 
     fn parse_integer(&mut self) -> Result<i64, Error> {
         Ok(self.cur_token.literal.parse::<i64>().unwrap())
+    }
+
+    fn parse_boolean(&mut self) -> Result<bool, Error> {
+        match self.cur_token.token_type {
+            TokenType::True => Ok(true),
+            TokenType::False => Ok(false),
+            _ => Err(Error::new(
+                ErrorKind::InvalidInput,
+                format!(
+                    "unexpected token \"{}\" in parse_boolean.",
+                    self.cur_token.literal
+                ),
+            )),
+        }
     }
 
     fn parse_prefix_expression(&mut self) -> Result<Expression, Error> {
