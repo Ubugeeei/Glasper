@@ -601,6 +601,26 @@ pub mod tests {
                     ))),
                 ))),
             ),
+            (
+                String::from("0 + ((1 + 2) + (3 + 4));"),
+                Statement::Expression(Expression::Infix(InfixExpression::new(
+                    Box::new(Expression::Integer(0)),
+                    String::from("+"),
+                    Box::new(Expression::Infix(InfixExpression::new(
+                        Box::new(Expression::Infix(InfixExpression::new(
+                            Box::new(Expression::Integer(1)),
+                            String::from("+"),
+                            Box::new(Expression::Integer(2)),
+                        ))),
+                        String::from("+"),
+                        Box::new(Expression::Infix(InfixExpression::new(
+                            Box::new(Expression::Integer(3)),
+                            String::from("+"),
+                            Box::new(Expression::Integer(4)),
+                        ))),
+                    ))),
+                ))),
+            ),
         ];
 
         for (source, expected) in case {
