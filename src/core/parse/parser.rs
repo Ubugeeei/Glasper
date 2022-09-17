@@ -526,4 +526,66 @@ pub mod tests {
             );
         }
     }
+
+    #[test]
+    fn test_parse_grouped_expression() {
+        let case = vec![
+            (
+                String::from("(1 + 2) + 3 + 4;"),
+                Statement::Expression(Expression::Infix(InfixExpression::new(
+                    Box::new(Expression::Infix(InfixExpression::new(
+                        Box::new(Expression::Infix(InfixExpression::new(
+                            Box::new(Expression::Integer(1)),
+                            String::from("+"),
+                            Box::new(Expression::Integer(2)),
+                        ))),
+                        String::from("+"),
+                        Box::new(Expression::Integer(3)),
+                    ))),
+                    String::from("+"),
+                    Box::new(Expression::Integer(4)),
+                ))),
+            ),
+            (
+                String::from("1 + (2 + 3) + 4;"),
+                Statement::Expression(Expression::Infix(InfixExpression::new(
+                    Box::new(Expression::Infix(InfixExpression::new(
+                        Box::new(Expression::Integer(1)),
+                        String::from("+"),
+                        Box::new(Expression::Infix(InfixExpression::new(
+                            Box::new(Expression::Integer(2)),
+                            String::from("+"),
+                            Box::new(Expression::Integer(3)),
+                        ))),
+                    ))),
+                    String::from("+"),
+                    Box::new(Expression::Integer(4)),
+                ))),
+            ),
+            (
+                String::from("1 + 2 + (3 + 4);"),
+                Statement::Expression(Expression::Infix(InfixExpression::new(
+                    Box::new(Expression::Infix(InfixExpression::new(
+                        Box::new(Expression::Integer(1)),
+                        String::from("+"),
+                        Box::new(Expression::Integer(2)),
+                    ))),
+                    String::from("+"),
+                    Box::new(Expression::Infix(InfixExpression::new(
+                        Box::new(Expression::Integer(3)),
+                        String::from("+"),
+                        Box::new(Expression::Integer(4)),
+                    ))),
+                ))),
+            ),
+        ];
+
+        for (source, expected) in case {
+            let mut l = Lexer::new(source);
+            let mut p = Parser::new(&mut l);
+            let program = p.parse_program();
+            assert_eq!(program.statements.len(), 1);
+            assert_eq!(program.statements[0], expected);
+        }
+    }
 }
