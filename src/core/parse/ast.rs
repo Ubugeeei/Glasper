@@ -55,6 +55,11 @@ impl Node for Statement {
 pub struct BlockStatement {
     pub statements: Vec<Statement>,
 }
+impl BlockStatement {
+    pub fn new(statements: Vec<Statement>) -> BlockStatement {
+        BlockStatement { statements }
+    }
+}
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct LetStatement {
