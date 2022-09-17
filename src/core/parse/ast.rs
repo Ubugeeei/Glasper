@@ -31,8 +31,8 @@ pub enum Statement {
     Let(LetStatement),
     Return(Expression),
     Expression(Expression),
+    If(IfStatement),
     // TODO: impl
-    // if
     // switch
     // for
     // while
