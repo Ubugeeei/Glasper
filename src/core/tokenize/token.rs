@@ -57,6 +57,7 @@ pub enum TokenType {
     If,
     Else,
     Return,
+    Null,
 }
 
 impl Token {
@@ -93,6 +94,7 @@ pub fn lookup_indent(ident: &str) -> TokenType {
         "if" => TokenType::If,
         "else" => TokenType::Else,
         "return" => TokenType::Return,
+        "null" => TokenType::Null,
         _ => TokenType::Ident,
     }
 }

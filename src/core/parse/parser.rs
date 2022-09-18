@@ -258,6 +258,7 @@ impl<'a> Parser<'a> {
             },
             TokenType::Number => Expression::Number(self.parse_number()?),
             TokenType::True | TokenType::False => Expression::Boolean(self.parse_boolean()?),
+            TokenType::Null => Expression::Null,
 
             // prefix_expression
             TokenType::Bang => self.parse_prefix_expression()?,
@@ -465,7 +466,7 @@ impl<'a> Parser<'a> {
     fn is_reserved_keyword(&self, ident: &str) -> bool {
         matches!(
             ident,
-            "function" | "let" | "true" | "false" | "if" | "else" | "return"
+            "function" | "let" | "const" | "true" | "false" | "if" | "else" | "return" | "null"
         )
     }
 }
@@ -594,6 +595,9 @@ pub mod tests {
             "let if = 5;",
             "let else = 5;",
             "let return = 5;",
+            "let null = 5;",
+            "let let = 5;",
+            "let const = 5;",
         ];
         for source in case {
             let mut l = Lexer::new(source.to_string());
@@ -741,6 +745,21 @@ pub mod tests {
                 assert_eq!(program.statements.len(), 1);
                 assert_eq!(program.statements[0], expected);
             }
+        }
+    }
+
+    #[test]
+    fn test_parse_null_expression() {
+        {
+            let source = String::from("null;");
+            let mut l = Lexer::new(source);
+            let mut p = Parser::new(&mut l);
+            let program = p.parse_program();
+            assert_eq!(program.statements.len(), 1);
+            assert_eq!(
+                program.statements[0],
+                Statement::Expression(Expression::Null)
+            );
         }
     }
 

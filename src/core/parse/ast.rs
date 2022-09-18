@@ -83,8 +83,9 @@ impl IfStatement {
 #[derive(Debug, PartialEq)]
 pub enum Expression {
     Number(f64),
-    Identifier(String),
     Boolean(bool),
+    Null,
+    Identifier(String),
     Prefix(PrefixExpression),
     Suffix(SuffixExpression),
     Infix(InfixExpression),
