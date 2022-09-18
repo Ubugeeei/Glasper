@@ -66,6 +66,12 @@ impl<'a> Parser<'a> {
         self.next_token();
 
         // guard
+        if self.is_reserved_keyword(&self.cur_token.literal) {
+            return Err(Error::new(
+                ErrorKind::InvalidInput,
+                format!("'{}' is reserved keyword", &self.cur_token.literal),
+            ));
+        }
         if self.cur_token.token_type != TokenType::Ident {
             return Err(Error::new(
                 ErrorKind::InvalidInput,
@@ -404,6 +410,13 @@ impl<'a> Parser<'a> {
     fn peek_precedence(&self) -> Precedence {
         self.peeked_token.clone().get_precedence()
     }
+
+    fn is_reserved_keyword(&self, ident: &str) -> bool {
+        matches!(
+            ident,
+            "function" | "let" | "true" | "false" | "if" | "else" | "return"
+        )
+    }
 }
 
 #[cfg(test)]
@@ -468,9 +481,27 @@ pub mod tests {
                 r#"
                     let = 5;
                     let 10;
-        "#,
+                "#,
             );
             let mut l = Lexer::new(source);
+            let mut p = Parser::new(&mut l);
+            let program = p.parse_program();
+            assert_eq!(program.statements.len(), 0);
+        }
+    }
+
+    #[test]
+    fn test_reserved_keywords_error() {
+        let case = vec![
+            "let function = 5;",
+            "let true = 5;",
+            "let false = 5;",
+            "let if = 5;",
+            "let else = 5;",
+            "let return = 5;",
+        ];
+        for source in case {
+            let mut l = Lexer::new(source.to_string());
             let mut p = Parser::new(&mut l);
             let program = p.parse_program();
             assert_eq!(program.statements.len(), 0);
