@@ -165,7 +165,7 @@ pub mod tests {
 
     #[test]
     fn test_symbol_token() {
-        let source = String::from("=+-*/!<>(){},;");
+        let source = String::from("=+-*/!<>(){},;++--");
         let mut l = Lexer::new(source);
         assert_eq!(l.next_token().token_type, TokenType::Assign);
         assert_eq!(l.next_token().token_type, TokenType::Plus);
@@ -181,6 +181,8 @@ pub mod tests {
         assert_eq!(l.next_token().token_type, TokenType::RBrace);
         assert_eq!(l.next_token().token_type, TokenType::Comma);
         assert_eq!(l.next_token().token_type, TokenType::SemiColon);
+        assert_eq!(l.next_token().token_type, TokenType::Inc);
+        assert_eq!(l.next_token().token_type, TokenType::Dec);
     }
 
     #[test]
