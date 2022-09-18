@@ -7,7 +7,7 @@ use crate::core::{
     parse::ast::Program,
 };
 
-pub fn eval(_program: Program) -> Result<Object, Error> {
+pub fn eval(_program: &Program) -> Result<Object, Error> {
     Ok(Object::Undefined(GUndefined))
 }
 
@@ -23,7 +23,7 @@ mod tests {
         let program = p.parse_program();
         assert_eq!(program.statements.len(), 1);
         assert_eq!(
-            format!("{}", eval(program).unwrap()),
+            format!("{}", eval(&program).unwrap()),
             "\x1b[30mundefined\x1b[0m"
         );
     }

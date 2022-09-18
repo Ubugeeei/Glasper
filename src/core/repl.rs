@@ -1,4 +1,5 @@
 use crate::core::{
+    eval::evaluator::eval,
     lexer::Lexer,
     parse::{ast::Statement, parser::Parser},
 };
@@ -26,9 +27,8 @@ pub fn start() {
         let mut l = Lexer::new(input);
         let mut p = Parser::new(&mut l);
         let mut program = p.parse_program();
+        let res = eval(&program);
+        println!("{}", res.unwrap());
         statements.append(&mut program.statements);
-
-        // TODO:
-        println!("\x1b[30mundefined\x1b[0m")
     }
 }
