@@ -110,7 +110,19 @@ impl Lexer {
 
     fn read_number(&mut self) -> String {
         let position = self.position;
-        while Self::is_digit(self.ch) || self.ch == '.' {
+        while Self::is_digit(self.ch)
+            || self.ch == '.'
+            || self.ch == 'e'
+            || self.ch == '-'
+            || self.ch == 'b'
+            || self.ch == 'o'
+            || self.ch == 'x'
+            // for hex
+            || self.ch == 'a'
+            || self.ch == 'c'
+            || self.ch == 'd'
+            || self.ch == 'f'
+        {
             self.read_char();
         }
         self.read_position -= 1;
@@ -169,6 +181,22 @@ pub mod tests {
         let mut l = Lexer::new(source);
         assert_eq!(l.next_token().token_type, TokenType::Number);
         assert_eq!(l.next_token().token_type, TokenType::SemiColon);
+    }
+
+    #[test]
+    fn test_number_exp() {
+        {
+            let source = String::from("4e2;");
+            let mut l = Lexer::new(source);
+            assert_eq!(l.next_token().token_type, TokenType::Number);
+            assert_eq!(l.next_token().token_type, TokenType::SemiColon);
+        }
+        {
+            let source = String::from("4e-2;");
+            let mut l = Lexer::new(source);
+            assert_eq!(l.next_token().token_type, TokenType::Number);
+            assert_eq!(l.next_token().token_type, TokenType::SemiColon);
+        }
     }
 
     #[test]
