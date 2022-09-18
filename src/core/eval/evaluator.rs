@@ -196,6 +196,7 @@ mod tests {
         }
     }
 
+    #[test]
     fn test_eval_infix_expression() {
         let case = vec![
             ("1 + 1", "\x1b[33m2\x1b[0m"),
