@@ -55,4 +55,28 @@ mod tests {
         assert_eq!(program.statements.len(), 1);
         assert_eq!(format!("{}", eval(&program).unwrap()), "\x1b[33m1\x1b[0m");
     }
+
+    #[test]
+    fn test_eval_bool() {
+        {
+            let mut l = Lexer::new("true".to_string());
+            let mut p = Parser::new(&mut l);
+            let program = p.parse_program();
+            assert_eq!(program.statements.len(), 1);
+            assert_eq!(
+                format!("{}", eval(&program).unwrap()),
+                "\x1b[33mtrue\x1b[0m"
+            );
+        }
+        {
+            let mut l = Lexer::new("false".to_string());
+            let mut p = Parser::new(&mut l);
+            let program = p.parse_program();
+            assert_eq!(program.statements.len(), 1);
+            assert_eq!(
+                format!("{}", eval(&program).unwrap()),
+                "\x1b[33mfalse\x1b[0m"
+            );
+        }
+    }
 }
