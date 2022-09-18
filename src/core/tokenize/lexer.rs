@@ -203,10 +203,11 @@ pub mod tests {
 
     #[test]
     fn test_keywords() {
-        let source = String::from("function let true false if else return");
+        let source = String::from("function let const true false if else return");
         let mut l = Lexer::new(source);
         assert_eq!(l.next_token().token_type, TokenType::Function);
         assert_eq!(l.next_token().token_type, TokenType::Let);
+        assert_eq!(l.next_token().token_type, TokenType::Const);
         assert_eq!(l.next_token().token_type, TokenType::True);
         assert_eq!(l.next_token().token_type, TokenType::False);
         assert_eq!(l.next_token().token_type, TokenType::If);

@@ -5,9 +5,9 @@ use crate::core::tokenize::token::TokenType;
 use super::{
     super::{lexer::Lexer, token::Token},
     ast::{
-        BlockStatement, CallExpression, Expression, FunctionExpression, FunctionParameter,
-        IfStatement, InfixExpression, LetStatement, Precedence, PrefixExpression, Program,
-        Statement, SuffixExpression,
+        BlockStatement, CallExpression, ConstStatement, Expression, FunctionExpression,
+        FunctionParameter, IfStatement, InfixExpression, LetStatement, Precedence,
+        PrefixExpression, Program, Statement, SuffixExpression,
     },
 };
 
@@ -56,6 +56,7 @@ impl<'a> Parser<'a> {
     fn parse_statement(&mut self) -> Result<Statement, Error> {
         match self.cur_token.token_type {
             TokenType::Let => self.parse_let_statement(),
+            TokenType::Const => self.parse_const_statement(),
             TokenType::If => self.parse_if_statement(),
             TokenType::Return => self.parse_return_statement(),
             _ => self.parse_expression_statement(),
@@ -99,6 +100,45 @@ impl<'a> Parser<'a> {
             self.next_token()
         }
         Ok(Statement::Let(LetStatement::new(name, value)))
+    }
+
+    fn parse_const_statement(&mut self) -> Result<Statement, Error> {
+        self.next_token();
+
+        // guard
+        if self.is_reserved_keyword(&self.cur_token.literal) {
+            return Err(Error::new(
+                ErrorKind::InvalidInput,
+                format!("'{}' is reserved keyword", &self.cur_token.literal),
+            ));
+        }
+        if self.cur_token.token_type != TokenType::Ident {
+            return Err(Error::new(
+                ErrorKind::InvalidInput,
+                format!(
+                    "expected identifier but found {}",
+                    self.peeked_token.literal
+                ),
+            ));
+        }
+        let name = self.cur_token.literal.clone();
+
+        if self.peeked_token.token_type != TokenType::Assign {
+            return Err(Error::new(
+                ErrorKind::InvalidInput,
+                format!("expected token '=' but found {}", self.cur_token.literal),
+            ));
+        }
+
+        // skip assign
+        self.next_token();
+
+        self.next_token();
+        let value: Expression = self.parse_expression(Precedence::Lowest)?;
+        if self.peeked_token.token_type == TokenType::SemiColon {
+            self.next_token()
+        }
+        Ok(Statement::Const(ConstStatement::new(name, value)))
     }
 
     fn parse_if_statement(&mut self) -> Result<Statement, Error> {
@@ -480,7 +520,7 @@ pub mod tests {
                     )),
                     Statement::Let(LetStatement::new(
                         String::from("ten"),
-                        Expression::Number(1.00)
+                        Expression::Number(10.0)
                     ))
                 ]
             );
@@ -492,6 +532,50 @@ pub mod tests {
                 r#"
                     let = 5;
                     let 10;
+                "#,
+            );
+            let mut l = Lexer::new(source);
+            let mut p = Parser::new(&mut l);
+            let program = p.parse_program();
+            assert_eq!(program.statements.len(), 0);
+        }
+    }
+
+    #[test]
+    fn test_parse_const_statements() {
+        // Ok
+        {
+            let source = String::from(
+                r#"
+                    const five = 5;
+                    const ten = 10;
+        "#,
+            );
+            let mut l = Lexer::new(source);
+            let mut p = Parser::new(&mut l);
+            let program = p.parse_program();
+            assert_eq!(program.statements.len(), 2);
+            assert_eq!(
+                program.statements,
+                vec![
+                    Statement::Const(ConstStatement::new(
+                        String::from("five"),
+                        Expression::Number(5.0)
+                    )),
+                    Statement::Const(ConstStatement::new(
+                        String::from("ten"),
+                        Expression::Number(10.0)
+                    ))
+                ]
+            );
+        }
+
+        // Err
+        {
+            let source = String::from(
+                r#"
+                    const = 5;
+                    const 10;
                 "#,
             );
             let mut l = Lexer::new(source);
@@ -864,7 +948,7 @@ pub mod tests {
                         Box::new(Expression::Number(3.0)),
                     ))),
                     String::from("!="),
-                    Box::new(Expression::Number(1.01)),
+                    Box::new(Expression::Number(11.0)),
                 ))),
             );
         }
