@@ -8,8 +8,8 @@ use crate::core::tokenize::token::TokenType;
 use super::{
     super::{lexer::Lexer, token::Token},
     ast::{
-        BlockStatement, Expression, IfStatement, InfixExpression, LetStatement, Precedence,
-        PrefixExpression, Program, Statement,
+        BlockStatement, Expression, FunctionExpression, FunctionParameter, IfStatement,
+        InfixExpression, LetStatement, Precedence, PrefixExpression, Program, Statement,
     },
 };
 
@@ -137,7 +137,7 @@ impl<'a> Parser<'a> {
         }
 
         // parse consequence
-        let consequence = BlockStatement::new(self.parse_block_statement()?);
+        let consequence = self.parse_block_statement()?;
 
         // parse alternative
         let alternative = if self.peeked_token.token_type == TokenType::Else {
@@ -153,7 +153,7 @@ impl<'a> Parser<'a> {
                 ));
             }
 
-            Some(BlockStatement::new(self.parse_block_statement()?))
+            Some(self.parse_block_statement()?)
         } else {
             None
         };
@@ -165,7 +165,7 @@ impl<'a> Parser<'a> {
         )))
     }
 
-    fn parse_block_statement(&mut self) -> Result<Vec<Statement>, Error> {
+    fn parse_block_statement(&mut self) -> Result<BlockStatement, Error> {
         // guard
         if self.peeked_token.token_type != TokenType::LBrace {
             return Err(Error::new(
@@ -189,7 +189,7 @@ impl<'a> Parser<'a> {
             self.next_token();
         }
 
-        Ok(statements)
+        Ok(BlockStatement::new(statements))
     }
 
     fn parse_return_statement(&mut self) -> Result<Statement, Error> {
@@ -215,12 +215,15 @@ impl<'a> Parser<'a> {
             TokenType::Ident => Expression::Identifier(self.parse_identifier()?),
             TokenType::Int => Expression::Integer(self.parse_integer()?),
             TokenType::True | TokenType::False => Expression::Boolean(self.parse_boolean()?),
+
             // prefix_expression
             TokenType::Bang => self.parse_prefix_expression()?,
             TokenType::Minus => self.parse_prefix_expression()?,
 
             // grouped
             TokenType::LParen => self.parse_grouped_expression()?,
+
+            TokenType::Function => self.parse_function_expression()?,
 
             _ => {
                 return Err(Error::new(
@@ -305,6 +308,70 @@ impl<'a> Parser<'a> {
                 ),
             ))
         }
+    }
+
+    fn parse_function_expression(&mut self) -> Result<Expression, Error> {
+        // guard
+        if self.peeked_token.token_type != TokenType::LParen {
+            return Err(Error::new(
+                ErrorKind::InvalidInput,
+                format!(
+                    "expected token '(' but found '{}'",
+                    self.peeked_token.literal
+                ),
+            ));
+        }
+
+        let params = self.parse_function_parameters()?;
+        let body = self.parse_block_statement()?;
+        Ok(Expression::Function(FunctionExpression::new(params, body)))
+    }
+
+    fn parse_function_parameters(&mut self) -> Result<Vec<FunctionParameter>, Error> {
+        // guard
+        if self.peeked_token.token_type != TokenType::LParen {
+            return Err(Error::new(
+                ErrorKind::InvalidInput,
+                format!(
+                    "expected token '(' but found '{}'",
+                    self.peeked_token.literal
+                ),
+            ));
+        }
+
+        self.next_token();
+
+        self.next_token(); // skip '('
+        let mut parameters: Vec<FunctionParameter> = vec![];
+        while self.cur_token.token_type != TokenType::RParen {
+            if self.cur_token.token_type != TokenType::Ident {
+                return Err(Error::new(
+                    ErrorKind::InvalidInput,
+                    format!(
+                        "expected token identifier but found '{}'. in parse_function_parameters",
+                        self.cur_token.literal
+                    ),
+                ));
+            }
+            let name = self.cur_token.literal.to_string();
+            self.next_token();
+
+            let default = if self.cur_token.token_type == TokenType::Assign {
+                self.next_token(); // skip '='
+                let expr = Some(self.parse_expression(Precedence::Lowest)?);
+                self.next_token();
+                expr
+            } else {
+                None
+            };
+            parameters.push(FunctionParameter::new(name, default));
+
+            if self.cur_token.token_type == TokenType::Comma {
+                self.next_token(); // skip ','
+            }
+        }
+
+        Ok(parameters)
     }
 
     fn current_precedence(&self) -> Precedence {
@@ -792,15 +859,50 @@ pub mod tests {
             (
                 String::from(
                     r#"
-                let add = function(x, y) {
-                    return x + y;
-                };
+                        let add = function(x, y) {
+                            return x + y;
+                        };
             "#,
                 ),
                 Statement::Let(LetStatement::new(
                     String::from("add"),
                     Expression::Function(FunctionExpression::new(
-                        vec![String::from("x"), String::from("y")],
+                        vec![
+                            FunctionParameter::new(String::from("x"), None),
+                            FunctionParameter::new(String::from("y"), None),
+                        ],
+                        BlockStatement::new(vec![Statement::Return(Expression::Infix(
+                            InfixExpression::new(
+                                Box::new(Expression::Identifier(String::from("x"))),
+                                String::from("+"),
+                                Box::new(Expression::Identifier(String::from("y"))),
+                            ),
+                        ))]),
+                    )),
+                )),
+            ),
+            (
+                String::from(
+                    r#"
+                        let add = function(x = 0, y = 0 * 0) {
+                            return x + y;
+                        };
+                    "#,
+                ),
+                Statement::Let(LetStatement::new(
+                    String::from("add"),
+                    Expression::Function(FunctionExpression::new(
+                        vec![
+                            FunctionParameter::new(String::from("x"), Some(Expression::Integer(0))),
+                            FunctionParameter::new(
+                                String::from("y"),
+                                Some(Expression::Infix(InfixExpression::new(
+                                    Box::new(Expression::Integer(0)),
+                                    String::from("*"),
+                                    Box::new(Expression::Integer(0)),
+                                ))),
+                            ),
+                        ],
                         BlockStatement::new(vec![Statement::Return(Expression::Infix(
                             InfixExpression::new(
                                 Box::new(Expression::Identifier(String::from("x"))),
@@ -818,6 +920,60 @@ pub mod tests {
                     Expression::Function(FunctionExpression::new(
                         vec![],
                         BlockStatement::new(vec![]),
+                    )),
+                )),
+            ),
+            (
+                String::from(
+                    r#"
+                        let hoge = function(x = 0, y = 1 + 2 * 3 + 4) {
+                            let a = 0;
+                            let b = 0;
+                            return x + y * a;
+                        }
+                    ;"#,
+                ),
+                Statement::Let(LetStatement::new(
+                    String::from("hoge"),
+                    Expression::Function(FunctionExpression::new(
+                        vec![
+                            FunctionParameter::new(String::from("x"), Some(Expression::Integer(0))),
+                            FunctionParameter::new(
+                                String::from("y"),
+                                Some(Expression::Infix(InfixExpression::new(
+                                    Box::new(Expression::Infix(InfixExpression::new(
+                                        Box::new(Expression::Integer(1)),
+                                        String::from("+"),
+                                        Box::new(Expression::Infix(InfixExpression::new(
+                                            Box::new(Expression::Integer(2)),
+                                            String::from("*"),
+                                            Box::new(Expression::Integer(3)),
+                                        ))),
+                                    ))),
+                                    String::from("+"),
+                                    Box::new(Expression::Integer(4)),
+                                ))),
+                            ),
+                        ],
+                        BlockStatement::new(vec![
+                            Statement::Let(LetStatement::new(
+                                String::from("a"),
+                                Expression::Integer(0),
+                            )),
+                            Statement::Let(LetStatement::new(
+                                String::from("b"),
+                                Expression::Integer(0),
+                            )),
+                            Statement::Return(Expression::Infix(InfixExpression::new(
+                                Box::new(Expression::Identifier(String::from("x"))),
+                                String::from("+"),
+                                Box::new(Expression::Infix(InfixExpression::new(
+                                    Box::new(Expression::Identifier(String::from("y"))),
+                                    String::from("*"),
+                                    Box::new(Expression::Identifier(String::from("a"))),
+                                ))),
+                            ))),
+                        ]),
                     )),
                 )),
             ),
