@@ -770,6 +770,28 @@ pub mod tests {
                 Statement::Expression(Expression::Number(0.0004))
             );
         }
+        {
+            let source = String::from("0xff;");
+            let mut l = Lexer::new(source);
+            let mut p = Parser::new(&mut l);
+            let program = p.parse_program();
+            assert_eq!(program.statements.len(), 1);
+            assert_eq!(
+                program.statements[0],
+                Statement::Expression(Expression::Number(255.0))
+            );
+        }
+        {
+            let source = String::from("0b1111;");
+            let mut l = Lexer::new(source);
+            let mut p = Parser::new(&mut l);
+            let program = p.parse_program();
+            assert_eq!(program.statements.len(), 1);
+            assert_eq!(
+                program.statements[0],
+                Statement::Expression(Expression::Number(15.0))
+            );
+        }
     }
 
     #[test]
