@@ -110,7 +110,19 @@ impl Lexer {
 
     fn read_number(&mut self) -> String {
         let position = self.position;
-        while Self::is_digit(self.ch) || self.ch == '.' || self.ch == 'e' || self.ch == '-' {
+        while Self::is_digit(self.ch)
+            || self.ch == '.'
+            || self.ch == 'e'
+            || self.ch == '-'
+            || self.ch == 'b'
+            || self.ch == 'o'
+            || self.ch == 'x'
+            // for hex
+            || self.ch == 'a'
+            || self.ch == 'c'
+            || self.ch == 'd'
+            || self.ch == 'f'
+        {
             self.read_char();
         }
         self.read_position -= 1;
