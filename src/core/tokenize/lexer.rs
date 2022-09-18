@@ -110,7 +110,7 @@ impl Lexer {
 
     fn read_number(&mut self) -> String {
         let position = self.position;
-        while Self::is_digit(self.ch) {
+        while Self::is_digit(self.ch) || self.ch == '.' {
             self.read_char();
         }
         self.read_position -= 1;
@@ -158,6 +158,14 @@ pub mod tests {
     #[test]
     fn test_digit() {
         let source = String::from("42;");
+        let mut l = Lexer::new(source);
+        assert_eq!(l.next_token().token_type, TokenType::Number);
+        assert_eq!(l.next_token().token_type, TokenType::SemiColon);
+    }
+
+    #[test]
+    fn test_decimal() {
+        let source = String::from("4.2;");
         let mut l = Lexer::new(source);
         assert_eq!(l.next_token().token_type, TokenType::Number);
         assert_eq!(l.next_token().token_type, TokenType::SemiColon);
