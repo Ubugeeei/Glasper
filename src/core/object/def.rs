@@ -5,6 +5,7 @@ use std::fmt::Display;
 pub enum Object {
     Number(GNumber),
     Boolean(GBoolean),
+    Null(GNull),
 }
 
 impl Object {
@@ -12,6 +13,7 @@ impl Object {
         match self {
             Self::Number(_) => "number".to_string(),
             Self::Boolean(_) => "boolean".to_string(),
+            Self::Null(_) => "object".to_string(),
         }
     }
 }
@@ -20,6 +22,7 @@ impl Display for Object {
         match self {
             Self::Number(n) => write!(f, "\x1b[33m{}\x1b[0m", n.value),
             Self::Boolean(b) => write!(f, "\x1b[33m{}\x1b[0m", b.value),
+            Self::Null(_) => write!(f, "null"),
         }
     }
 }
@@ -39,3 +42,5 @@ pub struct GBoolean {
 }
 // TODO: impl prototype
 impl GBoolean {}
+
+pub struct GNull;
