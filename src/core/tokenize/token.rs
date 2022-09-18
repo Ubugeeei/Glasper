@@ -51,6 +51,7 @@ pub enum TokenType {
      */
     Function,
     Let,
+    Const,
     True,
     False,
     If,
@@ -86,6 +87,7 @@ pub fn lookup_indent(ident: &str) -> TokenType {
     match ident {
         "function" => TokenType::Function,
         "let" => TokenType::Let,
+        "const" => TokenType::Const,
         "true" => TokenType::True,
         "false" => TokenType::False,
         "if" => TokenType::If,
