@@ -36,14 +36,22 @@ pub struct GNumber {
     pub value: f64,
 }
 // TODO: impl prototype
-impl GNumber {}
+impl GNumber {
+    pub fn new(value: f64) -> GNumber {
+        GNumber { value }
+    }
+}
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct GBoolean {
     pub value: bool,
 }
 // TODO: impl prototype
-impl GBoolean {}
+impl GBoolean {
+    pub fn new(value: bool) -> GBoolean {
+        GBoolean { value }
+    }
+}
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct GNull;

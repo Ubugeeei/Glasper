@@ -30,6 +30,11 @@ fn eval_expression(expr: &Expression) -> Result<Object, Error> {
         Expression::Undefined => Ok(Object::Undefined(GUndefined)),
 
         Expression::Prefix(expr) => eval_prefix_expression(expr),
+        Expression::Infix(expr) => {
+            let left = eval_expression(&expr.left)?;
+            let right = eval_expression(&expr.right)?;
+            eval_infix_expression(expr.operator.clone(), left, right)
+        }
 
         _ => Ok(Object::Undefined(GUndefined)),
     }
@@ -75,6 +80,47 @@ fn eval_minus_prefix_operator_expression(right: Object) -> Result<Object, Error>
             std::io::ErrorKind::Other,
             "Unexpected prefix operator. at eval_minus_prefix_operator_expression",
         ))
+    }
+}
+
+fn eval_infix_expression(operator: String, left: Object, right: Object) -> Result<Object, Error> {
+    match (left, right) {
+        (Object::Number(GNumber { value: l }), Object::Number(GNumber { value: r })) => {
+            match operator.as_str() {
+                "+" => Ok(Object::Number(GNumber::new(l + r))),
+                "-" => Ok(Object::Number(GNumber::new(l - r))),
+                "*" => Ok(Object::Number(GNumber::new(l * r))),
+                "/" => Ok(Object::Number(GNumber::new(l / r))),
+                "<" => Ok(Object::Boolean(GBoolean::new(l < r))),
+                ">" => Ok(Object::Boolean(GBoolean::new(l > r))),
+                "==" => Ok(Object::Boolean(GBoolean::new(l == r))),
+                "!=" => Ok(Object::Boolean(GBoolean::new(l != r))),
+                o => Err(Error::new(
+                    std::io::ErrorKind::Other,
+                    format!(
+                        "Unexpected infix operator '{}'. at eval_infix_expression",
+                        o
+                    ),
+                )),
+            }
+        }
+        (Object::Boolean(GBoolean { value: l }), Object::Boolean(GBoolean { value: r })) => {
+            match operator.as_str() {
+                "==" => Ok(Object::Boolean(GBoolean::new(l == r))),
+                "!=" => Ok(Object::Boolean(GBoolean::new(l != r))),
+                o => Err(Error::new(
+                    std::io::ErrorKind::Other,
+                    format!(
+                        "Unexpected infix operator '{}'. at eval_infix_expression",
+                        o
+                    ),
+                )),
+            }
+        }
+        _ => Err(Error::new(
+            std::io::ErrorKind::Other,
+            "Unexpected infix operator. at eval_infix_expression",
+        )),
     }
 }
 
