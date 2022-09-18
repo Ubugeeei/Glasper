@@ -99,6 +99,7 @@ pub enum Expression {
     Boolean(bool),
     Prefix(PrefixExpression),
     Infix(InfixExpression),
+    Function(FunctionExpression),
 }
 impl Expression {
     pub fn expression_node(&self) -> String {
@@ -135,6 +136,28 @@ impl InfixExpression {
             operator,
             right,
         }
+    }
+}
+
+#[derive(Debug, PartialEq, Eq)]
+pub struct FunctionExpression {
+    pub parameters: Vec<FunctionParameter>,
+    pub body: BlockStatement,
+}
+impl FunctionExpression {
+    pub fn new(parameters: Vec<FunctionParameter>, body: BlockStatement) -> FunctionExpression {
+        FunctionExpression { parameters, body }
+    }
+}
+
+#[derive(Debug, PartialEq, Eq)]
+pub struct FunctionParameter {
+    pub name: String,
+    pub default: Option<Expression>,
+}
+impl FunctionParameter {
+    pub fn new(name: String, default: Option<Expression>) -> FunctionParameter {
+        FunctionParameter { name, default }
     }
 }
 
