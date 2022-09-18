@@ -3,7 +3,7 @@
 use std::io::Error;
 
 use crate::core::{
-    object::def::{GNumber, GUndefined, Object},
+    object::def::{GBoolean, GNumber, GUndefined, Object},
     parse::ast::{Expression, Program, Statement},
 };
 
@@ -25,6 +25,7 @@ pub fn eval_statement(statement: &Statement) -> Result<Object, Error> {
 pub fn eval_expression(expr: &Expression) -> Result<Object, Error> {
     match expr {
         Expression::Integer(i) => Ok(Object::Number(GNumber { value: *i })),
+        Expression::Boolean(b) => Ok(Object::Boolean(GBoolean { value: *b })),
         _ => Ok(Object::Undefined(GUndefined)),
     }
 }
@@ -53,5 +54,29 @@ mod tests {
         let program = p.parse_program();
         assert_eq!(program.statements.len(), 1);
         assert_eq!(format!("{}", eval(&program).unwrap()), "\x1b[33m1\x1b[0m");
+    }
+
+    #[test]
+    fn test_eval_bool() {
+        {
+            let mut l = Lexer::new("true".to_string());
+            let mut p = Parser::new(&mut l);
+            let program = p.parse_program();
+            assert_eq!(program.statements.len(), 1);
+            assert_eq!(
+                format!("{}", eval(&program).unwrap()),
+                "\x1b[33mtrue\x1b[0m"
+            );
+        }
+        {
+            let mut l = Lexer::new("false".to_string());
+            let mut p = Parser::new(&mut l);
+            let program = p.parse_program();
+            assert_eq!(program.statements.len(), 1);
+            assert_eq!(
+                format!("{}", eval(&program).unwrap()),
+                "\x1b[33mfalse\x1b[0m"
+            );
+        }
     }
 }
