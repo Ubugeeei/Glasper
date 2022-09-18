@@ -3,7 +3,7 @@
 use std::io::Error;
 
 use crate::core::{
-    object::def::{GNumber, GUndefined, Object},
+    object::def::{GBoolean, GNumber, GUndefined, Object},
     parse::ast::{Expression, Program, Statement},
 };
 
@@ -25,6 +25,7 @@ pub fn eval_statement(statement: &Statement) -> Result<Object, Error> {
 pub fn eval_expression(expr: &Expression) -> Result<Object, Error> {
     match expr {
         Expression::Integer(i) => Ok(Object::Number(GNumber { value: *i })),
+        Expression::Boolean(b) => Ok(Object::Boolean(GBoolean { value: *b })),
         _ => Ok(Object::Undefined(GUndefined)),
     }
 }
