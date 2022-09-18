@@ -15,6 +15,7 @@ impl Program {
 #[derive(Debug, PartialEq)]
 pub enum Statement {
     Let(LetStatement),
+    Const(ConstStatement),
     Return(Expression),
     Expression(Expression),
     If(IfStatement),
@@ -45,6 +46,17 @@ pub struct LetStatement {
 impl LetStatement {
     pub fn new(name: String, value: Expression) -> LetStatement {
         LetStatement { name, value }
+    }
+}
+
+#[derive(Debug, PartialEq)]
+pub struct ConstStatement {
+    pub name: String,
+    pub value: Expression,
+}
+impl ConstStatement {
+    pub fn new(name: String, value: Expression) -> ConstStatement {
+        ConstStatement { name, value }
     }
 }
 
