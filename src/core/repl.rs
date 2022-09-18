@@ -28,6 +28,7 @@ pub fn start() {
         let mut program = p.parse_program();
         statements.append(&mut program.statements);
 
-        dbg!(&statements);
+        // TODO:
+        println!("\x1b[30mundefined\x1b[0m")
     }
 }
