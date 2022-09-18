@@ -980,4 +980,93 @@ pub mod tests {
             assert_eq!(program.statements[0], expected);
         }
     }
+
+    #[test]
+    fn test_parse_call_expression() {
+        let case = vec![
+            (
+                String::from("add(1, 2 * 3, 4 + 5);"),
+                Statement::Expression(Expression::Call(CallExpression::new(
+                    Box::new(Expression::Identifier(String::from("add"))),
+                    vec![
+                        Expression::Integer(1),
+                        Expression::Infix(InfixExpression::new(
+                            Box::new(Expression::Integer(2)),
+                            String::from("*"),
+                            Box::new(Expression::Integer(3)),
+                        )),
+                        Expression::Infix(InfixExpression::new(
+                            Box::new(Expression::Integer(4)),
+                            String::from("+"),
+                            Box::new(Expression::Integer(5)),
+                        )),
+                    ],
+                ))),
+            ),
+            (
+                String::from("function(a, b, c){}(1, 2 * 3, 4 + 5);"),
+                Statement::Expression(Expression::Call(CallExpression::new(
+                    Box::new(Expression::Function(FunctionExpression::new(
+                        vec![
+                            FunctionParameter::new(String::from("a"), None),
+                            FunctionParameter::new(String::from("b"), None),
+                            FunctionParameter::new(String::from("c"), None),
+                        ],
+                        BlockStatement::new(vec![]),
+                    ))),
+                    vec![
+                        Expression::Integer(1),
+                        Expression::Infix(InfixExpression::new(
+                            Box::new(Expression::Integer(2)),
+                            String::from("*"),
+                            Box::new(Expression::Integer(3)),
+                        )),
+                        Expression::Infix(InfixExpression::new(
+                            Box::new(Expression::Integer(4)),
+                            String::from("+"),
+                            Box::new(Expression::Integer(5)),
+                        )),
+                    ],
+                ))),
+            ),
+            (
+                String::from("function(a, b, c){}(1, 2 * (3 + 4), 5 + 6);"),
+                Statement::Expression(Expression::Call(CallExpression::new(
+                    Box::new(Expression::Function(FunctionExpression::new(
+                        vec![
+                            FunctionParameter::new(String::from("a"), None),
+                            FunctionParameter::new(String::from("b"), None),
+                            FunctionParameter::new(String::from("c"), None),
+                        ],
+                        BlockStatement::new(vec![]),
+                    ))),
+                    vec![
+                        Expression::Integer(1),
+                        Expression::Infix(InfixExpression::new(
+                            Box::new(Expression::Integer(2)),
+                            String::from("*"),
+                            Box::new(Expression::Infix(InfixExpression::new(
+                                Box::new(Expression::Integer(3)),
+                                String::from("+"),
+                                Box::new(Expression::Integer(4)),
+                            ))),
+                        )),
+                        Expression::Infix(InfixExpression::new(
+                            Box::new(Expression::Integer(5)),
+                            String::from("+"),
+                            Box::new(Expression::Integer(6)),
+                        )),
+                    ],
+                ))),
+            ),
+        ];
+
+        for (source, expected) in case {
+            let mut l = Lexer::new(source);
+            let mut p = Parser::new(&mut l);
+            let program = p.parse_program();
+            assert_eq!(program.statements.len(), 1);
+            assert_eq!(program.statements[0], expected);
+        }
+    }
 }
