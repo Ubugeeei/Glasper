@@ -35,6 +35,18 @@ mod tests {
     use crate::core::{parse::parser::Parser, tokenize::lexer::Lexer};
 
     #[test]
+    fn test_eval_let_statement() {
+        let mut l = Lexer::new("let a = 1;".to_string());
+        let mut p = Parser::new(&mut l);
+        let program = p.parse_program();
+        assert_eq!(program.statements.len(), 1);
+        assert_eq!(
+            format!("{}", eval(&program).unwrap()),
+            "\x1b[30mundefined\x1b[0m"
+        );
+    }
+
+    #[test]
     fn test_eval_int() {
         let mut l = Lexer::new("1".to_string());
         let mut p = Parser::new(&mut l);
