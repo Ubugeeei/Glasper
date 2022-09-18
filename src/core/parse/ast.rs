@@ -12,7 +12,7 @@ impl Program {
     }
 }
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq)]
 pub enum Statement {
     Let(LetStatement),
     Return(Expression),
@@ -27,7 +27,7 @@ pub enum Statement {
     // block
 }
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq)]
 pub struct BlockStatement {
     pub statements: Vec<Statement>,
 }
@@ -37,7 +37,7 @@ impl BlockStatement {
     }
 }
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq)]
 pub struct LetStatement {
     pub name: String,
     pub value: Expression,
@@ -48,7 +48,7 @@ impl LetStatement {
     }
 }
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq)]
 pub struct IfStatement {
     pub condition: Expression,
     pub consequence: BlockStatement,
@@ -68,9 +68,9 @@ impl IfStatement {
     }
 }
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq)]
 pub enum Expression {
-    Integer(i64),
+    Number(f64),
     Identifier(String),
     Boolean(bool),
     Prefix(PrefixExpression),
@@ -81,7 +81,7 @@ pub enum Expression {
 }
 impl Expression {}
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq)]
 pub struct PrefixExpression {
     pub operator: String,
     pub right: Box<Expression>,
@@ -106,7 +106,7 @@ impl SuffixExpression {
     }
 }
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq)]
 pub struct InfixExpression {
     pub left: Box<Expression>,
     pub operator: String,
@@ -122,7 +122,7 @@ impl InfixExpression {
     }
 }
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq)]
 pub struct FunctionExpression {
     pub parameters: Vec<FunctionParameter>,
     pub body: BlockStatement,
@@ -133,7 +133,7 @@ impl FunctionExpression {
     }
 }
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq)]
 pub struct FunctionParameter {
     pub name: String,
     pub default: Option<Expression>,
@@ -144,7 +144,7 @@ impl FunctionParameter {
     }
 }
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq)]
 pub struct CallExpression {
     function: Box<Expression>,
     arguments: Vec<Expression>,

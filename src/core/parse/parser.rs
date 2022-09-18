@@ -216,7 +216,7 @@ impl<'a> Parser<'a> {
                 TokenType::Inc | TokenType::Dec => self.parse_suffix_expression()?,
                 _ => Expression::Identifier(self.parse_identifier()?),
             },
-            TokenType::Int => Expression::Integer(self.parse_integer()?),
+            TokenType::Number => Expression::Number(self.parse_number()?),
             TokenType::True | TokenType::False => Expression::Boolean(self.parse_boolean()?),
 
             // prefix_expression
@@ -261,8 +261,8 @@ impl<'a> Parser<'a> {
         Ok(self.cur_token.literal.to_string())
     }
 
-    fn parse_integer(&mut self) -> Result<i64, Error> {
-        Ok(self.cur_token.literal.parse::<i64>().unwrap())
+    fn parse_number(&mut self) -> Result<f64, Error> {
+        Ok(self.cur_token.literal.parse::<f64>().unwrap())
     }
 
     fn parse_boolean(&mut self) -> Result<bool, Error> {
@@ -476,11 +476,11 @@ pub mod tests {
                 vec![
                     Statement::Let(LetStatement::new(
                         String::from("five"),
-                        Expression::Integer(5)
+                        Expression::Number(5.0)
                     )),
                     Statement::Let(LetStatement::new(
                         String::from("ten"),
-                        Expression::Integer(10)
+                        Expression::Number(1.00)
                     ))
                 ]
             );
@@ -540,10 +540,10 @@ pub mod tests {
                     )),
                     BlockStatement::new(vec![Statement::Let(LetStatement::new(
                         String::from("a"),
-                        Expression::Integer(1),
+                        Expression::Number(1.0),
                     ))]),
                     Some(BlockStatement::new(vec![Statement::Let(
-                        LetStatement::new(String::from("a"), Expression::Integer(2)),
+                        LetStatement::new(String::from("a"), Expression::Number(2.0)),
                     )])),
                 ))],
             ),
@@ -563,7 +563,7 @@ pub mod tests {
                     )),
                     BlockStatement::new(vec![Statement::Let(LetStatement::new(
                         String::from("a"),
-                        Expression::Integer(1),
+                        Expression::Number(1.0),
                     ))]),
                     None,
                 ))],
@@ -611,7 +611,7 @@ pub mod tests {
     }
 
     #[test]
-    fn test_parse_integer_expression() {
+    fn test_parse_number_expression() {
         {
             let source = String::from("5;");
             let mut l = Lexer::new(source);
@@ -620,7 +620,7 @@ pub mod tests {
             assert_eq!(program.statements.len(), 1);
             assert_eq!(
                 program.statements[0],
-                Statement::Expression(Expression::Integer(5))
+                Statement::Expression(Expression::Number(5.0))
             );
         }
     }
@@ -672,7 +672,7 @@ pub mod tests {
                 program.statements[0],
                 Statement::Expression(Expression::Prefix(PrefixExpression::new(
                     String::from("-"),
-                    Box::new(Expression::Integer(5))
+                    Box::new(Expression::Number(5.0))
                 )))
             );
         }
@@ -733,65 +733,65 @@ pub mod tests {
                 (
                     String::from("1 + 2;"),
                     Statement::Expression(Expression::Infix(InfixExpression::new(
-                        Box::new(Expression::Integer(1)),
+                        Box::new(Expression::Number(1.0)),
                         String::from("+"),
-                        Box::new(Expression::Integer(2)),
+                        Box::new(Expression::Number(2.0)),
                     ))),
                 ),
                 (
                     String::from("1 - 2;"),
                     Statement::Expression(Expression::Infix(InfixExpression::new(
-                        Box::new(Expression::Integer(1)),
+                        Box::new(Expression::Number(1.0)),
                         String::from("-"),
-                        Box::new(Expression::Integer(2)),
+                        Box::new(Expression::Number(2.0)),
                     ))),
                 ),
                 (
                     String::from("1 * 2;"),
                     Statement::Expression(Expression::Infix(InfixExpression::new(
-                        Box::new(Expression::Integer(1)),
+                        Box::new(Expression::Number(1.0)),
                         String::from("*"),
-                        Box::new(Expression::Integer(2)),
+                        Box::new(Expression::Number(2.0)),
                     ))),
                 ),
                 (
                     String::from("1 / 2;"),
                     Statement::Expression(Expression::Infix(InfixExpression::new(
-                        Box::new(Expression::Integer(1)),
+                        Box::new(Expression::Number(1.0)),
                         String::from("/"),
-                        Box::new(Expression::Integer(2)),
+                        Box::new(Expression::Number(2.0)),
                     ))),
                 ),
                 (
                     String::from("1 < 2;"),
                     Statement::Expression(Expression::Infix(InfixExpression::new(
-                        Box::new(Expression::Integer(1)),
+                        Box::new(Expression::Number(1.0)),
                         String::from("<"),
-                        Box::new(Expression::Integer(2)),
+                        Box::new(Expression::Number(2.0)),
                     ))),
                 ),
                 (
                     String::from("1 > 2;"),
                     Statement::Expression(Expression::Infix(InfixExpression::new(
-                        Box::new(Expression::Integer(1)),
+                        Box::new(Expression::Number(1.0)),
                         String::from(">"),
-                        Box::new(Expression::Integer(2)),
+                        Box::new(Expression::Number(2.0)),
                     ))),
                 ),
                 (
                     String::from("1 == 2;"),
                     Statement::Expression(Expression::Infix(InfixExpression::new(
-                        Box::new(Expression::Integer(1)),
+                        Box::new(Expression::Number(1.0)),
                         String::from("=="),
-                        Box::new(Expression::Integer(2)),
+                        Box::new(Expression::Number(2.0)),
                     ))),
                 ),
                 (
                     String::from("1 != 2;"),
                     Statement::Expression(Expression::Infix(InfixExpression::new(
-                        Box::new(Expression::Integer(1)),
+                        Box::new(Expression::Number(1.0)),
                         String::from("!="),
-                        Box::new(Expression::Integer(2)),
+                        Box::new(Expression::Number(2.0)),
                     ))),
                 ),
             ];
@@ -814,12 +814,12 @@ pub mod tests {
             assert_eq!(
                 program.statements[0],
                 Statement::Expression(Expression::Infix(InfixExpression::new(
-                    Box::new(Expression::Integer(1)),
+                    Box::new(Expression::Number(1.0)),
                     String::from("+"),
                     Box::new(Expression::Infix(InfixExpression::new(
-                        Box::new(Expression::Integer(2)),
+                        Box::new(Expression::Number(2.0)),
                         String::from("*"),
-                        Box::new(Expression::Integer(3)),
+                        Box::new(Expression::Number(3.0)),
                     )))
                 )))
             );
@@ -835,12 +835,12 @@ pub mod tests {
                 program.statements[0],
                 Statement::Expression(Expression::Infix(InfixExpression::new(
                     Box::new(Expression::Infix(InfixExpression::new(
-                        Box::new(Expression::Integer(1)),
+                        Box::new(Expression::Number(1.0)),
                         String::from("*"),
-                        Box::new(Expression::Integer(2)),
+                        Box::new(Expression::Number(2.0)),
                     ))),
                     String::from("+"),
-                    Box::new(Expression::Integer(3)),
+                    Box::new(Expression::Number(3.0)),
                 )))
             );
         }
@@ -858,13 +858,13 @@ pub mod tests {
                         Box::new(Expression::Infix(InfixExpression::new(
                             Box::new(Expression::Identifier(String::from("a"))),
                             String::from("*"),
-                            Box::new(Expression::Integer(2)),
+                            Box::new(Expression::Number(2.0)),
                         ))),
                         String::from("+"),
-                        Box::new(Expression::Integer(3)),
+                        Box::new(Expression::Number(3.0)),
                     ))),
                     String::from("!="),
-                    Box::new(Expression::Integer(11)),
+                    Box::new(Expression::Number(1.01)),
                 ))),
             );
         }
@@ -878,65 +878,65 @@ pub mod tests {
                 Statement::Expression(Expression::Infix(InfixExpression::new(
                     Box::new(Expression::Infix(InfixExpression::new(
                         Box::new(Expression::Infix(InfixExpression::new(
-                            Box::new(Expression::Integer(1)),
+                            Box::new(Expression::Number(1.0)),
                             String::from("+"),
-                            Box::new(Expression::Integer(2)),
+                            Box::new(Expression::Number(2.0)),
                         ))),
                         String::from("+"),
-                        Box::new(Expression::Integer(3)),
+                        Box::new(Expression::Number(3.0)),
                     ))),
                     String::from("+"),
-                    Box::new(Expression::Integer(4)),
+                    Box::new(Expression::Number(4.0)),
                 ))),
             ),
             (
                 String::from("1 + (2 + 3) + 4;"),
                 Statement::Expression(Expression::Infix(InfixExpression::new(
                     Box::new(Expression::Infix(InfixExpression::new(
-                        Box::new(Expression::Integer(1)),
+                        Box::new(Expression::Number(1.0)),
                         String::from("+"),
                         Box::new(Expression::Infix(InfixExpression::new(
-                            Box::new(Expression::Integer(2)),
+                            Box::new(Expression::Number(2.0)),
                             String::from("+"),
-                            Box::new(Expression::Integer(3)),
+                            Box::new(Expression::Number(3.0)),
                         ))),
                     ))),
                     String::from("+"),
-                    Box::new(Expression::Integer(4)),
+                    Box::new(Expression::Number(4.0)),
                 ))),
             ),
             (
                 String::from("1 + 2 + (3 + 4);"),
                 Statement::Expression(Expression::Infix(InfixExpression::new(
                     Box::new(Expression::Infix(InfixExpression::new(
-                        Box::new(Expression::Integer(1)),
+                        Box::new(Expression::Number(1.0)),
                         String::from("+"),
-                        Box::new(Expression::Integer(2)),
+                        Box::new(Expression::Number(2.0)),
                     ))),
                     String::from("+"),
                     Box::new(Expression::Infix(InfixExpression::new(
-                        Box::new(Expression::Integer(3)),
+                        Box::new(Expression::Number(3.0)),
                         String::from("+"),
-                        Box::new(Expression::Integer(4)),
+                        Box::new(Expression::Number(4.0)),
                     ))),
                 ))),
             ),
             (
                 String::from("0 + ((1 + 2) + (3 + 4));"),
                 Statement::Expression(Expression::Infix(InfixExpression::new(
-                    Box::new(Expression::Integer(0)),
+                    Box::new(Expression::Number(0.0)),
                     String::from("+"),
                     Box::new(Expression::Infix(InfixExpression::new(
                         Box::new(Expression::Infix(InfixExpression::new(
-                            Box::new(Expression::Integer(1)),
+                            Box::new(Expression::Number(1.0)),
                             String::from("+"),
-                            Box::new(Expression::Integer(2)),
+                            Box::new(Expression::Number(2.0)),
                         ))),
                         String::from("+"),
                         Box::new(Expression::Infix(InfixExpression::new(
-                            Box::new(Expression::Integer(3)),
+                            Box::new(Expression::Number(3.0)),
                             String::from("+"),
-                            Box::new(Expression::Integer(4)),
+                            Box::new(Expression::Number(4.0)),
                         ))),
                     ))),
                 ))),
@@ -992,13 +992,16 @@ pub mod tests {
                     String::from("add"),
                     Expression::Function(FunctionExpression::new(
                         vec![
-                            FunctionParameter::new(String::from("x"), Some(Expression::Integer(0))),
+                            FunctionParameter::new(
+                                String::from("x"),
+                                Some(Expression::Number(0.0)),
+                            ),
                             FunctionParameter::new(
                                 String::from("y"),
                                 Some(Expression::Infix(InfixExpression::new(
-                                    Box::new(Expression::Integer(0)),
+                                    Box::new(Expression::Number(0.0)),
                                     String::from("*"),
-                                    Box::new(Expression::Integer(0)),
+                                    Box::new(Expression::Number(0.0)),
                                 ))),
                             ),
                         ],
@@ -1036,32 +1039,35 @@ pub mod tests {
                     String::from("hoge"),
                     Expression::Function(FunctionExpression::new(
                         vec![
-                            FunctionParameter::new(String::from("x"), Some(Expression::Integer(0))),
+                            FunctionParameter::new(
+                                String::from("x"),
+                                Some(Expression::Number(0.0)),
+                            ),
                             FunctionParameter::new(
                                 String::from("y"),
                                 Some(Expression::Infix(InfixExpression::new(
                                     Box::new(Expression::Infix(InfixExpression::new(
-                                        Box::new(Expression::Integer(1)),
+                                        Box::new(Expression::Number(1.0)),
                                         String::from("+"),
                                         Box::new(Expression::Infix(InfixExpression::new(
-                                            Box::new(Expression::Integer(2)),
+                                            Box::new(Expression::Number(2.0)),
                                             String::from("*"),
-                                            Box::new(Expression::Integer(3)),
+                                            Box::new(Expression::Number(3.0)),
                                         ))),
                                     ))),
                                     String::from("+"),
-                                    Box::new(Expression::Integer(4)),
+                                    Box::new(Expression::Number(4.0)),
                                 ))),
                             ),
                         ],
                         BlockStatement::new(vec![
                             Statement::Let(LetStatement::new(
                                 String::from("a"),
-                                Expression::Integer(0),
+                                Expression::Number(0.0),
                             )),
                             Statement::Let(LetStatement::new(
                                 String::from("b"),
-                                Expression::Integer(0),
+                                Expression::Number(0.0),
                             )),
                             Statement::Return(Expression::Infix(InfixExpression::new(
                                 Box::new(Expression::Identifier(String::from("x"))),
@@ -1095,16 +1101,16 @@ pub mod tests {
                 Statement::Expression(Expression::Call(CallExpression::new(
                     Box::new(Expression::Identifier(String::from("add"))),
                     vec![
-                        Expression::Integer(1),
+                        Expression::Number(1.0),
                         Expression::Infix(InfixExpression::new(
-                            Box::new(Expression::Integer(2)),
+                            Box::new(Expression::Number(2.0)),
                             String::from("*"),
-                            Box::new(Expression::Integer(3)),
+                            Box::new(Expression::Number(3.0)),
                         )),
                         Expression::Infix(InfixExpression::new(
-                            Box::new(Expression::Integer(4)),
+                            Box::new(Expression::Number(4.0)),
                             String::from("+"),
-                            Box::new(Expression::Integer(5)),
+                            Box::new(Expression::Number(5.0)),
                         )),
                     ],
                 ))),
@@ -1121,16 +1127,16 @@ pub mod tests {
                         BlockStatement::new(vec![]),
                     ))),
                     vec![
-                        Expression::Integer(1),
+                        Expression::Number(1.0),
                         Expression::Infix(InfixExpression::new(
-                            Box::new(Expression::Integer(2)),
+                            Box::new(Expression::Number(2.0)),
                             String::from("*"),
-                            Box::new(Expression::Integer(3)),
+                            Box::new(Expression::Number(3.0)),
                         )),
                         Expression::Infix(InfixExpression::new(
-                            Box::new(Expression::Integer(4)),
+                            Box::new(Expression::Number(4.0)),
                             String::from("+"),
-                            Box::new(Expression::Integer(5)),
+                            Box::new(Expression::Number(5.0)),
                         )),
                     ],
                 ))),
@@ -1147,20 +1153,20 @@ pub mod tests {
                         BlockStatement::new(vec![]),
                     ))),
                     vec![
-                        Expression::Integer(1),
+                        Expression::Number(1.0),
                         Expression::Infix(InfixExpression::new(
-                            Box::new(Expression::Integer(2)),
+                            Box::new(Expression::Number(2.0)),
                             String::from("*"),
                             Box::new(Expression::Infix(InfixExpression::new(
-                                Box::new(Expression::Integer(3)),
+                                Box::new(Expression::Number(3.0)),
                                 String::from("+"),
-                                Box::new(Expression::Integer(4)),
+                                Box::new(Expression::Number(4.0)),
                             ))),
                         )),
                         Expression::Infix(InfixExpression::new(
-                            Box::new(Expression::Integer(5)),
+                            Box::new(Expression::Number(5.0)),
                             String::from("+"),
-                            Box::new(Expression::Integer(6)),
+                            Box::new(Expression::Number(6.0)),
                         )),
                     ],
                 ))),
@@ -1171,15 +1177,15 @@ pub mod tests {
                     String::from("result"),
                     Expression::Infix(InfixExpression::new(
                         Box::new(Expression::Infix(InfixExpression::new(
-                            Box::new(Expression::Integer(1)),
+                            Box::new(Expression::Number(1.0)),
                             String::from("+"),
                             Box::new(Expression::Call(CallExpression::new(
                                 Box::new(Expression::Identifier(String::from("add"))),
-                                vec![Expression::Integer(2), Expression::Integer(3)],
+                                vec![Expression::Number(2.0), Expression::Number(3.0)],
                             ))),
                         ))),
                         String::from("*"),
-                        Box::new(Expression::Integer(5)),
+                        Box::new(Expression::Number(5.0)),
                     )),
                 )),
             ),

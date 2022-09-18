@@ -14,7 +14,7 @@ pub enum TokenType {
     Eof,
 
     Ident,
-    Int,
+    Number,
 
     /*
      * symbols
