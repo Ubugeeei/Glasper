@@ -30,6 +30,11 @@ fn eval_expression(expr: &Expression) -> Result<Object, Error> {
         Expression::Undefined => Ok(Object::Undefined(GUndefined)),
 
         Expression::Prefix(expr) => eval_prefix_expression(expr),
+        Expression::Infix(expr) => {
+            let left = eval_expression(&expr.left)?;
+            let right = eval_expression(&expr.right)?;
+            eval_infix_expression(expr.operator.clone(), left, right)
+        }
 
         _ => Ok(Object::Undefined(GUndefined)),
     }
@@ -75,6 +80,47 @@ fn eval_minus_prefix_operator_expression(right: Object) -> Result<Object, Error>
             std::io::ErrorKind::Other,
             "Unexpected prefix operator. at eval_minus_prefix_operator_expression",
         ))
+    }
+}
+
+fn eval_infix_expression(operator: String, left: Object, right: Object) -> Result<Object, Error> {
+    match (left, right) {
+        (Object::Number(GNumber { value: l }), Object::Number(GNumber { value: r })) => {
+            match operator.as_str() {
+                "+" => Ok(Object::Number(GNumber::new(l + r))),
+                "-" => Ok(Object::Number(GNumber::new(l - r))),
+                "*" => Ok(Object::Number(GNumber::new(l * r))),
+                "/" => Ok(Object::Number(GNumber::new(l / r))),
+                "<" => Ok(Object::Boolean(GBoolean::new(l < r))),
+                ">" => Ok(Object::Boolean(GBoolean::new(l > r))),
+                "==" => Ok(Object::Boolean(GBoolean::new(l == r))),
+                "!=" => Ok(Object::Boolean(GBoolean::new(l != r))),
+                o => Err(Error::new(
+                    std::io::ErrorKind::Other,
+                    format!(
+                        "Unexpected infix operator '{}'. at eval_infix_expression",
+                        o
+                    ),
+                )),
+            }
+        }
+        (Object::Boolean(GBoolean { value: l }), Object::Boolean(GBoolean { value: r })) => {
+            match operator.as_str() {
+                "==" => Ok(Object::Boolean(GBoolean::new(l == r))),
+                "!=" => Ok(Object::Boolean(GBoolean::new(l != r))),
+                o => Err(Error::new(
+                    std::io::ErrorKind::Other,
+                    format!(
+                        "Unexpected infix operator '{}'. at eval_infix_expression",
+                        o
+                    ),
+                )),
+            }
+        }
+        _ => Err(Error::new(
+            std::io::ErrorKind::Other,
+            "Unexpected infix operator. at eval_infix_expression",
+        )),
     }
 }
 
@@ -139,6 +185,42 @@ mod tests {
             ("!!5", "\x1b[33mtrue\x1b[0m"),
             ("-5", "\x1b[33m-5\x1b[0m"),
             ("-10", "\x1b[33m-10\x1b[0m"),
+        ];
+
+        for (input, expected) in case {
+            let mut l = Lexer::new(input.to_string());
+            let mut p = Parser::new(&mut l);
+            let program = p.parse_program();
+            assert_eq!(program.statements.len(), 1);
+            assert_eq!(format!("{}", eval(&program).unwrap()), expected);
+        }
+    }
+
+    fn test_eval_infix_expression() {
+        let case = vec![
+            ("1 + 1", "\x1b[33m2\x1b[0m"),
+            ("1 - 1", "\x1b[33m0\x1b[0m"),
+            ("1 * 1", "\x1b[33m1\x1b[0m"),
+            ("1 / 1", "\x1b[33m1\x1b[0m"),
+            ("2 + 3 * 4", "\x1b[33m14\x1b[0m"),
+            ("2 * 3 + 4", "\x1b[33m10\x1b[0m"),
+            ("2 * (3 + 4)", "\x1b[33m14\x1b[0m"),
+            ("1 < 1", "\x1b[33mfalse\x1b[0m"),
+            ("1 > 1", "\x1b[33mfalse\x1b[0m"),
+            ("1 == 1", "\x1b[33mtrue\x1b[0m"),
+            ("1 != 1", "\x1b[33mfalse\x1b[0m"),
+            ("1 < 2", "\x1b[33mtrue\x1b[0m"),
+            ("1 > 2", "\x1b[33mfalse\x1b[0m"),
+            ("1 == 2", "\x1b[33mfalse\x1b[0m"),
+            ("1 != 2", "\x1b[33mtrue\x1b[0m"),
+            ("true == true", "\x1b[33mtrue\x1b[0m"),
+            ("true != true", "\x1b[33mfalse\x1b[0m"),
+            ("true == false", "\x1b[33mfalse\x1b[0m"),
+            ("true != false", "\x1b[33mtrue\x1b[0m"),
+            ("false == false", "\x1b[33mtrue\x1b[0m"),
+            ("false != false", "\x1b[33mfalse\x1b[0m"),
+            ("false == true", "\x1b[33mfalse\x1b[0m"),
+            ("false != true", "\x1b[33mtrue\x1b[0m"),
         ];
 
         for (input, expected) in case {
