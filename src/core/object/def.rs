@@ -33,14 +33,14 @@ impl Display for Object {
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct GNumber {
-    value: i64,
+    pub value: i64,
 }
 // TODO: impl prototype
 impl GNumber {}
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct GBoolean {
-    value: bool,
+    pub value: bool,
 }
 // TODO: impl prototype
 impl GBoolean {}
