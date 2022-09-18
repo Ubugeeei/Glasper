@@ -9,6 +9,7 @@ const PROMPT: &str = "> ";
 
 pub fn start() {
     println!("Welcome to Glasper v0.1.0 ");
+    println!("exit using ctrl+c or ctrl+d or exit()");
 
     let mut statements: Vec<Statement> = vec![];
 
@@ -19,7 +20,7 @@ pub fn start() {
         let stdin = io::stdin();
         let input = stdin.lock().lines().map(|l| l.unwrap()).next().unwrap();
 
-        if &input == "exit()\n" {
+        if &input == "exit()" {
             println!("Bye!");
             break;
         }
