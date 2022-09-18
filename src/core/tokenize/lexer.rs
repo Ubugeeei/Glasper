@@ -25,8 +25,22 @@ impl Lexer {
         let tok = match self.ch {
             '\u{0}' => Token::new(TokenType::Eof, self.ch.to_string()),
 
-            '+' => Token::new(TokenType::Plus, self.ch.to_string()),
-            '-' => Token::new(TokenType::Minus, self.ch.to_string()),
+            '+' => {
+                if self.peek_char() == '+' {
+                    self.read_char();
+                    Token::new(TokenType::Inc, "++".to_string())
+                } else {
+                    Token::new(TokenType::Plus, self.ch.to_string())
+                }
+            }
+            '-' => {
+                if self.peek_char() == '-' {
+                    self.read_char();
+                    Token::new(TokenType::Dec, "--".to_string())
+                } else {
+                    Token::new(TokenType::Minus, self.ch.to_string())
+                }
+            }
             '*' => Token::new(TokenType::Asterisk, self.ch.to_string()),
             '/' => Token::new(TokenType::Slash, self.ch.to_string()),
 
