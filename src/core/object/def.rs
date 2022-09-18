@@ -6,6 +6,7 @@ pub enum Object {
     Number(GNumber),
     Boolean(GBoolean),
     Null(GNull),
+    Undefined(GUndefined),
 }
 
 impl Object {
@@ -14,6 +15,7 @@ impl Object {
             Self::Number(_) => "number".to_string(),
             Self::Boolean(_) => "boolean".to_string(),
             Self::Null(_) => "object".to_string(),
+            Self::Undefined(_) => "undefined".to_string(),
         }
     }
 }
@@ -23,6 +25,7 @@ impl Display for Object {
             Self::Number(n) => write!(f, "\x1b[33m{}\x1b[0m", n.value),
             Self::Boolean(b) => write!(f, "\x1b[33m{}\x1b[0m", b.value),
             Self::Null(_) => write!(f, "null"),
+            Self::Undefined(_) => write!(f, "\x1b[30mundefined\x1b[0m"),
         }
     }
 }
@@ -44,3 +47,4 @@ pub struct GBoolean {
 impl GBoolean {}
 
 pub struct GNull;
+pub struct GUndefined;
