@@ -77,7 +77,7 @@ impl Lexer {
                     let token_type = lookup_indent(&id);
                     Token::new(token_type, id)
                 } else if Self::is_digit(self.ch) {
-                    Token::new(TokenType::Int, self.read_number())
+                    Token::new(TokenType::Number, self.read_number())
                 } else {
                     Token::new(TokenType::Illegal, self.ch.to_string())
                 }
@@ -159,7 +159,7 @@ pub mod tests {
     fn test_digit() {
         let source = String::from("42;");
         let mut l = Lexer::new(source);
-        assert_eq!(l.next_token().token_type, TokenType::Int);
+        assert_eq!(l.next_token().token_type, TokenType::Number);
         assert_eq!(l.next_token().token_type, TokenType::SemiColon);
     }
 
@@ -237,7 +237,7 @@ pub mod tests {
         assert_eq!(t.token_type, TokenType::Assign);
 
         t = l.next_token();
-        assert_eq!(t.token_type, TokenType::Int);
+        assert_eq!(t.token_type, TokenType::Number);
         assert_eq!(t.literal, String::from("5"));
 
         t = l.next_token();
@@ -255,7 +255,7 @@ pub mod tests {
         assert_eq!(t.token_type, TokenType::Assign);
 
         t = l.next_token();
-        assert_eq!(t.token_type, TokenType::Int);
+        assert_eq!(t.token_type, TokenType::Number);
         assert_eq!(t.literal, String::from("10"));
 
         t = l.next_token();
@@ -281,7 +281,7 @@ pub mod tests {
         assert_eq!(t.token_type, TokenType::Return);
 
         t = l.next_token();
-        assert_eq!(t.token_type, TokenType::Int);
+        assert_eq!(t.token_type, TokenType::Number);
         assert_eq!(t.literal, String::from("0"));
 
         t = l.next_token();

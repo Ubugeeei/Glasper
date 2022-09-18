@@ -216,7 +216,7 @@ impl<'a> Parser<'a> {
                 TokenType::Inc | TokenType::Dec => self.parse_suffix_expression()?,
                 _ => Expression::Identifier(self.parse_identifier()?),
             },
-            TokenType::Int => Expression::Integer(self.parse_integer()?),
+            TokenType::Number => Expression::Integer(self.parse_integer()?),
             TokenType::True | TokenType::False => Expression::Boolean(self.parse_boolean()?),
 
             // prefix_expression
