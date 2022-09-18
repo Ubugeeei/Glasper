@@ -85,6 +85,7 @@ pub enum Expression {
     Number(f64),
     Boolean(bool),
     Null,
+    Undefined,
     Identifier(String),
     Prefix(PrefixExpression),
     Suffix(SuffixExpression),
