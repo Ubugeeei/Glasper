@@ -195,4 +195,40 @@ mod tests {
             assert_eq!(format!("{}", eval(&program).unwrap()), expected);
         }
     }
+
+    fn test_eval_infix_expression() {
+        let case = vec![
+            ("1 + 1", "\x1b[33m2\x1b[0m"),
+            ("1 - 1", "\x1b[33m0\x1b[0m"),
+            ("1 * 1", "\x1b[33m1\x1b[0m"),
+            ("1 / 1", "\x1b[33m1\x1b[0m"),
+            ("2 + 3 * 4", "\x1b[33m14\x1b[0m"),
+            ("2 * 3 + 4", "\x1b[33m10\x1b[0m"),
+            ("2 * (3 + 4)", "\x1b[33m14\x1b[0m"),
+            ("1 < 1", "\x1b[33mfalse\x1b[0m"),
+            ("1 > 1", "\x1b[33mfalse\x1b[0m"),
+            ("1 == 1", "\x1b[33mtrue\x1b[0m"),
+            ("1 != 1", "\x1b[33mfalse\x1b[0m"),
+            ("1 < 2", "\x1b[33mtrue\x1b[0m"),
+            ("1 > 2", "\x1b[33mfalse\x1b[0m"),
+            ("1 == 2", "\x1b[33mfalse\x1b[0m"),
+            ("1 != 2", "\x1b[33mtrue\x1b[0m"),
+            ("true == true", "\x1b[33mtrue\x1b[0m"),
+            ("true != true", "\x1b[33mfalse\x1b[0m"),
+            ("true == false", "\x1b[33mfalse\x1b[0m"),
+            ("true != false", "\x1b[33mtrue\x1b[0m"),
+            ("false == false", "\x1b[33mtrue\x1b[0m"),
+            ("false != false", "\x1b[33mfalse\x1b[0m"),
+            ("false == true", "\x1b[33mfalse\x1b[0m"),
+            ("false != true", "\x1b[33mtrue\x1b[0m"),
+        ];
+
+        for (input, expected) in case {
+            let mut l = Lexer::new(input.to_string());
+            let mut p = Parser::new(&mut l);
+            let program = p.parse_program();
+            assert_eq!(program.statements.len(), 1);
+            assert_eq!(format!("{}", eval(&program).unwrap()), expected);
+        }
+    }
 }
