@@ -5,8 +5,9 @@ use crate::core::tokenize::token::TokenType;
 use super::{
     super::{lexer::Lexer, token::Token},
     ast::{
-        BlockStatement, Expression, FunctionExpression, FunctionParameter, IfStatement,
-        InfixExpression, LetStatement, Precedence, PrefixExpression, Program, Statement,
+        BlockStatement, CallExpression, Expression, FunctionExpression, FunctionParameter,
+        IfStatement, InfixExpression, LetStatement, Precedence, PrefixExpression, Program,
+        Statement,
     },
 };
 
@@ -232,9 +233,16 @@ impl<'a> Parser<'a> {
         while self.peeked_token.token_type != TokenType::SemiColon
             && precedence < self.peek_precedence()
         {
-            self.next_token();
-            let infix = self.parse_infix_expression(expr)?;
-            expr = infix;
+            expr = match self.peeked_token.token_type {
+                TokenType::LParen => {
+                    self.next_token();
+                    self.parse_call_expression(expr)?
+                }
+                _ => {
+                    self.next_token();
+                    self.parse_infix_expression(expr)?
+                }
+            }
         }
         // TODO: impl
         Ok(expr)
@@ -365,6 +373,29 @@ impl<'a> Parser<'a> {
         }
 
         Ok(parameters)
+    }
+
+    fn parse_call_expression(&mut self, function: Expression) -> Result<Expression, Error> {
+        let args = self.parse_call_arguments()?;
+        Ok(Expression::Call(CallExpression::new(
+            Box::new(function),
+            args,
+        )))
+    }
+
+    fn parse_call_arguments(&mut self) -> Result<Vec<Expression>, Error> {
+        let mut args: Vec<Expression> = vec![];
+        self.next_token();
+        while self.cur_token.token_type != TokenType::RParen {
+            let arg = self.parse_expression(Precedence::Lowest)?;
+            args.push(arg);
+
+            self.next_token();
+            if self.cur_token.token_type == TokenType::Comma {
+                self.next_token();
+            }
+        }
+        Ok(args)
     }
 
     fn current_precedence(&self) -> Precedence {
