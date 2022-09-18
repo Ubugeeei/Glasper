@@ -24,7 +24,7 @@ pub fn eval_statement(statement: &Statement) -> Result<Object, Error> {
 
 pub fn eval_expression(expr: &Expression) -> Result<Object, Error> {
     match expr {
-        Expression::Integer(i) => Ok(Object::Number(GNumber { value: *i })),
+        Expression::Number(i) => Ok(Object::Number(GNumber { value: *i })),
         Expression::Boolean(b) => Ok(Object::Boolean(GBoolean { value: *b })),
         _ => Ok(Object::Undefined(GUndefined)),
     }

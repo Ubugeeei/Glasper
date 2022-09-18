@@ -70,7 +70,7 @@ impl IfStatement {
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum Expression {
-    Integer(i64),
+    Number(i64),
     Identifier(String),
     Boolean(bool),
     Prefix(PrefixExpression),
