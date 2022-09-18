@@ -141,11 +141,11 @@ impl InfixExpression {
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct FunctionExpression {
-    pub parameters: Vec<Expression>,
+    pub parameters: Vec<String>,
     pub body: BlockStatement,
 }
 impl FunctionExpression {
-    pub fn new(parameters: Vec<Expression>, body: BlockStatement) -> FunctionExpression {
+    pub fn new(parameters: Vec<String>, body: BlockStatement) -> FunctionExpression {
         FunctionExpression { parameters, body }
     }
 }

@@ -317,6 +317,8 @@ impl<'a> Parser<'a> {
 
 #[cfg(test)]
 pub mod tests {
+    use crate::core::parse::ast::FunctionExpression;
+
     use super::*;
 
     #[test]
@@ -772,6 +774,52 @@ pub mod tests {
                         ))),
                     ))),
                 ))),
+            ),
+        ];
+
+        for (source, expected) in case {
+            let mut l = Lexer::new(source);
+            let mut p = Parser::new(&mut l);
+            let program = p.parse_program();
+            assert_eq!(program.statements.len(), 1);
+            assert_eq!(program.statements[0], expected);
+        }
+    }
+
+    #[test]
+    fn test_parse_function_expression() {
+        let case = vec![
+            (
+                String::from(
+                    r#"
+                let add = function(x, y) {
+                    return x + y;
+                };
+            "#,
+                ),
+                Statement::Let(LetStatement::new(
+                    String::from("add"),
+                    Expression::Function(FunctionExpression::new(
+                        vec![String::from("x"), String::from("y")],
+                        BlockStatement::new(vec![Statement::Return(Expression::Infix(
+                            InfixExpression::new(
+                                Box::new(Expression::Identifier(String::from("x"))),
+                                String::from("+"),
+                                Box::new(Expression::Identifier(String::from("y"))),
+                            ),
+                        ))]),
+                    )),
+                )),
+            ),
+            (
+                String::from("let void = function() {};"),
+                Statement::Let(LetStatement::new(
+                    String::from("void"),
+                    Expression::Function(FunctionExpression::new(
+                        vec![],
+                        BlockStatement::new(vec![]),
+                    )),
+                )),
             ),
         ];
 
