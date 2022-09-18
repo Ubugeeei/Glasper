@@ -43,6 +43,8 @@ pub enum TokenType {
      */
     Eq,
     NotEq,
+    Inc,
+    Dec,
 
     /*
      * keywords
