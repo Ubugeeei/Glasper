@@ -7,7 +7,7 @@ use super::{
     ast::{
         BlockStatement, CallExpression, Expression, FunctionExpression, FunctionParameter,
         IfStatement, InfixExpression, LetStatement, Precedence, PrefixExpression, Program,
-        Statement,
+        Statement, SuffixExpression,
     },
 };
 
@@ -212,7 +212,10 @@ impl<'a> Parser<'a> {
 
     fn parse_expression(&mut self, precedence: Precedence) -> Result<Expression, Error> {
         let mut expr = match self.cur_token.token_type {
-            TokenType::Ident => Expression::Identifier(self.parse_identifier()?),
+            TokenType::Ident => match self.peeked_token.token_type {
+                TokenType::Inc | TokenType::Dec => self.parse_suffix_expression()?,
+                _ => Expression::Identifier(self.parse_identifier()?),
+            },
             TokenType::Int => Expression::Integer(self.parse_integer()?),
             TokenType::True | TokenType::False => Expression::Boolean(self.parse_boolean()?),
 
@@ -282,6 +285,14 @@ impl<'a> Parser<'a> {
 
         let right = self.parse_expression(Precedence::Prefix)?;
         let expr = Expression::Prefix(PrefixExpression::new(token.literal, Box::new(right)));
+        Ok(expr)
+    }
+
+    fn parse_suffix_expression(&mut self) -> Result<Expression, Error> {
+        let ident = self.cur_token.literal.to_string();
+        self.next_token();
+        let suffix_token = self.cur_token.clone();
+        let expr = Expression::Suffix(SuffixExpression::new(suffix_token.literal, ident));
         Ok(expr)
     }
 
@@ -677,6 +688,39 @@ pub mod tests {
                 Statement::Expression(Expression::Prefix(PrefixExpression::new(
                     String::from("!"),
                     Box::new(Expression::Identifier(String::from("flag")))
+                )))
+            );
+        }
+    }
+
+    #[test]
+    fn test_parse_suf_ops_expressions() {
+        {
+            let source = String::from("a++;");
+            let mut l = Lexer::new(source);
+            let mut p = Parser::new(&mut l);
+            let program = p.parse_program();
+            assert_eq!(program.statements.len(), 1);
+            assert_eq!(
+                program.statements[0],
+                Statement::Expression(Expression::Suffix(SuffixExpression::new(
+                    String::from("++"),
+                    String::from("a"),
+                )))
+            );
+        }
+
+        {
+            let source = String::from("a--;");
+            let mut l = Lexer::new(source);
+            let mut p = Parser::new(&mut l);
+            let program = p.parse_program();
+            assert_eq!(program.statements.len(), 1);
+            assert_eq!(
+                program.statements[0],
+                Statement::Expression(Expression::Suffix(SuffixExpression::new(
+                    String::from("--"),
+                    String::from("a"),
                 )))
             );
         }

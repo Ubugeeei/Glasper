@@ -25,8 +25,22 @@ impl Lexer {
         let tok = match self.ch {
             '\u{0}' => Token::new(TokenType::Eof, self.ch.to_string()),
 
-            '+' => Token::new(TokenType::Plus, self.ch.to_string()),
-            '-' => Token::new(TokenType::Minus, self.ch.to_string()),
+            '+' => {
+                if self.peek_char() == '+' {
+                    self.read_char();
+                    Token::new(TokenType::Inc, "++".to_string())
+                } else {
+                    Token::new(TokenType::Plus, self.ch.to_string())
+                }
+            }
+            '-' => {
+                if self.peek_char() == '-' {
+                    self.read_char();
+                    Token::new(TokenType::Dec, "--".to_string())
+                } else {
+                    Token::new(TokenType::Minus, self.ch.to_string())
+                }
+            }
             '*' => Token::new(TokenType::Asterisk, self.ch.to_string()),
             '/' => Token::new(TokenType::Slash, self.ch.to_string()),
 
@@ -135,7 +149,7 @@ pub mod tests {
     use super::*;
 
     #[test]
-    fn test_witespace() {
+    fn test_whitespace() {
         let source = String::from(" \t\n\r=");
         let mut l = Lexer::new(source);
         assert_eq!(l.next_token().token_type, TokenType::Assign);
@@ -151,7 +165,7 @@ pub mod tests {
 
     #[test]
     fn test_symbol_token() {
-        let source = String::from("=+-*/!<>(){},;");
+        let source = String::from("=+-*/!<>(){},;++--");
         let mut l = Lexer::new(source);
         assert_eq!(l.next_token().token_type, TokenType::Assign);
         assert_eq!(l.next_token().token_type, TokenType::Plus);
@@ -167,6 +181,8 @@ pub mod tests {
         assert_eq!(l.next_token().token_type, TokenType::RBrace);
         assert_eq!(l.next_token().token_type, TokenType::Comma);
         assert_eq!(l.next_token().token_type, TokenType::SemiColon);
+        assert_eq!(l.next_token().token_type, TokenType::Inc);
+        assert_eq!(l.next_token().token_type, TokenType::Dec);
     }
 
     #[test]

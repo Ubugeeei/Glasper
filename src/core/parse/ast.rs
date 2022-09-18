@@ -74,6 +74,7 @@ pub enum Expression {
     Identifier(String),
     Boolean(bool),
     Prefix(PrefixExpression),
+    Suffix(SuffixExpression),
     Infix(InfixExpression),
     Function(FunctionExpression),
     Call(CallExpression),
@@ -88,6 +89,20 @@ pub struct PrefixExpression {
 impl PrefixExpression {
     pub fn new(operator: String, right: Box<Expression>) -> PrefixExpression {
         PrefixExpression { operator, right }
+    }
+}
+
+#[derive(Debug, PartialEq, Eq)]
+pub struct SuffixExpression {
+    pub operator: String,
+    pub target_var_name: String,
+}
+impl SuffixExpression {
+    pub fn new(operator: String, target_var_name: String) -> SuffixExpression {
+        SuffixExpression {
+            operator,
+            target_var_name,
+        }
     }
 }
 
