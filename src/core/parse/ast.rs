@@ -1,6 +1,3 @@
-// TODO: remove this
-#![allow(dead_code)]
-
 use std::fmt::Debug;
 
 #[derive(Default, Debug)]
@@ -13,17 +10,6 @@ impl Program {
             statements: Vec::new(),
         }
     }
-    pub fn token_literals(&self) -> String {
-        if !self.statements.is_empty() {
-            self.statements[0].token_literal()
-        } else {
-            String::from("")
-        }
-    }
-}
-
-pub trait Node: Debug {
-    fn token_literal(&self) -> String;
 }
 
 #[derive(Debug, PartialEq, Eq)]
@@ -39,16 +25,6 @@ pub enum Statement {
     // break
     // continue
     // block
-}
-impl Statement {
-    pub fn statement_node(&self) -> String {
-        todo!()
-    }
-}
-impl Node for Statement {
-    fn token_literal(&self) -> String {
-        todo!()
-    }
 }
 
 #[derive(Debug, PartialEq, Eq)]
@@ -101,16 +77,7 @@ pub enum Expression {
     Infix(InfixExpression),
     Function(FunctionExpression),
 }
-impl Expression {
-    pub fn expression_node(&self) -> String {
-        todo!()
-    }
-}
-impl Node for Expression {
-    fn token_literal(&self) -> String {
-        todo!()
-    }
-}
+impl Expression {}
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct PrefixExpression {

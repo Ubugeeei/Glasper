@@ -1,6 +1,3 @@
-// TODO: remove this
-#![allow(dead_code)]
-
 use std::io::{Error, ErrorKind};
 
 use crate::core::tokenize::token::TokenType;
@@ -61,10 +58,6 @@ impl<'a> Parser<'a> {
             TokenType::If => self.parse_if_statement(),
             TokenType::Return => self.parse_return_statement(),
             _ => self.parse_expression_statement(),
-            // _ => Err(Error::new(
-            //     ErrorKind::InvalidInput,
-            //     format!("unexpected token {:?}", self.cur_token.token_type),
-            // )),
         }
     }
 
