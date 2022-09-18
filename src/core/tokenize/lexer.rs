@@ -149,7 +149,7 @@ pub mod tests {
     use super::*;
 
     #[test]
-    fn test_witespace() {
+    fn test_whitespace() {
         let source = String::from(" \t\n\r=");
         let mut l = Lexer::new(source);
         assert_eq!(l.next_token().token_type, TokenType::Assign);
