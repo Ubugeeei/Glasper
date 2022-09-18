@@ -1090,6 +1090,24 @@ pub mod tests {
                     ],
                 ))),
             ),
+            (
+                String::from("let result = (1 + add(2, 3)) * 5;"),
+                Statement::Let(LetStatement::new(
+                    String::from("result"),
+                    Expression::Infix(InfixExpression::new(
+                        Box::new(Expression::Infix(InfixExpression::new(
+                            Box::new(Expression::Integer(1)),
+                            String::from("+"),
+                            Box::new(Expression::Call(CallExpression::new(
+                                Box::new(Expression::Identifier(String::from("add"))),
+                                vec![Expression::Integer(2), Expression::Integer(3)],
+                            ))),
+                        ))),
+                        String::from("*"),
+                        Box::new(Expression::Integer(5)),
+                    )),
+                )),
+            ),
         ];
 
         for (source, expected) in case {
