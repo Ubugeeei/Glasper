@@ -76,6 +76,7 @@ pub enum Expression {
     Prefix(PrefixExpression),
     Infix(InfixExpression),
     Function(FunctionExpression),
+    Call(CallExpression),
 }
 impl Expression {}
 
@@ -125,6 +126,20 @@ pub struct FunctionParameter {
 impl FunctionParameter {
     pub fn new(name: String, default: Option<Expression>) -> FunctionParameter {
         FunctionParameter { name, default }
+    }
+}
+
+#[derive(Debug, PartialEq, Eq)]
+pub struct CallExpression {
+    function: Box<Expression>,
+    arguments: Vec<Expression>,
+}
+impl CallExpression {
+    pub fn new(function: Box<Expression>, arguments: Vec<Expression>) -> CallExpression {
+        CallExpression {
+            function,
+            arguments,
+        }
     }
 }
 

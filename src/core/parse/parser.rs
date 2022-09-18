@@ -5,8 +5,9 @@ use crate::core::tokenize::token::TokenType;
 use super::{
     super::{lexer::Lexer, token::Token},
     ast::{
-        BlockStatement, Expression, FunctionExpression, FunctionParameter, IfStatement,
-        InfixExpression, LetStatement, Precedence, PrefixExpression, Program, Statement,
+        BlockStatement, CallExpression, Expression, FunctionExpression, FunctionParameter,
+        IfStatement, InfixExpression, LetStatement, Precedence, PrefixExpression, Program,
+        Statement,
     },
 };
 
@@ -232,9 +233,16 @@ impl<'a> Parser<'a> {
         while self.peeked_token.token_type != TokenType::SemiColon
             && precedence < self.peek_precedence()
         {
-            self.next_token();
-            let infix = self.parse_infix_expression(expr)?;
-            expr = infix;
+            expr = match self.peeked_token.token_type {
+                TokenType::LParen => {
+                    self.next_token();
+                    self.parse_call_expression(expr)?
+                }
+                _ => {
+                    self.next_token();
+                    self.parse_infix_expression(expr)?
+                }
+            }
         }
         // TODO: impl
         Ok(expr)
@@ -365,6 +373,29 @@ impl<'a> Parser<'a> {
         }
 
         Ok(parameters)
+    }
+
+    fn parse_call_expression(&mut self, function: Expression) -> Result<Expression, Error> {
+        let args = self.parse_call_arguments()?;
+        Ok(Expression::Call(CallExpression::new(
+            Box::new(function),
+            args,
+        )))
+    }
+
+    fn parse_call_arguments(&mut self) -> Result<Vec<Expression>, Error> {
+        let mut args: Vec<Expression> = vec![];
+        self.next_token();
+        while self.cur_token.token_type != TokenType::RParen {
+            let arg = self.parse_expression(Precedence::Lowest)?;
+            args.push(arg);
+
+            self.next_token();
+            if self.cur_token.token_type == TokenType::Comma {
+                self.next_token();
+            }
+        }
+        Ok(args)
     }
 
     fn current_precedence(&self) -> Precedence {
@@ -969,6 +1000,95 @@ pub mod tests {
                         ]),
                     )),
                 )),
+            ),
+        ];
+
+        for (source, expected) in case {
+            let mut l = Lexer::new(source);
+            let mut p = Parser::new(&mut l);
+            let program = p.parse_program();
+            assert_eq!(program.statements.len(), 1);
+            assert_eq!(program.statements[0], expected);
+        }
+    }
+
+    #[test]
+    fn test_parse_call_expression() {
+        let case = vec![
+            (
+                String::from("add(1, 2 * 3, 4 + 5);"),
+                Statement::Expression(Expression::Call(CallExpression::new(
+                    Box::new(Expression::Identifier(String::from("add"))),
+                    vec![
+                        Expression::Integer(1),
+                        Expression::Infix(InfixExpression::new(
+                            Box::new(Expression::Integer(2)),
+                            String::from("*"),
+                            Box::new(Expression::Integer(3)),
+                        )),
+                        Expression::Infix(InfixExpression::new(
+                            Box::new(Expression::Integer(4)),
+                            String::from("+"),
+                            Box::new(Expression::Integer(5)),
+                        )),
+                    ],
+                ))),
+            ),
+            (
+                String::from("function(a, b, c){}(1, 2 * 3, 4 + 5);"),
+                Statement::Expression(Expression::Call(CallExpression::new(
+                    Box::new(Expression::Function(FunctionExpression::new(
+                        vec![
+                            FunctionParameter::new(String::from("a"), None),
+                            FunctionParameter::new(String::from("b"), None),
+                            FunctionParameter::new(String::from("c"), None),
+                        ],
+                        BlockStatement::new(vec![]),
+                    ))),
+                    vec![
+                        Expression::Integer(1),
+                        Expression::Infix(InfixExpression::new(
+                            Box::new(Expression::Integer(2)),
+                            String::from("*"),
+                            Box::new(Expression::Integer(3)),
+                        )),
+                        Expression::Infix(InfixExpression::new(
+                            Box::new(Expression::Integer(4)),
+                            String::from("+"),
+                            Box::new(Expression::Integer(5)),
+                        )),
+                    ],
+                ))),
+            ),
+            (
+                String::from("function(a, b, c){}(1, 2 * (3 + 4), 5 + 6);"),
+                Statement::Expression(Expression::Call(CallExpression::new(
+                    Box::new(Expression::Function(FunctionExpression::new(
+                        vec![
+                            FunctionParameter::new(String::from("a"), None),
+                            FunctionParameter::new(String::from("b"), None),
+                            FunctionParameter::new(String::from("c"), None),
+                        ],
+                        BlockStatement::new(vec![]),
+                    ))),
+                    vec![
+                        Expression::Integer(1),
+                        Expression::Infix(InfixExpression::new(
+                            Box::new(Expression::Integer(2)),
+                            String::from("*"),
+                            Box::new(Expression::Infix(InfixExpression::new(
+                                Box::new(Expression::Integer(3)),
+                                String::from("+"),
+                                Box::new(Expression::Integer(4)),
+                            ))),
+                        )),
+                        Expression::Infix(InfixExpression::new(
+                            Box::new(Expression::Integer(5)),
+                            String::from("+"),
+                            Box::new(Expression::Integer(6)),
+                        )),
+                    ],
+                ))),
             ),
         ];
 
