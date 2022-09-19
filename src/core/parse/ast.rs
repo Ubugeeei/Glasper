@@ -175,10 +175,15 @@ impl CallExpression {
 #[derive(Debug, PartialEq, Eq, PartialOrd)]
 pub enum Precedence {
     Lowest,
-    Equals,      // == or !==
-    LessGreater, // > or <
-    Sum,         // + or -
-    Product,     // * or /
-    Prefix,      // -X or !X
-    Call,        // myFunction(x)
+    Assign,
+    Equals,            // == or !==
+    NullishCoalescing, // ??
+    Bool,              // && or ||
+    LessGreater,       // > or <
+    Shift,             // << or >> or >>>
+    Sum,               // + or -
+    Product,           // * or /
+    Exp,               // **
+    Prefix,            // -X or !X
+    Call,              // myFunction(x)
 }

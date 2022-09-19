@@ -2,7 +2,7 @@
 
 use std::fmt::Display;
 
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq, Clone, Copy)]
 pub enum Object {
     Number(GNumber),
     Boolean(GBoolean),
@@ -31,7 +31,7 @@ impl Display for Object {
     }
 }
 
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq, Clone, Copy)]
 pub struct GNumber {
     pub value: f64,
 }
@@ -42,7 +42,7 @@ impl GNumber {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct GBoolean {
     pub value: bool,
 }
@@ -53,8 +53,8 @@ impl GBoolean {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct GNull;
 
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct GUndefined;

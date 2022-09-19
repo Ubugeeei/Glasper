@@ -112,10 +112,36 @@ impl<'a> Evaluator<'a> {
                     "-" => Ok(Object::Number(GNumber::new(l - r))),
                     "*" => Ok(Object::Number(GNumber::new(l * r))),
                     "/" => Ok(Object::Number(GNumber::new(l / r))),
+                    "%" => Ok(Object::Number(GNumber::new(l % r))),
+                    "|" => Ok(Object::Number(GNumber::new((l as i64 | r as i64) as f64))),
+                    "&" => Ok(Object::Number(GNumber::new((l as i64 & r as i64) as f64))),
+                    "^" => Ok(Object::Number(GNumber::new((l as i64 ^ r as i64) as f64))),
                     "<" => Ok(Object::Boolean(GBoolean::new(l < r))),
                     ">" => Ok(Object::Boolean(GBoolean::new(l > r))),
                     "==" => Ok(Object::Boolean(GBoolean::new(l == r))),
                     "!=" => Ok(Object::Boolean(GBoolean::new(l != r))),
+                    "**" => Ok(Object::Number(GNumber::new(l.powf(r)))),
+                    "??" => Ok(Object::Number(GNumber::new(l))),
+                    "||" => {
+                        if l == 0.0 {
+                            Ok(Object::Number(GNumber::new(r)))
+                        } else {
+                            Ok(Object::Number(GNumber::new(l)))
+                        }
+                    }
+                    "&&" => {
+                        if l == 0.0 {
+                            Ok(Object::Number(GNumber::new(l)))
+                        } else {
+                            Ok(Object::Number(GNumber::new(r)))
+                        }
+                    }
+                    "<<" => Ok(Object::Number(GNumber::new(
+                        ((l as i64) << r as i64) as f64,
+                    ))),
+                    ">>" => Ok(Object::Number(GNumber::new((l as i64 >> r as i64) as f64))),
+                    // TODO: implement
+                    // ">>>" => ,
                     o => Err(Error::new(
                         std::io::ErrorKind::Other,
                         format!(
@@ -129,6 +155,21 @@ impl<'a> Evaluator<'a> {
                 match operator.as_str() {
                     "==" => Ok(Object::Boolean(GBoolean::new(l == r))),
                     "!=" => Ok(Object::Boolean(GBoolean::new(l != r))),
+                    "??" => Ok(Object::Boolean(GBoolean::new(l))),
+                    "||" => {
+                        if l {
+                            Ok(Object::Boolean(GBoolean::new(l)))
+                        } else {
+                            Ok(Object::Boolean(GBoolean::new(r)))
+                        }
+                    }
+                    "&&" => {
+                        if l {
+                            Ok(Object::Boolean(GBoolean::new(r)))
+                        } else {
+                            Ok(Object::Boolean(GBoolean::new(l)))
+                        }
+                    }
                     o => Err(Error::new(
                         std::io::ErrorKind::Other,
                         format!(
@@ -138,6 +179,22 @@ impl<'a> Evaluator<'a> {
                     )),
                 }
             }
+            (Object::Null(_), r) | (Object::Undefined(_), r) => match operator.as_str() {
+                "??" => Ok(r),
+                "||" => Ok(r),
+                "&&" => match left {
+                    Object::Null(_) => Ok(Object::Null(GNull)),
+                    Object::Undefined(_) => Ok(Object::Undefined(GUndefined)),
+                    _ => unreachable!(),
+                },
+                o => Err(Error::new(
+                    std::io::ErrorKind::Other,
+                    format!(
+                        "Unexpected infix operator '{}'. at eval_infix_expression",
+                        o
+                    ),
+                )),
+            },
             _ => Err(Error::new(
                 std::io::ErrorKind::Other,
                 "Unexpected infix operator. at eval_infix_expression",
@@ -261,6 +318,8 @@ mod tests {
             ("1 - 1", "\x1b[33m0\x1b[0m"),
             ("1 * 1", "\x1b[33m1\x1b[0m"),
             ("1 / 1", "\x1b[33m1\x1b[0m"),
+            ("5 % 5", "\x1b[33m0\x1b[0m"),
+            ("5 % 2", "\x1b[33m1\x1b[0m"),
             ("2 + 3 * 4", "\x1b[33m14\x1b[0m"),
             ("2 * 3 + 4", "\x1b[33m10\x1b[0m"),
             ("2 * (3 + 4)", "\x1b[33m14\x1b[0m"),
@@ -280,6 +339,25 @@ mod tests {
             ("false != false", "\x1b[33mfalse\x1b[0m"),
             ("false == true", "\x1b[33mfalse\x1b[0m"),
             ("false != true", "\x1b[33mtrue\x1b[0m"),
+            ("2 ** 10", "\x1b[33m1024\x1b[0m"),
+            ("null ?? 1", "\x1b[33m1\x1b[0m"),
+            ("undefined ?? 1", "\x1b[33m1\x1b[0m"),
+            ("1 ?? 2", "\x1b[33m1\x1b[0m"),
+            ("false ?? true", "\x1b[33mfalse\x1b[0m"),
+            ("null || 1", "\x1b[33m1\x1b[0m"),
+            ("undefined || 1", "\x1b[33m1\x1b[0m"),
+            ("1 || 2", "\x1b[33m1\x1b[0m"),
+            ("0 || 2", "\x1b[33m2\x1b[0m"),
+            ("false || true", "\x1b[33mtrue\x1b[0m"),
+            ("null && 1", "null"),
+            ("undefined && 1", "\x1b[30mundefined\x1b[0m"),
+            ("1 && 2", "\x1b[33m2\x1b[0m"),
+            ("0 && 2", "\x1b[33m0\x1b[0m"),
+            ("false || true", "\x1b[33mtrue\x1b[0m"),
+            ("0b1100 | 0b0011", "\x1b[33m15\x1b[0m"),
+            ("0b1100 & 0b0011", "\x1b[33m0\x1b[0m"),
+            ("0b1100 ^ 0b0011", "\x1b[33m15\x1b[0m"),
+            ("0b0101 << 0b0010", "\x1b[33m20\x1b[0m"),
         ];
 
         for (input, expected) in case {

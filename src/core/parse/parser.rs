@@ -954,10 +954,26 @@ pub mod tests {
                     ))),
                 ),
                 (
+                    String::from("1 ** 2;"),
+                    Statement::Expression(Expression::Infix(InfixExpression::new(
+                        Box::new(Expression::Number(1.0)),
+                        String::from("**"),
+                        Box::new(Expression::Number(2.0)),
+                    ))),
+                ),
+                (
                     String::from("1 / 2;"),
                     Statement::Expression(Expression::Infix(InfixExpression::new(
                         Box::new(Expression::Number(1.0)),
                         String::from("/"),
+                        Box::new(Expression::Number(2.0)),
+                    ))),
+                ),
+                (
+                    String::from("1 % 2;"),
+                    Statement::Expression(Expression::Infix(InfixExpression::new(
+                        Box::new(Expression::Number(1.0)),
+                        String::from("%"),
                         Box::new(Expression::Number(2.0)),
                     ))),
                 ),
@@ -991,6 +1007,70 @@ pub mod tests {
                         Box::new(Expression::Number(1.0)),
                         String::from("!="),
                         Box::new(Expression::Number(2.0)),
+                    ))),
+                ),
+                (
+                    String::from("null ?? 1;"),
+                    Statement::Expression(Expression::Infix(InfixExpression::new(
+                        Box::new(Expression::Null),
+                        String::from("??"),
+                        Box::new(Expression::Number(1.0)),
+                    ))),
+                ),
+                (
+                    String::from("1 | 1;"),
+                    Statement::Expression(Expression::Infix(InfixExpression::new(
+                        Box::new(Expression::Number(1.0)),
+                        String::from("|"),
+                        Box::new(Expression::Number(1.0)),
+                    ))),
+                ),
+                (
+                    String::from("1 || 1;"),
+                    Statement::Expression(Expression::Infix(InfixExpression::new(
+                        Box::new(Expression::Number(1.0)),
+                        String::from("||"),
+                        Box::new(Expression::Number(1.0)),
+                    ))),
+                ),
+                (
+                    String::from("1 & 1;"),
+                    Statement::Expression(Expression::Infix(InfixExpression::new(
+                        Box::new(Expression::Number(1.0)),
+                        String::from("&"),
+                        Box::new(Expression::Number(1.0)),
+                    ))),
+                ),
+                (
+                    String::from("1 && 1;"),
+                    Statement::Expression(Expression::Infix(InfixExpression::new(
+                        Box::new(Expression::Number(1.0)),
+                        String::from("&&"),
+                        Box::new(Expression::Number(1.0)),
+                    ))),
+                ),
+                (
+                    String::from("1 >> 1;"),
+                    Statement::Expression(Expression::Infix(InfixExpression::new(
+                        Box::new(Expression::Number(1.0)),
+                        String::from(">>"),
+                        Box::new(Expression::Number(1.0)),
+                    ))),
+                ),
+                (
+                    String::from("1 >>> 1;"),
+                    Statement::Expression(Expression::Infix(InfixExpression::new(
+                        Box::new(Expression::Number(1.0)),
+                        String::from(">>>"),
+                        Box::new(Expression::Number(1.0)),
+                    ))),
+                ),
+                (
+                    String::from("1 << 1;"),
+                    Statement::Expression(Expression::Infix(InfixExpression::new(
+                        Box::new(Expression::Number(1.0)),
+                        String::from("<<"),
+                        Box::new(Expression::Number(1.0)),
                     ))),
                 ),
             ];

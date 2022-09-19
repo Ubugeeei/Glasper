@@ -26,6 +26,10 @@ pub enum TokenType {
     Bang,
     Asterisk,
     Slash,
+    Percent,
+    BitOr,
+    BitAnd,
+    BitXOr,
     // comp
     LT,
     GT,
@@ -37,6 +41,10 @@ pub enum TokenType {
     // others
     Comma,
     SemiColon,
+    // bool
+    Or,
+    And,
+    Conditional, // ?
 
     /*
      * combination of symbols
@@ -45,6 +53,11 @@ pub enum TokenType {
     NotEq,
     Inc,
     Dec,
+    Exp,
+    NullishCoalescing, // ??
+    ShL,
+    ShR,
+    SaR,
 
     /*
      * keywords
@@ -71,14 +84,17 @@ impl Token {
 
     pub fn get_precedence(&mut self) -> Precedence {
         match self.token_type {
+            TokenType::Assign => Precedence::Assign,
             TokenType::Eq => Precedence::Equals,
+            TokenType::NullishCoalescing => Precedence::NullishCoalescing,
+            TokenType::Or | TokenType::And => Precedence::Bool,
             TokenType::NotEq => Precedence::Equals,
-            TokenType::LT => Precedence::LessGreater,
-            TokenType::GT => Precedence::LessGreater,
-            TokenType::Plus => Precedence::Sum,
-            TokenType::Minus => Precedence::Sum,
-            TokenType::Slash => Precedence::Product,
-            TokenType::Asterisk => Precedence::Product,
+            TokenType::LT | TokenType::GT => Precedence::LessGreater,
+            TokenType::BitOr | TokenType::BitAnd | TokenType::BitXOr => Precedence::Sum,
+            TokenType::Plus | TokenType::Minus => Precedence::Sum,
+            TokenType::Exp => Precedence::Exp,
+            TokenType::ShL | TokenType::ShR | TokenType::SaR => Precedence::Shift,
+            TokenType::Slash | TokenType::Asterisk | TokenType::Percent => Precedence::Product,
             TokenType::LParen => Precedence::Call,
             _ => Precedence::Lowest,
         }

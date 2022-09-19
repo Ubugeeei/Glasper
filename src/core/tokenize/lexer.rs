@@ -41,11 +41,56 @@ impl Lexer {
                     Token::new(TokenType::Minus, self.ch.to_string())
                 }
             }
-            '*' => Token::new(TokenType::Asterisk, self.ch.to_string()),
+            '*' => {
+                if self.peek_char() == '*' {
+                    self.read_char();
+                    Token::new(TokenType::Exp, "**".to_string())
+                } else {
+                    Token::new(TokenType::Asterisk, self.ch.to_string())
+                }
+            }
             '/' => Token::new(TokenType::Slash, self.ch.to_string()),
+            '%' => Token::new(TokenType::Percent, self.ch.to_string()),
 
-            '<' => Token::new(TokenType::LT, self.ch.to_string()),
-            '>' => Token::new(TokenType::GT, self.ch.to_string()),
+            '|' => {
+                if self.peek_char() == '|' {
+                    self.read_char();
+                    Token::new(TokenType::Or, "||".to_string())
+                } else {
+                    Token::new(TokenType::BitOr, self.ch.to_string())
+                }
+            }
+            '&' => {
+                if self.peek_char() == '&' {
+                    self.read_char();
+                    Token::new(TokenType::And, "&&".to_string())
+                } else {
+                    Token::new(TokenType::BitAnd, self.ch.to_string())
+                }
+            }
+            '^' => Token::new(TokenType::BitXOr, self.ch.to_string()),
+
+            '<' => {
+                if self.peek_char() == '<' {
+                    self.read_char();
+                    Token::new(TokenType::ShL, "<<".to_string())
+                } else {
+                    Token::new(TokenType::LT, self.ch.to_string())
+                }
+            }
+            '>' => {
+                if self.peek_char() == '>' {
+                    self.read_char();
+                    if self.peek_char() == '>' {
+                        self.read_char();
+                        Token::new(TokenType::SaR, ">>>".to_string())
+                    } else {
+                        Token::new(TokenType::ShR, ">>".to_string())
+                    }
+                } else {
+                    Token::new(TokenType::GT, self.ch.to_string())
+                }
+            }
             ';' => Token::new(TokenType::SemiColon, self.ch.to_string()),
             ',' => Token::new(TokenType::Comma, self.ch.to_string()),
             '(' => Token::new(TokenType::LParen, self.ch.to_string()),
@@ -68,6 +113,15 @@ impl Lexer {
                     Token::new(TokenType::NotEq, "!=".to_string())
                 } else {
                     Token::new(TokenType::Bang, self.ch.to_string())
+                }
+            }
+
+            '?' => {
+                if self.peek_char() == '?' {
+                    self.read_char();
+                    Token::new(TokenType::NullishCoalescing, "??".to_string())
+                } else {
+                    Token::new(TokenType::Conditional, self.ch.to_string())
                 }
             }
 
@@ -201,13 +255,14 @@ pub mod tests {
 
     #[test]
     fn test_symbol_token() {
-        let source = String::from("=+-*/!<>(){},;++--");
+        let source = String::from("=+-*/%!<>(){},;?|&^");
         let mut l = Lexer::new(source);
         assert_eq!(l.next_token().token_type, TokenType::Assign);
         assert_eq!(l.next_token().token_type, TokenType::Plus);
         assert_eq!(l.next_token().token_type, TokenType::Minus);
         assert_eq!(l.next_token().token_type, TokenType::Asterisk);
         assert_eq!(l.next_token().token_type, TokenType::Slash);
+        assert_eq!(l.next_token().token_type, TokenType::Percent);
         assert_eq!(l.next_token().token_type, TokenType::Bang);
         assert_eq!(l.next_token().token_type, TokenType::LT);
         assert_eq!(l.next_token().token_type, TokenType::GT);
@@ -217,16 +272,27 @@ pub mod tests {
         assert_eq!(l.next_token().token_type, TokenType::RBrace);
         assert_eq!(l.next_token().token_type, TokenType::Comma);
         assert_eq!(l.next_token().token_type, TokenType::SemiColon);
-        assert_eq!(l.next_token().token_type, TokenType::Inc);
-        assert_eq!(l.next_token().token_type, TokenType::Dec);
+        assert_eq!(l.next_token().token_type, TokenType::Conditional);
+        assert_eq!(l.next_token().token_type, TokenType::BitOr);
+        assert_eq!(l.next_token().token_type, TokenType::BitAnd);
+        assert_eq!(l.next_token().token_type, TokenType::BitXOr);
     }
 
     #[test]
     fn test_combination_of_symbols() {
-        let source = String::from("== !=");
+        let source = String::from("== != ++ -- ** || && ?? << >> >>>");
         let mut l = Lexer::new(source);
         assert_eq!(l.next_token().token_type, TokenType::Eq);
         assert_eq!(l.next_token().token_type, TokenType::NotEq);
+        assert_eq!(l.next_token().token_type, TokenType::Inc);
+        assert_eq!(l.next_token().token_type, TokenType::Dec);
+        assert_eq!(l.next_token().token_type, TokenType::Exp);
+        assert_eq!(l.next_token().token_type, TokenType::Or);
+        assert_eq!(l.next_token().token_type, TokenType::And);
+        assert_eq!(l.next_token().token_type, TokenType::NullishCoalescing);
+        assert_eq!(l.next_token().token_type, TokenType::ShL);
+        assert_eq!(l.next_token().token_type, TokenType::ShR);
+        assert_eq!(l.next_token().token_type, TokenType::SaR);
     }
 
     #[test]
