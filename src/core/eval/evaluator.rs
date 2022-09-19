@@ -10,6 +10,8 @@ use crate::core::{
     parse::ast::{ConstStatement, Expression, LetStatement, Program, Statement},
 };
 
+use super::environment::{Variable, VariableKind};
+
 pub struct Evaluator<'a> {
     env: &'a mut Environment,
 }
@@ -35,7 +37,7 @@ impl<'a> Evaluator<'a> {
         }
     }
 
-    fn eval_expression(&self, expr: &Expression) -> Result<Object, Error> {
+    fn eval_expression(&mut self, expr: &Expression) -> Result<Object, Error> {
         match expr {
             Expression::Number(i) => Ok(Object::Number(GNumber { value: *i })),
             Expression::Boolean(b) => Ok(Object::Boolean(GBoolean { value: *b })),
@@ -46,9 +48,13 @@ impl<'a> Evaluator<'a> {
 
             Expression::Prefix(expr) => self.eval_prefix_expression(expr),
             Expression::Infix(expr) => {
-                let left = self.eval_expression(&expr.left)?;
-                let right = self.eval_expression(&expr.right)?;
-                self.eval_infix_expression(expr.operator.clone(), left, right)
+                if expr.operator == "=" {
+                    self.eval_assign_expression(&expr.left, &expr.right)
+                } else {
+                    let left = self.eval_expression(&expr.left)?;
+                    let right = self.eval_expression(&expr.right)?;
+                    self.eval_infix_expression(expr.operator.clone(), left, right)
+                }
             }
 
             _ => Ok(Object::Undefined(GUndefined)),
@@ -56,7 +62,7 @@ impl<'a> Evaluator<'a> {
     }
 
     fn eval_prefix_expression(
-        &self,
+        &mut self,
         expr: &crate::core::parse::ast::PrefixExpression,
     ) -> Result<Object, Error> {
         let right = self.eval_expression(&expr.right)?;
@@ -203,24 +209,112 @@ impl<'a> Evaluator<'a> {
     }
 
     fn eval_let_statement(&mut self, stmt: &LetStatement) -> Result<Object, Error> {
-        let value = self.eval_expression(&stmt.value)?;
-        self.env.set(&stmt.name, value);
-        Ok(Object::Undefined(GUndefined))
+        match self.env.get(stmt.name.as_str()) {
+            // varidation
+            Some(var) => match var.kind {
+                VariableKind::Const => {
+                    return Err(Error::new(
+                        std::io::ErrorKind::Other,
+                        format!("Cannot reassign to const '{}'", stmt.name),
+                    ))
+                }
+                VariableKind::Let | VariableKind::Var => {
+                    let value = self.eval_expression(&stmt.value)?;
+                    let var = Variable::new(VariableKind::Let, value);
+                    self.env.set(&stmt.name, var);
+                    Ok(Object::Undefined(GUndefined))
+                }
+            },
+            // initial set
+            None => {
+                let value = self.eval_expression(&stmt.value)?;
+                let var = Variable::new(VariableKind::Let, value);
+                self.env.set(&stmt.name, var);
+                Ok(Object::Undefined(GUndefined))
+            }
+        }
     }
 
-    // TODO: as constant
     fn eval_const_statement(&mut self, stmt: &ConstStatement) -> Result<Object, Error> {
-        let value = self.eval_expression(&stmt.value)?;
-        self.env.set(&stmt.name, value);
-        Ok(Object::Undefined(GUndefined))
+        match self.env.get(stmt.name.as_str()) {
+            // varidation
+            Some(var) => match var.kind {
+                VariableKind::Const => {
+                    return Err(Error::new(
+                        std::io::ErrorKind::Other,
+                        format!(
+                            "Uncaught SyntaxError: Identifier '{}' has already been declared",
+                            stmt.name
+                        ),
+                    ))
+                }
+                VariableKind::Let | VariableKind::Var => {
+                    let value = self.eval_expression(&stmt.value)?;
+                    let var = Variable::new(VariableKind::Const, value);
+                    self.env.set(&stmt.name, var);
+                    Ok(Object::Undefined(GUndefined))
+                }
+            },
+            // initial set
+            None => {
+                let value = self.eval_expression(&stmt.value)?;
+                let var = Variable::new(VariableKind::Const, value);
+                self.env.set(&stmt.name, var);
+                Ok(Object::Undefined(GUndefined))
+            }
+        }
     }
 
     fn eval_identifier(&self, name: &str) -> Result<Object, Error> {
         match self.env.get(name) {
-            Some(value) => Ok(value),
+            Some(var) => Ok(var.value),
             None => Err(Error::new(
                 std::io::ErrorKind::Other,
                 format!("Uncaught ReferenceError: {} is not defined", name),
+            )),
+        }
+    }
+
+    fn eval_assign_expression(
+        &mut self,
+        left: &Expression,
+        right: &Expression,
+    ) -> Result<Object, Error> {
+        match left {
+            Expression::Identifier(name) => {
+                match self.env.get(name.as_str()) {
+                    Some(var) => match var.kind {
+                        // varidation
+                        VariableKind::Const => Err(Error::new(
+                            std::io::ErrorKind::Other,
+                            "Uncaught TypeError: Assignment to constant variable.",
+                        )),
+                        // assqign
+                        VariableKind::Let => {
+                            let value = self.eval_expression(right)?;
+                            let var = Variable::new(VariableKind::Let, value);
+                            self.env.set(name, var);
+                            Ok(value)
+                        }
+                        VariableKind::Var => {
+                            let value = self.eval_expression(right)?;
+                            let var = Variable::new(VariableKind::Var, value);
+                            self.env.set(name, var);
+                            Ok(value)
+                        }
+                    },
+                    // no var
+                    None => {
+                        let value = self.eval_expression(right)?;
+                        let var = Variable::new(VariableKind::Var, value);
+                        self.env.set(name, var);
+                        Ok(value)
+                    }
+                }
+            }
+            _ => Err(Error::new(
+                std::io::ErrorKind::Other,
+                "Uncaught SyntaxError: Invalid left-hand side in assignment",
             )),
         }
     }
@@ -380,6 +474,7 @@ mod tests {
                 "let a = 1; let b = a; let c = a + b + 5; c;",
                 "\x1b[33m7\x1b[0m",
             ),
+            ("let a = 1; a = 3;", "\x1b[33m3\x1b[0m"),
         ];
 
         for (input, expected) in case {
@@ -389,6 +484,84 @@ mod tests {
             let mut e = Environment::new();
             let mut ev = Evaluator::new(&mut e);
             assert_eq!(format!("{}", ev.eval(&program).unwrap()), expected);
+        }
+    }
+
+    #[test]
+    fn test_assign_var_varidation() {
+        // reassign to let variable
+        {
+            let input = "let a = 1; a = 2;";
+            let mut l = Lexer::new(input.to_string());
+            let mut p = Parser::new(&mut l);
+            let program = p.parse_program();
+            let mut e = Environment::new();
+            let mut ev = Evaluator::new(&mut e);
+            assert_eq!(
+                format!("{}", ev.eval(&program).unwrap()),
+                "\x1b[33m2\x1b[0m"
+            );
+        }
+
+        // redeclare (let)
+        {
+            let input = "let a = 1; let a = 2; a;";
+            let mut l = Lexer::new(input.to_string());
+            let mut p = Parser::new(&mut l);
+            let program = p.parse_program();
+            let mut e = Environment::new();
+            let mut ev = Evaluator::new(&mut e);
+            assert_eq!(
+                format!("{}", ev.eval(&program).unwrap()),
+                "\x1b[33m2\x1b[0m"
+            );
+        }
+
+        // redeclare (let -> const)
+        {
+            let input = "let a = 1; const a = 2; a;";
+            let mut l = Lexer::new(input.to_string());
+            let mut p = Parser::new(&mut l);
+            let program = p.parse_program();
+            let mut e = Environment::new();
+            let mut ev = Evaluator::new(&mut e);
+            assert_eq!(
+                format!("{}", ev.eval(&program).unwrap()),
+                "\x1b[33m2\x1b[0m"
+            );
+        }
+
+        // reassign to const variable
+        {
+            let input = "const a = 1; a = 2;";
+            let mut l = Lexer::new(input.to_string());
+            let mut p = Parser::new(&mut l);
+            let program = p.parse_program();
+            let mut e = Environment::new();
+            let mut ev = Evaluator::new(&mut e);
+            ev.eval(&program).unwrap_err();
+        }
+
+        // redeclare (const -> const)
+        {
+            let input = "const a = 1; const a = 2; a;";
+            let mut l = Lexer::new(input.to_string());
+            let mut p = Parser::new(&mut l);
+            let program = p.parse_program();
+            let mut e = Environment::new();
+            let mut ev = Evaluator::new(&mut e);
+            ev.eval(&program).unwrap_err();
+        }
+
+        // redeclare (const -> let)
+        {
+            let input = "const a = 1; let a = 2; a;";
+            let mut l = Lexer::new(input.to_string());
+            let mut p = Parser::new(&mut l);
+            let program = p.parse_program();
+            let mut e = Environment::new();
+            let mut ev = Evaluator::new(&mut e);
+            ev.eval(&program).unwrap_err();
         }
     }
 }
