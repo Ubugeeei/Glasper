@@ -10,7 +10,10 @@ use crate::engine::{
     },
 };
 
-use super::environment::{Variable, VariableKind};
+use super::{
+    environment::{Variable, VariableKind},
+    object::GFunction,
+};
 
 pub struct Evaluator<'a> {
     env: &'a mut Environment,
@@ -43,6 +46,11 @@ impl<'a> Evaluator<'a> {
         match expr {
             Expression::Number(i) => Ok(Object::Number(GNumber { value: *i })),
             Expression::Boolean(b) => Ok(Object::Boolean(GBoolean { value: *b })),
+            // Expression::Function(f) => Ok(Object::Function(GFunction::new(
+            //     f.parameters.clone(),
+            //     f.body.clone(),
+            //     self.env.clone(),
+            // ))),
             Expression::Null => Ok(Object::Null(GNull)),
             Expression::Undefined => Ok(Object::Undefined(GUndefined)),
 
@@ -84,8 +92,6 @@ impl<'a> Evaluator<'a> {
     fn eval_bang_operator_expression(&self, right: Object) -> Result<Object, Error> {
         match right {
             Object::Boolean(GBoolean { value }) => Ok(Object::Boolean(GBoolean { value: !value })),
-            Object::Null(_) => Ok(Object::Boolean(GBoolean { value: true })),
-            Object::Undefined(_) => Ok(Object::Boolean(GBoolean { value: true })),
             Object::Number(GNumber { value }) => {
                 if value == 0.0 {
                     Ok(Object::Boolean(GBoolean { value: true }))
@@ -93,6 +99,9 @@ impl<'a> Evaluator<'a> {
                     Ok(Object::Boolean(GBoolean { value: false }))
                 }
             }
+            Object::Null(_) => Ok(Object::Boolean(GBoolean { value: true })),
+            Object::Undefined(_) => Ok(Object::Boolean(GBoolean { value: true })),
+            _ => Ok(Object::Boolean(GBoolean { value: true })),
         }
     }
 
@@ -113,7 +122,7 @@ impl<'a> Evaluator<'a> {
         left: Object,
         right: Object,
     ) -> Result<Object, Error> {
-        match (left, right) {
+        match (left.clone(), right) {
             (Object::Number(GNumber { value: l }), Object::Number(GNumber { value: r })) => {
                 match operator.as_str() {
                     "+" => Ok(Object::Number(GNumber::new(l + r))),
@@ -237,7 +246,7 @@ impl<'a> Evaluator<'a> {
 
     fn eval_const_statement(&mut self, stmt: &ConstStatement) -> Result<Object, Error> {
         match self.env.get(stmt.name.as_str()) {
-            // varidation
+            // validation
             Some(var) => match var.kind {
                 VariableKind::Const => Err(Error::new(
                     std::io::ErrorKind::Other,
@@ -265,7 +274,7 @@ impl<'a> Evaluator<'a> {
 
     fn eval_identifier(&self, name: &str) -> Result<Object, Error> {
         match self.env.get(name) {
-            Some(var) => Ok(var.value),
+            Some(var) => Ok(var.value.clone()),
             None => Err(Error::new(
                 std::io::ErrorKind::Other,
                 format!("Uncaught ReferenceError: {} is not defined", name),
@@ -282,21 +291,21 @@ impl<'a> Evaluator<'a> {
             Expression::Identifier(name) => {
                 match self.env.get(name.as_str()) {
                     Some(var) => match var.kind {
-                        // varidation
+                        // validation
                         VariableKind::Const => Err(Error::new(
                             std::io::ErrorKind::Other,
                             "Uncaught TypeError: Assignment to constant variable.",
                         )),
-                        // assqign
+                        // assign
                         VariableKind::Let => {
                             let value = self.eval_expression(right)?;
-                            let var = Variable::new(VariableKind::Let, value);
+                            let var = Variable::new(VariableKind::Let, value.clone());
                             self.env.set(name, var);
                             Ok(value)
                         }
                         VariableKind::Var => {
                             let value = self.eval_expression(right)?;
-                            let var = Variable::new(VariableKind::Var, value);
+                            let var = Variable::new(VariableKind::Var, value.clone());
                             self.env.set(name, var);
                             Ok(value)
                         }
@@ -304,7 +313,7 @@ impl<'a> Evaluator<'a> {
                     // no var
                     None => {
                         let value = self.eval_expression(right)?;
-                        let var = Variable::new(VariableKind::Var, value);
+                        let var = Variable::new(VariableKind::Var, value.clone());
                         self.env.set(name, var);
                         Ok(value)
                     }
