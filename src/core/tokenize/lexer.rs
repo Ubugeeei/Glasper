@@ -60,6 +60,7 @@ impl Lexer {
                     Token::new(TokenType::BitAnd, self.ch.to_string())
                 }
             }
+            '^' => Token::new(TokenType::BitXOr, self.ch.to_string()),
 
             '<' => Token::new(TokenType::LT, self.ch.to_string()),
             '>' => Token::new(TokenType::GT, self.ch.to_string()),
@@ -227,7 +228,7 @@ pub mod tests {
 
     #[test]
     fn test_symbol_token() {
-        let source = String::from("=+-*/!<>(){},;++-- ? ?? | || & &&");
+        let source = String::from("=+-*/!<>(){},;++-- ? ?? | || & && ^");
         let mut l = Lexer::new(source);
         assert_eq!(l.next_token().token_type, TokenType::Assign);
         assert_eq!(l.next_token().token_type, TokenType::Plus);
@@ -251,6 +252,7 @@ pub mod tests {
         assert_eq!(l.next_token().token_type, TokenType::Or);
         assert_eq!(l.next_token().token_type, TokenType::BitAnd);
         assert_eq!(l.next_token().token_type, TokenType::And);
+        assert_eq!(l.next_token().token_type, TokenType::BitXOr);
     }
 
     #[test]

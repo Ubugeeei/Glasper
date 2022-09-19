@@ -28,6 +28,7 @@ pub enum TokenType {
     Slash,
     BitOr,
     BitAnd,
+    BitXOr,
     // comp
     LT,
     GT,
@@ -87,6 +88,7 @@ impl Token {
             TokenType::GT => Precedence::LessGreater,
             TokenType::BitOr => Precedence::Sum,
             TokenType::BitAnd => Precedence::Sum,
+            TokenType::BitXOr => Precedence::Sum,
             TokenType::Plus => Precedence::Sum,
             TokenType::Minus => Precedence::Sum,
             TokenType::Slash => Precedence::Product,
