@@ -5,7 +5,7 @@ use std::io::Error;
 use crate::core::{
     eval::environment::Environment,
     object::def::{GBoolean, GNull, GNumber, GUndefined, Object},
-    parse::ast::{Expression, LetStatement, Program, Statement},
+    parse::ast::{ConstStatement, Expression, LetStatement, Program, Statement},
 };
 
 pub struct Evaluator<'a> {
@@ -28,7 +28,7 @@ impl<'a> Evaluator<'a> {
         match statement {
             Statement::Expression(expr) => self.eval_expression(expr),
             Statement::Let(stmt) => self.eval_let_statement(stmt),
-            // TODO: const statement
+            Statement::Const(stmt) => self.eval_const_statement(stmt),
             _ => Ok(Object::Undefined(GUndefined)),
         }
     }
@@ -144,7 +144,13 @@ impl<'a> Evaluator<'a> {
     }
 
     fn eval_let_statement(&mut self, stmt: &LetStatement) -> Result<Object, Error> {
-        // TODO: bind value to environment
+        let value = self.eval_expression(&stmt.value)?;
+        self.env.set(&stmt.name, value);
+        Ok(Object::Undefined(GUndefined))
+    }
+
+    // TODO: as constant
+    fn eval_const_statement(&mut self, stmt: &ConstStatement) -> Result<Object, Error> {
         let value = self.eval_expression(&stmt.value)?;
         self.env.set(&stmt.name, value);
         Ok(Object::Undefined(GUndefined))
