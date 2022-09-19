@@ -53,6 +53,9 @@ pub enum TokenType {
     Inc,
     Dec,
     NullishCoalescing, // ??
+    ShL,
+    ShR,
+    SaR,
 
     /*
      * keywords
@@ -79,20 +82,16 @@ impl Token {
 
     pub fn get_precedence(&mut self) -> Precedence {
         match self.token_type {
+            TokenType::Assign => Precedence::Assign,
             TokenType::Eq => Precedence::Equals,
             TokenType::NullishCoalescing => Precedence::NullishCoalescing,
-            TokenType::Or => Precedence::Bool,
-            TokenType::And => Precedence::Bool,
+            TokenType::Or | TokenType::And => Precedence::Bool,
             TokenType::NotEq => Precedence::Equals,
-            TokenType::LT => Precedence::LessGreater,
-            TokenType::GT => Precedence::LessGreater,
-            TokenType::BitOr => Precedence::Sum,
-            TokenType::BitAnd => Precedence::Sum,
-            TokenType::BitXOr => Precedence::Sum,
-            TokenType::Plus => Precedence::Sum,
-            TokenType::Minus => Precedence::Sum,
-            TokenType::Slash => Precedence::Product,
-            TokenType::Asterisk => Precedence::Product,
+            TokenType::LT | TokenType::GT => Precedence::LessGreater,
+            TokenType::BitOr | TokenType::BitAnd | TokenType::BitXOr => Precedence::Sum,
+            TokenType::Plus | TokenType::Minus => Precedence::Sum,
+            TokenType::ShL | TokenType::ShR | TokenType::SaR => Precedence::Shift,
+            TokenType::Slash | TokenType::Asterisk => Precedence::Product,
             TokenType::LParen => Precedence::Call,
             _ => Precedence::Lowest,
         }

@@ -134,6 +134,12 @@ impl<'a> Evaluator<'a> {
                             Ok(Object::Number(GNumber::new(r)))
                         }
                     }
+                    "<<" => Ok(Object::Number(GNumber::new(
+                        ((l as i64) << r as i64) as f64,
+                    ))),
+                    ">>" => Ok(Object::Number(GNumber::new((l as i64 >> r as i64) as f64))),
+                    // TODO: implement
+                    // ">>>" => ,
                     o => Err(Error::new(
                         std::io::ErrorKind::Other,
                         format!(
@@ -346,6 +352,7 @@ mod tests {
             ("0b1100 | 0b0011", "\x1b[33m15\x1b[0m"),
             ("0b1100 & 0b0011", "\x1b[33m0\x1b[0m"),
             ("0b1100 ^ 0b0011", "\x1b[33m15\x1b[0m"),
+            ("0b0101 << 0b0010", "\x1b[33m20\x1b[0m"),
         ];
 
         for (input, expected) in case {
