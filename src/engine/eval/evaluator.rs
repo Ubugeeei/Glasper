@@ -10,10 +10,7 @@ use crate::engine::{
     },
 };
 
-use super::{
-    environment::{Variable, VariableKind},
-    object::GFunction,
-};
+use super::environment::{Variable, VariableKind};
 
 pub struct Evaluator<'a> {
     env: &'a mut Environment,
