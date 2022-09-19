@@ -1,5 +1,7 @@
+mod cli;
 mod engine;
+mod runtime;
 
 fn main() {
-    engine::repl::start();
+    cli::interact::start();
 }

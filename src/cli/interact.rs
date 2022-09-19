@@ -1,8 +1,4 @@
-use crate::engine::{
-    eval::{environment::Environment, evaluator::Evaluator},
-    lexer::Lexer,
-    parse::parser::Parser,
-};
+use crate::runtime::js::JavaScriptRuntime;
 use std::io::{self, BufRead, Write};
 
 const PROMPT: &str = "> ";
@@ -10,9 +6,7 @@ const PROMPT: &str = "> ";
 pub fn start() {
     println!("Welcome to Glasper v0.1.0 ");
     println!("exit using ctrl+c or ctrl+d or exit()");
-
-    let mut e = Environment::new();
-    let mut ev = Evaluator::new(&mut e);
+    let mut runtime = JavaScriptRuntime::new();
 
     loop {
         print!("{}", PROMPT);
@@ -26,11 +20,7 @@ pub fn start() {
             break;
         }
 
-        let mut l = Lexer::new(input);
-        let mut p = Parser::new(&mut l);
-        let program = p.parse_program();
-        let res = ev.eval(&program);
-        match res {
+        match runtime.execute(input) {
             Ok(o) => println!("{}", o),
             Err(e) => println!("{}", e),
         }
