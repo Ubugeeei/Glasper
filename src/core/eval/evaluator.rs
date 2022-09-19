@@ -212,12 +212,10 @@ impl<'a> Evaluator<'a> {
         match self.env.get(stmt.name.as_str()) {
             // varidation
             Some(var) => match var.kind {
-                VariableKind::Const => {
-                    return Err(Error::new(
-                        std::io::ErrorKind::Other,
-                        format!("Cannot reassign to const '{}'", stmt.name),
-                    ))
-                }
+                VariableKind::Const => Err(Error::new(
+                    std::io::ErrorKind::Other,
+                    format!("Cannot reassign to const '{}'", stmt.name),
+                )),
                 VariableKind::Let | VariableKind::Var => {
                     let value = self.eval_expression(&stmt.value)?;
                     let var = Variable::new(VariableKind::Let, value);
@@ -239,15 +237,13 @@ impl<'a> Evaluator<'a> {
         match self.env.get(stmt.name.as_str()) {
             // varidation
             Some(var) => match var.kind {
-                VariableKind::Const => {
-                    return Err(Error::new(
-                        std::io::ErrorKind::Other,
-                        format!(
-                            "Uncaught SyntaxError: Identifier '{}' has already been declared",
-                            stmt.name
-                        ),
-                    ))
-                }
+                VariableKind::Const => Err(Error::new(
+                    std::io::ErrorKind::Other,
+                    format!(
+                        "Uncaught SyntaxError: Identifier '{}' has already been declared",
+                        stmt.name
+                    ),
+                )),
                 VariableKind::Let | VariableKind::Var => {
                     let value = self.eval_expression(&stmt.value)?;
                     let var = Variable::new(VariableKind::Const, value);
