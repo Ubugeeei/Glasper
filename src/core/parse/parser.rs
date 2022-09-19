@@ -174,7 +174,6 @@ impl<'a> Parser<'a> {
         let consequence = Box::new(self.parse_statement()?);
         self.next_token(); // skip '}'
 
-        dbg!(&self.peeked_token.token_type);
         // parse alternative
         let alternative = match self.cur_token.token_type {
             TokenType::Else => {
