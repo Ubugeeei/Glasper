@@ -16,7 +16,7 @@ impl<'a> Evaluator<'a> {
         Evaluator { env }
     }
 
-    pub fn eval(&self, program: &Program) -> Result<Object, Error> {
+    pub fn eval(&mut self, program: &Program) -> Result<Object, Error> {
         let mut result = Object::Undefined(GUndefined);
         for statement in &program.statements {
             result = self.eval_statement(statement)?;
@@ -24,7 +24,7 @@ impl<'a> Evaluator<'a> {
         Ok(result)
     }
 
-    fn eval_statement(&self, statement: &Statement) -> Result<Object, Error> {
+    fn eval_statement(&mut self, statement: &Statement) -> Result<Object, Error> {
         match statement {
             Statement::Expression(expr) => self.eval_expression(expr),
             Statement::Let(stmt) => self.eval_let_statement(stmt),
@@ -140,9 +140,10 @@ impl<'a> Evaluator<'a> {
         }
     }
 
-    fn eval_let_statement(&self, _stmt: &LetStatement) -> Result<Object, Error> {
+    fn eval_let_statement(&mut self, stmt: &LetStatement) -> Result<Object, Error> {
         // TODO: bind value to environment
-
+        let value = self.eval_expression(&stmt.value)?;
+        self.env.set(&stmt.name, value);
         Ok(Object::Undefined(GUndefined))
     }
 }
@@ -158,7 +159,7 @@ mod tests {
         let mut p = Parser::new(&mut l);
         let program = p.parse_program();
         let mut e = Environment::new();
-        let ev = Evaluator::new(&mut e);
+        let mut ev = Evaluator::new(&mut e);
         assert_eq!(program.statements.len(), 1);
         assert_eq!(
             format!("{}", ev.eval(&program).unwrap()),
@@ -172,10 +173,10 @@ mod tests {
         let mut p = Parser::new(&mut l);
         let program = p.parse_program();
         let mut e = Environment::new();
-        let ev = Evaluator::new(&mut e);
+        let mut ev = Evaluator::new(&mut e);
         assert_eq!(program.statements.len(), 1);
         assert_eq!(
-            format!("{}", ev.eval(&program,).unwrap()),
+            format!("{}", ev.eval(&program).unwrap()),
             "\x1b[33m1\x1b[0m"
         );
     }
@@ -187,10 +188,10 @@ mod tests {
             let mut p = Parser::new(&mut l);
             let program = p.parse_program();
             let mut e = Environment::new();
-            let ev = Evaluator::new(&mut e);
+            let mut ev = Evaluator::new(&mut e);
             assert_eq!(program.statements.len(), 1);
             assert_eq!(
-                format!("{}", ev.eval(&program,).unwrap()),
+                format!("{}", ev.eval(&program).unwrap()),
                 "\x1b[33mtrue\x1b[0m"
             );
         }
@@ -199,10 +200,10 @@ mod tests {
             let mut p = Parser::new(&mut l);
             let program = p.parse_program();
             let mut e = Environment::new();
-            let ev = Evaluator::new(&mut e);
+            let mut ev = Evaluator::new(&mut e);
             assert_eq!(program.statements.len(), 1);
             assert_eq!(
-                format!("{}", ev.eval(&program,).unwrap()),
+                format!("{}", ev.eval(&program).unwrap()),
                 "\x1b[33mfalse\x1b[0m"
             );
         }
@@ -226,9 +227,9 @@ mod tests {
             let mut p = Parser::new(&mut l);
             let program = p.parse_program();
             let mut e = Environment::new();
-            let ev = Evaluator::new(&mut e);
+            let mut ev = Evaluator::new(&mut e);
             assert_eq!(program.statements.len(), 1);
-            assert_eq!(format!("{}", ev.eval(&program,).unwrap()), expected);
+            assert_eq!(format!("{}", ev.eval(&program).unwrap()), expected);
         }
     }
 
@@ -265,9 +266,9 @@ mod tests {
             let mut p = Parser::new(&mut l);
             let program = p.parse_program();
             let mut e = Environment::new();
-            let ev = Evaluator::new(&mut e);
+            let mut ev = Evaluator::new(&mut e);
             assert_eq!(program.statements.len(), 1);
-            assert_eq!(format!("{}", ev.eval(&program,).unwrap()), expected);
+            assert_eq!(format!("{}", ev.eval(&program).unwrap()), expected);
         }
     }
 }
