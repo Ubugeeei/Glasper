@@ -59,6 +59,7 @@ impl<'a> Parser<'a> {
             TokenType::Const => self.parse_const_statement(),
             TokenType::If => self.parse_if_statement(),
             TokenType::Return => self.parse_return_statement(),
+            TokenType::LBrace => self.parse_block_statement(),
             _ => self.parse_expression_statement(),
         }
     }
@@ -159,43 +160,27 @@ impl<'a> Parser<'a> {
         if self.peeked_token.token_type != TokenType::RParen {
             return Err(Error::new(
                 ErrorKind::InvalidInput,
-                format!("expected token ')' but found {}", self.peeked_token.literal),
-            ));
-        }
-
-        self.next_token(); // skip ')'
-
-        // TODO: parse non block statement
-        if self.peeked_token.token_type != TokenType::LBrace {
-            return Err(Error::new(
-                ErrorKind::InvalidInput,
                 format!(
-                    "expected token '{{' but found {} in parse_if_statement",
+                    "expected token ')' but found '{}' (at parse_if_statement)",
                     self.peeked_token.literal
                 ),
             ));
         }
 
+        self.next_token();
+        self.next_token(); // skip ')'
+
         // parse consequence
-        let consequence = self.parse_block_statement()?;
+        let consequence = Box::new(self.parse_statement()?);
+        self.next_token(); // skip '}'
 
         // parse alternative
-        let alternative = if self.peeked_token.token_type == TokenType::Else {
-            self.next_token();
-            // TODO: parse non block statement
-            if self.peeked_token.token_type != TokenType::LBrace {
-                return Err(Error::new(
-                    ErrorKind::InvalidInput,
-                    format!(
-                        "expected token '{{' but found {}",
-                        self.peeked_token.literal
-                    ),
-                ));
+        let alternative = match self.cur_token.token_type {
+            TokenType::Else => {
+                self.next_token();
+                Box::new(Some(self.parse_statement()?))
             }
-
-            Some(self.parse_block_statement()?)
-        } else {
-            None
+            _ => Box::new(None),
         };
 
         Ok(Statement::If(IfStatement::new(
@@ -205,9 +190,9 @@ impl<'a> Parser<'a> {
         )))
     }
 
-    fn parse_block_statement(&mut self) -> Result<BlockStatement, Error> {
+    fn parse_block_statement(&mut self) -> Result<Statement, Error> {
         // guard
-        if self.peeked_token.token_type != TokenType::LBrace {
+        if self.cur_token.token_type != TokenType::LBrace {
             return Err(Error::new(
                 ErrorKind::InvalidInput,
                 format!(
@@ -220,7 +205,6 @@ impl<'a> Parser<'a> {
         self.next_token(); // skip '{'
 
         let mut statements = vec![];
-        self.next_token();
         while self.cur_token.token_type != TokenType::RBrace
             && self.cur_token.token_type != TokenType::Eof
         {
@@ -229,7 +213,7 @@ impl<'a> Parser<'a> {
             self.next_token();
         }
 
-        Ok(BlockStatement::new(statements))
+        Ok(Statement::Block(BlockStatement::new(statements)))
     }
 
     fn parse_return_statement(&mut self) -> Result<Statement, Error> {
@@ -274,7 +258,7 @@ impl<'a> Parser<'a> {
                 return Err(Error::new(
                     ErrorKind::InvalidInput,
                     format!(
-                        "unexpected token \"{}\" in parse_expression.",
+                        "unexpected token \"{}\" (at parse_expression)",
                         self.cur_token.literal
                     ),
                 ))
@@ -286,13 +270,39 @@ impl<'a> Parser<'a> {
         {
             expr = match self.peeked_token.token_type {
                 TokenType::LParen => {
-                    self.next_token();
-                    self.parse_call_expression(expr)?
+                    if self.cur_token.token_type == TokenType::Ident
+                        || self.cur_token.token_type == TokenType::RParen
+                    {
+                        self.next_token();
+                        self.parse_call_expression(expr)?
+                    } else {
+                        self.parse_grouped_expression()?
+                    }
                 }
-                _ => {
+                TokenType::Plus
+                | TokenType::Minus
+                | TokenType::Asterisk
+                | TokenType::Slash
+                | TokenType::Percent
+                | TokenType::Exp
+                | TokenType::And
+                | TokenType::Or
+                | TokenType::NullishCoalescing
+                | TokenType::BitAnd
+                | TokenType::BitOr
+                | TokenType::BitXOr
+                | TokenType::LT
+                | TokenType::GT
+                | TokenType::Eq
+                | TokenType::NotEq
+                | TokenType::Assign
+                | TokenType::ShL
+                | TokenType::ShR
+                | TokenType::SaR => {
                     self.next_token();
                     self.parse_infix_expression(expr)?
                 }
+                _ => expr,
             }
         }
         // TODO: impl
@@ -389,7 +399,7 @@ impl<'a> Parser<'a> {
             Err(Error::new(
                 ErrorKind::InvalidInput,
                 format!(
-                    "expected token ')' but found '{}'",
+                    "expected token ')' or ','. but found '{}' (at parse_grouped_expression)",
                     self.peeked_token.literal
                 ),
             ))
@@ -402,14 +412,30 @@ impl<'a> Parser<'a> {
             return Err(Error::new(
                 ErrorKind::InvalidInput,
                 format!(
-                    "expected token '(' but found '{}'",
+                    "expected token '(' but found '{}' (at parse_function_expression)",
                     self.peeked_token.literal
                 ),
             ));
         }
 
         let params = self.parse_function_parameters()?;
+
+        // guard
+        if self.peeked_token.token_type != TokenType::LBrace {
+            return Err(Error::new(
+                ErrorKind::InvalidInput,
+                format!(
+                    "expected token '{{' but found '{}'",
+                    self.peeked_token.literal
+                ),
+            ));
+        }
+        self.next_token();
         let body = self.parse_block_statement()?;
+        let body = match body {
+            Statement::Block(b) => b,
+            _ => unreachable!(),
+        };
         Ok(Expression::Function(FunctionExpression::new(params, body)))
     }
 
@@ -419,7 +445,7 @@ impl<'a> Parser<'a> {
             return Err(Error::new(
                 ErrorKind::InvalidInput,
                 format!(
-                    "expected token '(' but found '{}'",
+                    "expected token '(' but found '{}' (at parse_function_parameters)",
                     self.peeked_token.literal
                 ),
             ));
@@ -663,13 +689,15 @@ pub mod tests {
                         String::from("<"),
                         Box::new(Expression::Identifier(String::from("y"))),
                     )),
-                    BlockStatement::new(vec![Statement::Let(LetStatement::new(
-                        String::from("a"),
-                        Expression::Number(1.0),
-                    ))]),
-                    Some(BlockStatement::new(vec![Statement::Let(
-                        LetStatement::new(String::from("a"), Expression::Number(2.0)),
-                    )])),
+                    Box::new(Statement::Block(BlockStatement::new(vec![Statement::Let(
+                        LetStatement::new(String::from("a"), Expression::Number(1.0)),
+                    )]))),
+                    Box::new(Some(Statement::Block(BlockStatement::new(vec![
+                        Statement::Let(LetStatement::new(
+                            String::from("a"),
+                            Expression::Number(2.0),
+                        )),
+                    ])))),
                 ))],
             ),
             (
@@ -686,11 +714,29 @@ pub mod tests {
                         String::from("<"),
                         Box::new(Expression::Identifier(String::from("y"))),
                     )),
-                    BlockStatement::new(vec![Statement::Let(LetStatement::new(
+                    Box::new(Statement::Block(BlockStatement::new(vec![Statement::Let(
+                        LetStatement::new(String::from("a"), Expression::Number(1.0)),
+                    )]))),
+                    Box::new(None),
+                ))],
+            ),
+            (
+                String::from(
+                    r#"
+                        if (x < y) let a = 1;
+                    "#,
+                ),
+                vec![Statement::If(IfStatement::new(
+                    Expression::Infix(InfixExpression::new(
+                        Box::new(Expression::Identifier(String::from("x"))),
+                        String::from("<"),
+                        Box::new(Expression::Identifier(String::from("y"))),
+                    )),
+                    Box::new(Statement::Let(LetStatement::new(
                         String::from("a"),
                         Expression::Number(1.0),
-                    ))]),
-                    None,
+                    ))),
+                    Box::new(None),
                 ))],
             ),
         ];
@@ -1394,62 +1440,33 @@ pub mod tests {
                     ],
                 ))),
             ),
-            (
-                String::from("function(a, b, c){}(1, 2 * 3, 4 + 5);"),
-                Statement::Expression(Expression::Call(CallExpression::new(
-                    Box::new(Expression::Function(FunctionExpression::new(
-                        vec![
-                            FunctionParameter::new(String::from("a"), None),
-                            FunctionParameter::new(String::from("b"), None),
-                            FunctionParameter::new(String::from("c"), None),
-                        ],
-                        BlockStatement::new(vec![]),
-                    ))),
-                    vec![
-                        Expression::Number(1.0),
-                        Expression::Infix(InfixExpression::new(
-                            Box::new(Expression::Number(2.0)),
-                            String::from("*"),
-                            Box::new(Expression::Number(3.0)),
-                        )),
-                        Expression::Infix(InfixExpression::new(
-                            Box::new(Expression::Number(4.0)),
-                            String::from("+"),
-                            Box::new(Expression::Number(5.0)),
-                        )),
-                    ],
-                ))),
-            ),
-            (
-                String::from("function(a, b, c){}(1, 2 * (3 + 4), 5 + 6);"),
-                Statement::Expression(Expression::Call(CallExpression::new(
-                    Box::new(Expression::Function(FunctionExpression::new(
-                        vec![
-                            FunctionParameter::new(String::from("a"), None),
-                            FunctionParameter::new(String::from("b"), None),
-                            FunctionParameter::new(String::from("c"), None),
-                        ],
-                        BlockStatement::new(vec![]),
-                    ))),
-                    vec![
-                        Expression::Number(1.0),
-                        Expression::Infix(InfixExpression::new(
-                            Box::new(Expression::Number(2.0)),
-                            String::from("*"),
-                            Box::new(Expression::Infix(InfixExpression::new(
-                                Box::new(Expression::Number(3.0)),
-                                String::from("+"),
-                                Box::new(Expression::Number(4.0)),
-                            ))),
-                        )),
-                        Expression::Infix(InfixExpression::new(
-                            Box::new(Expression::Number(5.0)),
-                            String::from("+"),
-                            Box::new(Expression::Number(6.0)),
-                        )),
-                    ],
-                ))),
-            ),
+            // TODO: immediate function call
+            // (
+            //     String::from("(function(a, b, c){})(1, 2 * 3, 4 + 5);"),
+            //     Statement::Expression(Expression::Call(CallExpression::new(
+            //         Box::new(Expression::Function(FunctionExpression::new(
+            //             vec![
+            //                 FunctionParameter::new(String::from("a"), None),
+            //                 FunctionParameter::new(String::from("b"), None),
+            //                 FunctionParameter::new(String::from("c"), None),
+            //             ],
+            //             BlockStatement::new(vec![]),
+            //         ))),
+            //         vec![
+            //             Expression::Number(1.0),
+            //             Expression::Infix(InfixExpression::new(
+            //                 Box::new(Expression::Number(2.0)),
+            //                 String::from("*"),
+            //                 Box::new(Expression::Number(3.0)),
+            //             )),
+            //             Expression::Infix(InfixExpression::new(
+            //                 Box::new(Expression::Number(4.0)),
+            //                 String::from("+"),
+            //                 Box::new(Expression::Number(5.0)),
+            //             )),
+            //         ],
+            //     ))),
+            // ),
             (
                 String::from("let result = (1 + add(2, 3)) * 5;"),
                 Statement::Let(LetStatement::new(

@@ -19,6 +19,7 @@ pub enum Statement {
     Return(Expression),
     Expression(Expression),
     If(IfStatement),
+    Block(BlockStatement),
     // TODO: impl
     // switch
     // for
@@ -63,14 +64,14 @@ impl ConstStatement {
 #[derive(Debug, PartialEq)]
 pub struct IfStatement {
     pub condition: Expression,
-    pub consequence: BlockStatement,
-    pub alternative: Option<BlockStatement>,
+    pub consequence: Box<Statement>,
+    pub alternative: Box<Option<Statement>>,
 }
 impl IfStatement {
     pub fn new(
         condition: Expression,
-        consequence: BlockStatement,
-        alternative: Option<BlockStatement>,
+        consequence: Box<Statement>,
+        alternative: Box<Option<Statement>>,
     ) -> IfStatement {
         IfStatement {
             condition,

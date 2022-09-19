@@ -1,5 +1,3 @@
-#![allow(dead_code)]
-
 use std::io::Error;
 
 use crate::core::{
@@ -7,7 +5,9 @@ use crate::core::{
         environment::Environment,
         object::{GBoolean, GNull, GNumber, GUndefined, Object},
     },
-    parse::ast::{ConstStatement, Expression, LetStatement, Program, Statement},
+    parse::ast::{
+        BlockStatement, ConstStatement, Expression, IfStatement, LetStatement, Program, Statement,
+    },
 };
 
 use super::environment::{Variable, VariableKind};
@@ -33,6 +33,8 @@ impl<'a> Evaluator<'a> {
             Statement::Expression(expr) => self.eval_expression(expr),
             Statement::Let(stmt) => self.eval_let_statement(stmt),
             Statement::Const(stmt) => self.eval_const_statement(stmt),
+            Statement::If(stmt) => self.eval_if_statement(stmt),
+            Statement::Block(stmt) => self.eval_block_statement(stmt),
             _ => Ok(Object::Undefined(GUndefined)),
         }
     }
@@ -314,6 +316,36 @@ impl<'a> Evaluator<'a> {
             )),
         }
     }
+
+    fn eval_if_statement(&mut self, statement: &IfStatement) -> Result<Object, Error> {
+        let condition = self.eval_expression(&statement.condition)?;
+        if self.is_truthy(condition) {
+            self.eval_statement(&statement.consequence)
+        } else {
+            let un_boxed = statement.alternative.as_ref();
+            match un_boxed {
+                Some(ref alt) => self.eval_statement(alt),
+                None => Ok(Object::Undefined(GUndefined)),
+            }
+        }
+    }
+
+    fn eval_block_statement(&mut self, block: &BlockStatement) -> Result<Object, Error> {
+        let mut result = Object::Undefined(GUndefined);
+        for stmt in &block.statements {
+            result = self.eval_statement(stmt)?;
+        }
+        Ok(result)
+    }
+
+    fn is_truthy(&self, obj: Object) -> bool {
+        match obj {
+            Object::Boolean(b) => b.value,
+            Object::Null(_) => false,
+            Object::Undefined(_) => false,
+            _ => true,
+        }
+    }
 }
 
 #[cfg(test)]
@@ -558,6 +590,99 @@ mod tests {
             let mut e = Environment::new();
             let mut ev = Evaluator::new(&mut e);
             ev.eval(&program).unwrap_err();
+        }
+    }
+
+    #[test]
+    fn test_eval_if_statement() {
+        {
+            let case = vec![
+                (
+                    String::from(
+                        r#"
+                            let a = 5;
+                            if (a % 2 == 0) {
+                                a = 0;
+                            } else {
+                                a = 1;
+                            }
+                            a;
+                        "#,
+                    ),
+                    "\x1b[33m1\x1b[0m",
+                ),
+                (
+                    String::from(
+                        r#"
+                            let a = 6;
+                            if (a % 2 == 0) {
+                                a = 0;
+                            } else {
+                                a = 1;
+                            }
+                            a;
+                        "#,
+                    ),
+                    "\x1b[33m0\x1b[0m",
+                ),
+                (
+                    String::from(
+                        r#"
+                            let a = 3;
+                            if (a % 3 == 0) {
+                                a = 0;
+                            } else if (a % 3 == 1) {
+                                a = 1;
+                            } else {
+                                a = 2;
+                            }
+                            a;
+                        "#,
+                    ),
+                    "\x1b[33m0\x1b[0m",
+                ),
+                (
+                    String::from(
+                        r#"
+                            let a = 4;
+                            if (a % 3 == 0) {
+                                a = 0;
+                            } else if (a % 3 == 1) {
+                                a = 1;
+                            } else {
+                                a = 2;
+                            }
+                            a;
+                        "#,
+                    ),
+                    "\x1b[33m1\x1b[0m",
+                ),
+                (
+                    String::from(
+                        r#"
+                            let a = 5;
+                            if (a % 3 == 0) {
+                                a = 0;
+                            } else if (a % 3 == 1) {
+                                a = 1;
+                            } else {
+                                a = 2;
+                            }
+                            a;
+                        "#,
+                    ),
+                    "\x1b[33m2\x1b[0m",
+                ),
+            ];
+
+            for (input, expected) in case {
+                let mut l = Lexer::new(input.to_string());
+                let mut p = Parser::new(&mut l);
+                let program = p.parse_program();
+                let mut e = Environment::new();
+                let mut ev = Evaluator::new(&mut e);
+                assert_eq!(format!("{}", ev.eval(&program).unwrap()), expected);
+            }
         }
     }
 }
