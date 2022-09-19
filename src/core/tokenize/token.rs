@@ -37,6 +37,7 @@ pub enum TokenType {
     // others
     Comma,
     SemiColon,
+    Conditional, // ?
 
     /*
      * combination of symbols
@@ -45,6 +46,7 @@ pub enum TokenType {
     NotEq,
     Inc,
     Dec,
+    NullishCoalescing, // ??
 
     /*
      * keywords
@@ -72,6 +74,7 @@ impl Token {
     pub fn get_precedence(&mut self) -> Precedence {
         match self.token_type {
             TokenType::Eq => Precedence::Equals,
+            TokenType::NullishCoalescing => Precedence::NullishCoalescing,
             TokenType::NotEq => Precedence::Equals,
             TokenType::LT => Precedence::LessGreater,
             TokenType::GT => Precedence::LessGreater,
