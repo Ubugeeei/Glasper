@@ -113,6 +113,7 @@ impl<'a> Evaluator<'a> {
                     "*" => Ok(Object::Number(GNumber::new(l * r))),
                     "/" => Ok(Object::Number(GNumber::new(l / r))),
                     "|" => Ok(Object::Number(GNumber::new((l as i64 | r as i64) as f64))),
+                    "&" => Ok(Object::Number(GNumber::new((l as i64 & r as i64) as f64))),
                     "<" => Ok(Object::Boolean(GBoolean::new(l < r))),
                     ">" => Ok(Object::Boolean(GBoolean::new(l > r))),
                     "==" => Ok(Object::Boolean(GBoolean::new(l == r))),
@@ -342,6 +343,7 @@ mod tests {
             ("0 && 2", "\x1b[33m0\x1b[0m"),
             ("false || true", "\x1b[33mtrue\x1b[0m"),
             ("0b1100 | 0b0011", "\x1b[33m15\x1b[0m"),
+            ("0b1100 & 0b0011", "\x1b[33m0\x1b[0m"),
         ];
 
         for (input, expected) in case {
