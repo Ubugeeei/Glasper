@@ -35,7 +35,7 @@ impl<'a> Evaluator<'a> {
         }
     }
 
-    fn eval_expression(&self, expr: &Expression) -> Result<Object, Error> {
+    fn eval_expression(&mut self, expr: &Expression) -> Result<Object, Error> {
         match expr {
             Expression::Number(i) => Ok(Object::Number(GNumber { value: *i })),
             Expression::Boolean(b) => Ok(Object::Boolean(GBoolean { value: *b })),
@@ -46,9 +46,13 @@ impl<'a> Evaluator<'a> {
 
             Expression::Prefix(expr) => self.eval_prefix_expression(expr),
             Expression::Infix(expr) => {
-                let left = self.eval_expression(&expr.left)?;
-                let right = self.eval_expression(&expr.right)?;
-                self.eval_infix_expression(expr.operator.clone(), left, right)
+                if expr.operator == "=" {
+                    self.eval_assign_expression(&expr.left, &expr.right)
+                } else {
+                    let left = self.eval_expression(&expr.left)?;
+                    let right = self.eval_expression(&expr.right)?;
+                    self.eval_infix_expression(expr.operator.clone(), left, right)
+                }
             }
 
             _ => Ok(Object::Undefined(GUndefined)),
@@ -56,7 +60,7 @@ impl<'a> Evaluator<'a> {
     }
 
     fn eval_prefix_expression(
-        &self,
+        &mut self,
         expr: &crate::core::parse::ast::PrefixExpression,
     ) -> Result<Object, Error> {
         let right = self.eval_expression(&expr.right)?;
@@ -224,6 +228,24 @@ impl<'a> Evaluator<'a> {
             )),
         }
     }
+
+    fn eval_assign_expression(
+        &mut self,
+        left: &Expression,
+        right: &Expression,
+    ) -> Result<Object, Error> {
+        match left {
+            Expression::Identifier(name) => {
+                let value = self.eval_expression(right)?;
+                self.env.set(name, value);
+                Ok(value)
+            }
+            _ => Err(Error::new(
+                std::io::ErrorKind::Other,
+                "Unexpected assign target",
+            )),
+        }
+    }
 }
 
 #[cfg(test)]
@@ -380,6 +402,7 @@ mod tests {
                 "let a = 1; let b = a; let c = a + b + 5; c;",
                 "\x1b[33m7\x1b[0m",
             ),
+            ("let a = 1; a = 3;", "\x1b[33m3\x1b[0m"),
         ];
 
         for (input, expected) in case {
