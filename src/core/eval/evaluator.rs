@@ -116,6 +116,7 @@ impl<'a> Evaluator<'a> {
                     ">" => Ok(Object::Boolean(GBoolean::new(l > r))),
                     "==" => Ok(Object::Boolean(GBoolean::new(l == r))),
                     "!=" => Ok(Object::Boolean(GBoolean::new(l != r))),
+                    "??" => Ok(Object::Number(GNumber::new(l))),
                     o => Err(Error::new(
                         std::io::ErrorKind::Other,
                         format!(
@@ -129,6 +130,7 @@ impl<'a> Evaluator<'a> {
                 match operator.as_str() {
                     "==" => Ok(Object::Boolean(GBoolean::new(l == r))),
                     "!=" => Ok(Object::Boolean(GBoolean::new(l != r))),
+                    "??" => Ok(Object::Boolean(GBoolean::new(l))),
                     o => Err(Error::new(
                         std::io::ErrorKind::Other,
                         format!(
@@ -138,6 +140,16 @@ impl<'a> Evaluator<'a> {
                     )),
                 }
             }
+            (Object::Null(_), r) | (Object::Undefined(_), r) => match operator.as_str() {
+                "??" => Ok(r),
+                o => Err(Error::new(
+                    std::io::ErrorKind::Other,
+                    format!(
+                        "Unexpected infix operator '{}'. at eval_infix_expression",
+                        o
+                    ),
+                )),
+            },
             _ => Err(Error::new(
                 std::io::ErrorKind::Other,
                 "Unexpected infix operator. at eval_infix_expression",
@@ -280,6 +292,10 @@ mod tests {
             ("false != false", "\x1b[33mfalse\x1b[0m"),
             ("false == true", "\x1b[33mfalse\x1b[0m"),
             ("false != true", "\x1b[33mtrue\x1b[0m"),
+            ("null ?? 1", "\x1b[33m1\x1b[0m"),
+            ("undefined ?? 1", "\x1b[33m1\x1b[0m"),
+            ("1 ?? 2", "\x1b[33m1\x1b[0m"),
+            ("false ?? true", "\x1b[33mfalse\x1b[0m"),
         ];
 
         for (input, expected) in case {
