@@ -71,6 +71,15 @@ impl Lexer {
                 }
             }
 
+            '?' => {
+                if self.peek_char() == '?' {
+                    self.read_char();
+                    Token::new(TokenType::NullishCoalescing, "??".to_string())
+                } else {
+                    Token::new(TokenType::Conditional, self.ch.to_string())
+                }
+            }
+
             _ => {
                 if Self::is_letter(self.ch) {
                     let id = self.read_identifier();
@@ -201,7 +210,7 @@ pub mod tests {
 
     #[test]
     fn test_symbol_token() {
-        let source = String::from("=+-*/!<>(){},;++--");
+        let source = String::from("=+-*/!<>(){},;++-- ? ??");
         let mut l = Lexer::new(source);
         assert_eq!(l.next_token().token_type, TokenType::Assign);
         assert_eq!(l.next_token().token_type, TokenType::Plus);
@@ -219,6 +228,8 @@ pub mod tests {
         assert_eq!(l.next_token().token_type, TokenType::SemiColon);
         assert_eq!(l.next_token().token_type, TokenType::Inc);
         assert_eq!(l.next_token().token_type, TokenType::Dec);
+        assert_eq!(l.next_token().token_type, TokenType::Conditional);
+        assert_eq!(l.next_token().token_type, TokenType::NullishCoalescing);
     }
 
     #[test]
