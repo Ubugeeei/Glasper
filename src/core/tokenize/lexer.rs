@@ -50,6 +50,7 @@ impl Lexer {
                 }
             }
             '/' => Token::new(TokenType::Slash, self.ch.to_string()),
+            '%' => Token::new(TokenType::Percent, self.ch.to_string()),
 
             '|' => {
                 if self.peek_char() == '|' {
@@ -254,13 +255,14 @@ pub mod tests {
 
     #[test]
     fn test_symbol_token() {
-        let source = String::from("=+-*/!<>(){},;?|&^");
+        let source = String::from("=+-*/%!<>(){},;?|&^");
         let mut l = Lexer::new(source);
         assert_eq!(l.next_token().token_type, TokenType::Assign);
         assert_eq!(l.next_token().token_type, TokenType::Plus);
         assert_eq!(l.next_token().token_type, TokenType::Minus);
         assert_eq!(l.next_token().token_type, TokenType::Asterisk);
         assert_eq!(l.next_token().token_type, TokenType::Slash);
+        assert_eq!(l.next_token().token_type, TokenType::Percent);
         assert_eq!(l.next_token().token_type, TokenType::Bang);
         assert_eq!(l.next_token().token_type, TokenType::LT);
         assert_eq!(l.next_token().token_type, TokenType::GT);

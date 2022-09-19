@@ -26,6 +26,7 @@ pub enum TokenType {
     Bang,
     Asterisk,
     Slash,
+    Percent,
     BitOr,
     BitAnd,
     BitXOr,
@@ -93,7 +94,7 @@ impl Token {
             TokenType::Plus | TokenType::Minus => Precedence::Sum,
             TokenType::Exp => Precedence::Exp,
             TokenType::ShL | TokenType::ShR | TokenType::SaR => Precedence::Shift,
-            TokenType::Slash | TokenType::Asterisk => Precedence::Product,
+            TokenType::Slash | TokenType::Asterisk | TokenType::Percent => Precedence::Product,
             TokenType::LParen => Precedence::Call,
             _ => Precedence::Lowest,
         }
