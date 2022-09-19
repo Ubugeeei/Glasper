@@ -177,6 +177,7 @@ pub enum Precedence {
     Lowest,
     Equals,            // == or !==
     NullishCoalescing, // ??
+    Bool,              // && or ||
     LessGreater,       // > or <
     Sum,               // + or -
     Product,           // * or /

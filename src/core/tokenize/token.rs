@@ -26,6 +26,7 @@ pub enum TokenType {
     Bang,
     Asterisk,
     Slash,
+    BitOr,
     // comp
     LT,
     GT,
@@ -37,6 +38,8 @@ pub enum TokenType {
     // others
     Comma,
     SemiColon,
+    // bool
+    Or,
     Conditional, // ?
 
     /*
@@ -75,9 +78,11 @@ impl Token {
         match self.token_type {
             TokenType::Eq => Precedence::Equals,
             TokenType::NullishCoalescing => Precedence::NullishCoalescing,
+            TokenType::Or => Precedence::Bool,
             TokenType::NotEq => Precedence::Equals,
             TokenType::LT => Precedence::LessGreater,
             TokenType::GT => Precedence::LessGreater,
+            TokenType::BitOr => Precedence::Sum,
             TokenType::Plus => Precedence::Sum,
             TokenType::Minus => Precedence::Sum,
             TokenType::Slash => Precedence::Product,

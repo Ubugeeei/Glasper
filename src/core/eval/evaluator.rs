@@ -117,6 +117,13 @@ impl<'a> Evaluator<'a> {
                     "==" => Ok(Object::Boolean(GBoolean::new(l == r))),
                     "!=" => Ok(Object::Boolean(GBoolean::new(l != r))),
                     "??" => Ok(Object::Number(GNumber::new(l))),
+                    "||" => {
+                        if l == 0.0 {
+                            Ok(Object::Number(GNumber::new(r)))
+                        } else {
+                            Ok(Object::Number(GNumber::new(l)))
+                        }
+                    }
                     o => Err(Error::new(
                         std::io::ErrorKind::Other,
                         format!(
@@ -131,6 +138,13 @@ impl<'a> Evaluator<'a> {
                     "==" => Ok(Object::Boolean(GBoolean::new(l == r))),
                     "!=" => Ok(Object::Boolean(GBoolean::new(l != r))),
                     "??" => Ok(Object::Boolean(GBoolean::new(l))),
+                    "||" => {
+                        if l {
+                            Ok(Object::Boolean(GBoolean::new(l)))
+                        } else {
+                            Ok(Object::Boolean(GBoolean::new(r)))
+                        }
+                    }
                     o => Err(Error::new(
                         std::io::ErrorKind::Other,
                         format!(
@@ -142,6 +156,7 @@ impl<'a> Evaluator<'a> {
             }
             (Object::Null(_), r) | (Object::Undefined(_), r) => match operator.as_str() {
                 "??" => Ok(r),
+                "||" => Ok(r),
                 o => Err(Error::new(
                     std::io::ErrorKind::Other,
                     format!(
@@ -296,6 +311,11 @@ mod tests {
             ("undefined ?? 1", "\x1b[33m1\x1b[0m"),
             ("1 ?? 2", "\x1b[33m1\x1b[0m"),
             ("false ?? true", "\x1b[33mfalse\x1b[0m"),
+            ("null || 1", "\x1b[33m1\x1b[0m"),
+            ("undefined || 1", "\x1b[33m1\x1b[0m"),
+            ("1 || 2", "\x1b[33m1\x1b[0m"),
+            ("0 || 2", "\x1b[33m2\x1b[0m"),
+            ("false || true", "\x1b[33mtrue\x1b[0m"),
         ];
 
         for (input, expected) in case {
