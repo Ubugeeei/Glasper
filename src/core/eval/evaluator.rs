@@ -209,18 +209,60 @@ impl<'a> Evaluator<'a> {
     }
 
     fn eval_let_statement(&mut self, stmt: &LetStatement) -> Result<Object, Error> {
-        let value = self.eval_expression(&stmt.value)?;
-        let var = Variable::new(VariableKind::Let, value);
-        self.env.set(&stmt.name, var);
-        Ok(Object::Undefined(GUndefined))
+        match self.env.get(stmt.name.as_str()) {
+            // varidation
+            Some(var) => match var.kind {
+                VariableKind::Const => {
+                    return Err(Error::new(
+                        std::io::ErrorKind::Other,
+                        format!("Cannot reassign to const '{}'", stmt.name),
+                    ))
+                }
+                VariableKind::Let | VariableKind::Var => {
+                    let value = self.eval_expression(&stmt.value)?;
+                    let var = Variable::new(VariableKind::Let, value);
+                    self.env.set(&stmt.name, var);
+                    Ok(Object::Undefined(GUndefined))
+                }
+            },
+            // initial set
+            None => {
+                let value = self.eval_expression(&stmt.value)?;
+                let var = Variable::new(VariableKind::Let, value);
+                self.env.set(&stmt.name, var);
+                Ok(Object::Undefined(GUndefined))
+            }
+        }
     }
 
-    // TODO: as constant
     fn eval_const_statement(&mut self, stmt: &ConstStatement) -> Result<Object, Error> {
-        let value = self.eval_expression(&stmt.value)?;
-        let var = Variable::new(VariableKind::Const, value);
-        self.env.set(&stmt.name, var);
-        Ok(Object::Undefined(GUndefined))
+        match self.env.get(stmt.name.as_str()) {
+            // varidation
+            Some(var) => match var.kind {
+                VariableKind::Const => {
+                    return Err(Error::new(
+                        std::io::ErrorKind::Other,
+                        format!(
+                            "Uncaught SyntaxError: Identifier '{}' has already been declared",
+                            stmt.name
+                        ),
+                    ))
+                }
+                VariableKind::Let | VariableKind::Var => {
+                    let value = self.eval_expression(&stmt.value)?;
+                    let var = Variable::new(VariableKind::Const, value);
+                    self.env.set(&stmt.name, var);
+                    Ok(Object::Undefined(GUndefined))
+                }
+            },
+            // initial set
+            None => {
+                let value = self.eval_expression(&stmt.value)?;
+                let var = Variable::new(VariableKind::Const, value);
+                self.env.set(&stmt.name, var);
+                Ok(Object::Undefined(GUndefined))
+            }
+        }
     }
 
     fn eval_identifier(&self, name: &str) -> Result<Object, Error> {
@@ -240,14 +282,39 @@ impl<'a> Evaluator<'a> {
     ) -> Result<Object, Error> {
         match left {
             Expression::Identifier(name) => {
-                let value = self.eval_expression(right)?;
-                let var = Variable::new(VariableKind::Let, value);
-                self.env.set(name, var);
-                Ok(value)
+                match self.env.get(name.as_str()) {
+                    Some(var) => match var.kind {
+                        // varidation
+                        VariableKind::Const => Err(Error::new(
+                            std::io::ErrorKind::Other,
+                            "Uncaught TypeError: Assignment to constant variable.",
+                        )),
+                        // assqign
+                        VariableKind::Let => {
+                            let value = self.eval_expression(right)?;
+                            let var = Variable::new(VariableKind::Let, value);
+                            self.env.set(name, var);
+                            Ok(value)
+                        }
+                        VariableKind::Var => {
+                            let value = self.eval_expression(right)?;
+                            let var = Variable::new(VariableKind::Var, value);
+                            self.env.set(name, var);
+                            Ok(value)
+                        }
+                    },
+                    // no var
+                    None => {
+                        let value = self.eval_expression(right)?;
+                        let var = Variable::new(VariableKind::Var, value);
+                        self.env.set(name, var);
+                        Ok(value)
+                    }
+                }
             }
             _ => Err(Error::new(
                 std::io::ErrorKind::Other,
-                "Unexpected assign target",
+                "Uncaught SyntaxError: Invalid left-hand side in assignment",
             )),
         }
     }
