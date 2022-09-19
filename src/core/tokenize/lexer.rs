@@ -52,6 +52,14 @@ impl Lexer {
                     Token::new(TokenType::BitOr, self.ch.to_string())
                 }
             }
+            '&' => {
+                if self.peek_char() == '&' {
+                    self.read_char();
+                    Token::new(TokenType::And, "&&".to_string())
+                } else {
+                    Token::new(TokenType::BitAnd, self.ch.to_string())
+                }
+            }
 
             '<' => Token::new(TokenType::LT, self.ch.to_string()),
             '>' => Token::new(TokenType::GT, self.ch.to_string()),
@@ -219,7 +227,7 @@ pub mod tests {
 
     #[test]
     fn test_symbol_token() {
-        let source = String::from("=+-*/!<>(){},;++-- ? ?? | ||");
+        let source = String::from("=+-*/!<>(){},;++-- ? ?? | || & &&");
         let mut l = Lexer::new(source);
         assert_eq!(l.next_token().token_type, TokenType::Assign);
         assert_eq!(l.next_token().token_type, TokenType::Plus);
@@ -241,6 +249,8 @@ pub mod tests {
         assert_eq!(l.next_token().token_type, TokenType::NullishCoalescing);
         assert_eq!(l.next_token().token_type, TokenType::BitOr);
         assert_eq!(l.next_token().token_type, TokenType::Or);
+        assert_eq!(l.next_token().token_type, TokenType::BitAnd);
+        assert_eq!(l.next_token().token_type, TokenType::And);
     }
 
     #[test]

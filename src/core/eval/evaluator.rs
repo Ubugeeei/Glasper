@@ -125,6 +125,13 @@ impl<'a> Evaluator<'a> {
                             Ok(Object::Number(GNumber::new(l)))
                         }
                     }
+                    "&&" => {
+                        if l == 0.0 {
+                            Ok(Object::Number(GNumber::new(l)))
+                        } else {
+                            Ok(Object::Number(GNumber::new(r)))
+                        }
+                    }
                     o => Err(Error::new(
                         std::io::ErrorKind::Other,
                         format!(
@@ -146,6 +153,13 @@ impl<'a> Evaluator<'a> {
                             Ok(Object::Boolean(GBoolean::new(r)))
                         }
                     }
+                    "&&" => {
+                        if l {
+                            Ok(Object::Boolean(GBoolean::new(r)))
+                        } else {
+                            Ok(Object::Boolean(GBoolean::new(l)))
+                        }
+                    }
                     o => Err(Error::new(
                         std::io::ErrorKind::Other,
                         format!(
@@ -158,6 +172,11 @@ impl<'a> Evaluator<'a> {
             (Object::Null(_), r) | (Object::Undefined(_), r) => match operator.as_str() {
                 "??" => Ok(r),
                 "||" => Ok(r),
+                "&&" => match left {
+                    Object::Null(_) => Ok(Object::Null(GNull)),
+                    Object::Undefined(_) => Ok(Object::Undefined(GUndefined)),
+                    _ => unreachable!(),
+                },
                 o => Err(Error::new(
                     std::io::ErrorKind::Other,
                     format!(
@@ -316,6 +335,11 @@ mod tests {
             ("undefined || 1", "\x1b[33m1\x1b[0m"),
             ("1 || 2", "\x1b[33m1\x1b[0m"),
             ("0 || 2", "\x1b[33m2\x1b[0m"),
+            ("false || true", "\x1b[33mtrue\x1b[0m"),
+            ("null && 1", "null"),
+            ("undefined && 1", "\x1b[30mundefined\x1b[0m"),
+            ("1 && 2", "\x1b[33m2\x1b[0m"),
+            ("0 && 2", "\x1b[33m0\x1b[0m"),
             ("false || true", "\x1b[33mtrue\x1b[0m"),
             ("0b1100 | 0b0011", "\x1b[33m15\x1b[0m"),
         ];

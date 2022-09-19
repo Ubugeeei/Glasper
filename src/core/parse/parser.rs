@@ -1001,6 +1001,38 @@ pub mod tests {
                         Box::new(Expression::Number(1.0)),
                     ))),
                 ),
+                (
+                    String::from("1 | 1;"),
+                    Statement::Expression(Expression::Infix(InfixExpression::new(
+                        Box::new(Expression::Number(1.0)),
+                        String::from("|"),
+                        Box::new(Expression::Number(1.0)),
+                    ))),
+                ),
+                (
+                    String::from("1 || 1;"),
+                    Statement::Expression(Expression::Infix(InfixExpression::new(
+                        Box::new(Expression::Number(1.0)),
+                        String::from("||"),
+                        Box::new(Expression::Number(1.0)),
+                    ))),
+                ),
+                (
+                    String::from("1 & 1;"),
+                    Statement::Expression(Expression::Infix(InfixExpression::new(
+                        Box::new(Expression::Number(1.0)),
+                        String::from("&"),
+                        Box::new(Expression::Number(1.0)),
+                    ))),
+                ),
+                (
+                    String::from("1 && 1;"),
+                    Statement::Expression(Expression::Infix(InfixExpression::new(
+                        Box::new(Expression::Number(1.0)),
+                        String::from("&&"),
+                        Box::new(Expression::Number(1.0)),
+                    ))),
+                ),
             ];
 
             for (source, expected) in test_case {

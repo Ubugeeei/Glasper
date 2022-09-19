@@ -27,6 +27,7 @@ pub enum TokenType {
     Asterisk,
     Slash,
     BitOr,
+    BitAnd,
     // comp
     LT,
     GT,
@@ -40,6 +41,7 @@ pub enum TokenType {
     SemiColon,
     // bool
     Or,
+    And,
     Conditional, // ?
 
     /*
@@ -79,10 +81,12 @@ impl Token {
             TokenType::Eq => Precedence::Equals,
             TokenType::NullishCoalescing => Precedence::NullishCoalescing,
             TokenType::Or => Precedence::Bool,
+            TokenType::And => Precedence::Bool,
             TokenType::NotEq => Precedence::Equals,
             TokenType::LT => Precedence::LessGreater,
             TokenType::GT => Precedence::LessGreater,
             TokenType::BitOr => Precedence::Sum,
+            TokenType::BitAnd => Precedence::Sum,
             TokenType::Plus => Precedence::Sum,
             TokenType::Minus => Precedence::Sum,
             TokenType::Slash => Precedence::Product,
