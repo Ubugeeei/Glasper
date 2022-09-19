@@ -28,6 +28,7 @@ impl<'a> Evaluator<'a> {
         match statement {
             Statement::Expression(expr) => self.eval_expression(expr),
             Statement::Let(stmt) => self.eval_let_statement(stmt),
+            // TODO: const statement
             _ => Ok(Object::Undefined(GUndefined)),
         }
     }
@@ -38,6 +39,8 @@ impl<'a> Evaluator<'a> {
             Expression::Boolean(b) => Ok(Object::Boolean(GBoolean { value: *b })),
             Expression::Null => Ok(Object::Null(GNull)),
             Expression::Undefined => Ok(Object::Undefined(GUndefined)),
+
+            Expression::Identifier(name) => self.eval_identifier(name),
 
             Expression::Prefix(expr) => self.eval_prefix_expression(expr),
             Expression::Infix(expr) => {
@@ -145,6 +148,16 @@ impl<'a> Evaluator<'a> {
         let value = self.eval_expression(&stmt.value)?;
         self.env.set(&stmt.name, value);
         Ok(Object::Undefined(GUndefined))
+    }
+
+    fn eval_identifier(&self, name: &str) -> Result<Object, Error> {
+        match self.env.get(name) {
+            Some(value) => Ok(value),
+            None => Err(Error::new(
+                std::io::ErrorKind::Other,
+                format!("Uncaught ReferenceError: {} is not defined", name),
+            )),
+        }
     }
 }
 
