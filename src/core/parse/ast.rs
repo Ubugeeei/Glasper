@@ -183,6 +183,7 @@ pub enum Precedence {
     Shift,             // << or >> or >>>
     Sum,               // + or -
     Product,           // * or /
+    Exp,               // **
     Prefix,            // -X or !X
     Call,              // myFunction(x)
 }

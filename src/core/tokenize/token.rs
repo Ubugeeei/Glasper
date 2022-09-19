@@ -52,6 +52,7 @@ pub enum TokenType {
     NotEq,
     Inc,
     Dec,
+    Exp,
     NullishCoalescing, // ??
     ShL,
     ShR,
@@ -90,6 +91,7 @@ impl Token {
             TokenType::LT | TokenType::GT => Precedence::LessGreater,
             TokenType::BitOr | TokenType::BitAnd | TokenType::BitXOr => Precedence::Sum,
             TokenType::Plus | TokenType::Minus => Precedence::Sum,
+            TokenType::Exp => Precedence::Exp,
             TokenType::ShL | TokenType::ShR | TokenType::SaR => Precedence::Shift,
             TokenType::Slash | TokenType::Asterisk => Precedence::Product,
             TokenType::LParen => Precedence::Call,

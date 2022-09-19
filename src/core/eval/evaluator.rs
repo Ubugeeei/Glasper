@@ -119,6 +119,7 @@ impl<'a> Evaluator<'a> {
                     ">" => Ok(Object::Boolean(GBoolean::new(l > r))),
                     "==" => Ok(Object::Boolean(GBoolean::new(l == r))),
                     "!=" => Ok(Object::Boolean(GBoolean::new(l != r))),
+                    "**" => Ok(Object::Number(GNumber::new(l.powf(r)))),
                     "??" => Ok(Object::Number(GNumber::new(l))),
                     "||" => {
                         if l == 0.0 {
@@ -335,6 +336,7 @@ mod tests {
             ("false != false", "\x1b[33mfalse\x1b[0m"),
             ("false == true", "\x1b[33mfalse\x1b[0m"),
             ("false != true", "\x1b[33mtrue\x1b[0m"),
+            ("2 ** 10", "\x1b[33m1024\x1b[0m"),
             ("null ?? 1", "\x1b[33m1\x1b[0m"),
             ("undefined ?? 1", "\x1b[33m1\x1b[0m"),
             ("1 ?? 2", "\x1b[33m1\x1b[0m"),
