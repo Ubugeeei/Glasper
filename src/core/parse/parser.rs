@@ -993,6 +993,14 @@ pub mod tests {
                         Box::new(Expression::Number(2.0)),
                     ))),
                 ),
+                (
+                    String::from("null ?? 1;"),
+                    Statement::Expression(Expression::Infix(InfixExpression::new(
+                        Box::new(Expression::Null),
+                        String::from("??"),
+                        Box::new(Expression::Number(1.0)),
+                    ))),
+                ),
             ];
 
             for (source, expected) in test_case {
