@@ -37,7 +37,7 @@ impl Variable {
     }
 }
 
-#[derive(PartialEq, Debug, Clone)]
+#[derive(PartialEq, Eq, Debug, Clone)]
 pub enum VariableKind {
     Let,
     Const,
