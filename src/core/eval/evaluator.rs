@@ -10,6 +10,8 @@ use crate::core::{
     parse::ast::{ConstStatement, Expression, LetStatement, Program, Statement},
 };
 
+use super::environment::{Variable, VariableKind};
+
 pub struct Evaluator<'a> {
     env: &'a mut Environment,
 }
@@ -208,20 +210,22 @@ impl<'a> Evaluator<'a> {
 
     fn eval_let_statement(&mut self, stmt: &LetStatement) -> Result<Object, Error> {
         let value = self.eval_expression(&stmt.value)?;
-        self.env.set(&stmt.name, value);
+        let var = Variable::new(VariableKind::Let, value);
+        self.env.set(&stmt.name, var);
         Ok(Object::Undefined(GUndefined))
     }
 
     // TODO: as constant
     fn eval_const_statement(&mut self, stmt: &ConstStatement) -> Result<Object, Error> {
         let value = self.eval_expression(&stmt.value)?;
-        self.env.set(&stmt.name, value);
+        let var = Variable::new(VariableKind::Const, value);
+        self.env.set(&stmt.name, var);
         Ok(Object::Undefined(GUndefined))
     }
 
     fn eval_identifier(&self, name: &str) -> Result<Object, Error> {
         match self.env.get(name) {
-            Some(value) => Ok(value),
+            Some(var) => Ok(var.value),
             None => Err(Error::new(
                 std::io::ErrorKind::Other,
                 format!("Uncaught ReferenceError: {} is not defined", name),
@@ -237,7 +241,8 @@ impl<'a> Evaluator<'a> {
         match left {
             Expression::Identifier(name) => {
                 let value = self.eval_expression(right)?;
-                self.env.set(name, value);
+                let var = Variable::new(VariableKind::Let, value);
+                self.env.set(name, var);
                 Ok(value)
             }
             _ => Err(Error::new(
