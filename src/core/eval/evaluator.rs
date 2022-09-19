@@ -3,8 +3,10 @@
 use std::io::Error;
 
 use crate::core::{
-    eval::environment::Environment,
-    object::def::{GBoolean, GNull, GNumber, GUndefined, Object},
+    eval::{
+        environment::Environment,
+        object::{GBoolean, GNull, GNumber, GUndefined, Object},
+    },
     parse::ast::{ConstStatement, Expression, LetStatement, Program, Statement},
 };
 

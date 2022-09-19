@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use crate::core::object::def::Object;
+use super::object::Object;
 
 pub struct Environment {
     pub store: HashMap<String, Object>,
@@ -29,9 +29,8 @@ impl Environment {
 
 #[cfg(test)]
 mod test {
-    use crate::core::object::def::GNumber;
-
     use super::*;
+    use crate::core::eval::object::GNumber;
 
     #[test]
     fn test_set_get() {
