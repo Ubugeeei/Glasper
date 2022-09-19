@@ -284,4 +284,25 @@ mod tests {
             assert_eq!(format!("{}", ev.eval(&program).unwrap()), expected);
         }
     }
+
+    #[test]
+    fn test_eval_variables() {
+        let case = vec![
+            ("let a = 1; a;", "\x1b[33m1\x1b[0m"),
+            ("let a = 1; let b = a; b;", "\x1b[33m1\x1b[0m"),
+            (
+                "let a = 1; let b = a; let c = a + b + 5; c;",
+                "\x1b[33m7\x1b[0m",
+            ),
+        ];
+
+        for (input, expected) in case {
+            let mut l = Lexer::new(input.to_string());
+            let mut p = Parser::new(&mut l);
+            let program = p.parse_program();
+            let mut e = Environment::new();
+            let mut ev = Evaluator::new(&mut e);
+            assert_eq!(format!("{}", ev.eval(&program).unwrap()), expected);
+        }
+    }
 }
