@@ -47,7 +47,7 @@ pub enum VariableKind {
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::core::eval::object::GNumber;
+    use crate::engine::eval::object::GNumber;
 
     #[test]
     fn test_set_get() {

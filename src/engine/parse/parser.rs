@@ -1,6 +1,6 @@
 use std::io::{Error, ErrorKind};
 
-use crate::core::tokenize::token::TokenType;
+use crate::engine::tokenize::token::TokenType;
 
 use super::{
     super::{lexer::Lexer, token::Token},
@@ -535,7 +535,7 @@ impl<'a> Parser<'a> {
 
 #[cfg(test)]
 pub mod tests {
-    use crate::core::parse::ast::FunctionExpression;
+    use crate::engine::parse::ast::FunctionExpression;
 
     use super::*;
 

@@ -1,6 +1,6 @@
 use std::io::Error;
 
-use crate::core::{
+use crate::engine::{
     eval::{
         environment::Environment,
         object::{GBoolean, GNull, GNumber, GUndefined, Object},
@@ -65,7 +65,7 @@ impl<'a> Evaluator<'a> {
 
     fn eval_prefix_expression(
         &mut self,
-        expr: &crate::core::parse::ast::PrefixExpression,
+        expr: &crate::engine::parse::ast::PrefixExpression,
     ) -> Result<Object, Error> {
         let right = self.eval_expression(&expr.right)?;
         match expr.operator.as_str() {
@@ -351,7 +351,7 @@ impl<'a> Evaluator<'a> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::core::{parse::parser::Parser, tokenize::lexer::Lexer};
+    use crate::engine::{parse::parser::Parser, tokenize::lexer::Lexer};
 
     #[test]
     fn test_eval_let_statement() {
