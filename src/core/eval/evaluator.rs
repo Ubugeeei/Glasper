@@ -560,4 +560,97 @@ mod tests {
             ev.eval(&program).unwrap_err();
         }
     }
+
+    #[test]
+    fn test_eval_if_statement() {
+        {
+            let case = vec![
+                (
+                    String::from(
+                        r#"
+                            let a = 5;
+                            if (a % 2 == 0) {
+                                a = 0;
+                            } else {
+                                a = 1;
+                            }
+                            a;
+                        "#,
+                    ),
+                    "\x1b[33m1\x1b[0m",
+                ),
+                (
+                    String::from(
+                        r#"
+                            let a = 6;
+                            if (a % 2 == 0) {
+                                a = 0;
+                            } else {
+                                a = 1;
+                            }
+                            a;
+                        "#,
+                    ),
+                    "\x1b[33m0\x1b[0m",
+                ),
+                (
+                    String::from(
+                        r#"
+                            let a = 3;
+                            if (a % 3 == 0) {
+                                a = 0;
+                            } else if (a % 3 == 1) {
+                                a = 1;
+                            } else {
+                                a = 2;
+                            }
+                            a;
+                        "#,
+                    ),
+                    "\x1b[33m0\x1b[0m",
+                ),
+                (
+                    String::from(
+                        r#"
+                            let a = 4;
+                            if (a % 3 == 0) {
+                                a = 0;
+                            } else if (a % 3 == 1) {
+                                a = 1;
+                            } else {
+                                a = 2;
+                            }
+                            a;
+                        "#,
+                    ),
+                    "\x1b[33m1\x1b[0m",
+                ),
+                (
+                    String::from(
+                        r#"
+                            let a = 5;
+                            if (a % 3 == 0) {
+                                a = 0;
+                            } else if (a % 3 == 1) {
+                                a = 1;
+                            } else {
+                                a = 2;
+                            }
+                            a;
+                        "#,
+                    ),
+                    "\x1b[33m1\x1b[0m",
+                ),
+            ];
+
+            for (input, expected) in case {
+                let mut l = Lexer::new(input.to_string());
+                let mut p = Parser::new(&mut l);
+                let program = p.parse_program();
+                let mut e = Environment::new();
+                let mut ev = Evaluator::new(&mut e);
+                assert_eq!(format!("{}", ev.eval(&program).unwrap()), expected);
+            }
+        }
+    }
 }
