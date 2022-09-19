@@ -1,5 +1,9 @@
-# Grasper
+<div align="center">
+  <img src="https://user-images.githubusercontent.com/71201308/191076633-4efad1ee-c458-4309-886f-c5c3336fecb0.png" width="200">
+</div>
 
+
+# Glasper
 A toy JavaScript runtime implementation in Rust.
 
 # build and setup
