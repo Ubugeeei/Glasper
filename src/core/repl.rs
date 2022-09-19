@@ -12,7 +12,7 @@ pub fn start() {
     println!("exit using ctrl+c or ctrl+d or exit()");
 
     let mut e = Environment::new();
-    let ev = Evaluator::new(&mut e);
+    let mut ev = Evaluator::new(&mut e);
 
     loop {
         print!("{}", PROMPT);
@@ -30,6 +30,9 @@ pub fn start() {
         let mut p = Parser::new(&mut l);
         let program = p.parse_program();
         let res = ev.eval(&program);
-        println!("{}", res.unwrap());
+        match res {
+            Ok(o) => println!("{}", o),
+            Err(e) => println!("{}", e),
+        }
     }
 }
