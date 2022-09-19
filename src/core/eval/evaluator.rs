@@ -486,4 +486,82 @@ mod tests {
             assert_eq!(format!("{}", ev.eval(&program).unwrap()), expected);
         }
     }
+
+    #[test]
+    fn test_assign_var_varidation() {
+        // reassign to let variable
+        {
+            let input = "let a = 1; a = 2;";
+            let mut l = Lexer::new(input.to_string());
+            let mut p = Parser::new(&mut l);
+            let program = p.parse_program();
+            let mut e = Environment::new();
+            let mut ev = Evaluator::new(&mut e);
+            assert_eq!(
+                format!("{}", ev.eval(&program).unwrap()),
+                "\x1b[33m2\x1b[0m"
+            );
+        }
+
+        // redeclare (let)
+        {
+            let input = "let a = 1; let a = 2; a;";
+            let mut l = Lexer::new(input.to_string());
+            let mut p = Parser::new(&mut l);
+            let program = p.parse_program();
+            let mut e = Environment::new();
+            let mut ev = Evaluator::new(&mut e);
+            assert_eq!(
+                format!("{}", ev.eval(&program).unwrap()),
+                "\x1b[33m2\x1b[0m"
+            );
+        }
+
+        // redeclare (let -> const)
+        {
+            let input = "let a = 1; const a = 2; a;";
+            let mut l = Lexer::new(input.to_string());
+            let mut p = Parser::new(&mut l);
+            let program = p.parse_program();
+            let mut e = Environment::new();
+            let mut ev = Evaluator::new(&mut e);
+            assert_eq!(
+                format!("{}", ev.eval(&program).unwrap()),
+                "\x1b[33m2\x1b[0m"
+            );
+        }
+
+        // reassign to const variable
+        {
+            let input = "const a = 1; a = 2;";
+            let mut l = Lexer::new(input.to_string());
+            let mut p = Parser::new(&mut l);
+            let program = p.parse_program();
+            let mut e = Environment::new();
+            let mut ev = Evaluator::new(&mut e);
+            ev.eval(&program).unwrap_err();
+        }
+
+        // redeclare (const -> const)
+        {
+            let input = "const a = 1; const a = 2; a;";
+            let mut l = Lexer::new(input.to_string());
+            let mut p = Parser::new(&mut l);
+            let program = p.parse_program();
+            let mut e = Environment::new();
+            let mut ev = Evaluator::new(&mut e);
+            ev.eval(&program).unwrap_err();
+        }
+
+        // redeclare (const -> let)
+        {
+            let input = "const a = 1; let a = 2; a;";
+            let mut l = Lexer::new(input.to_string());
+            let mut p = Parser::new(&mut l);
+            let program = p.parse_program();
+            let mut e = Environment::new();
+            let mut ev = Evaluator::new(&mut e);
+            ev.eval(&program).unwrap_err();
+        }
+    }
 }
