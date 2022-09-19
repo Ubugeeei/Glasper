@@ -41,6 +41,7 @@ impl Variable {
 pub enum VariableKind {
     Let,
     Const,
+    Var,
 }
 
 #[cfg(test)]
