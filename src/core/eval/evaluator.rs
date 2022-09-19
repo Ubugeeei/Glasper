@@ -1,5 +1,3 @@
-#![allow(dead_code)]
-
 use std::io::Error;
 
 use crate::core::{
@@ -36,6 +34,7 @@ impl<'a> Evaluator<'a> {
             Statement::Let(stmt) => self.eval_let_statement(stmt),
             Statement::Const(stmt) => self.eval_const_statement(stmt),
             Statement::If(stmt) => self.eval_if_statement(stmt),
+            Statement::Block(stmt) => self.eval_block_statement(stmt),
             _ => Ok(Object::Undefined(GUndefined)),
         }
     }
@@ -321,11 +320,13 @@ impl<'a> Evaluator<'a> {
     fn eval_if_statement(&mut self, statement: &IfStatement) -> Result<Object, Error> {
         let condition = self.eval_expression(&statement.condition)?;
         if self.is_truthy(condition) {
-            self.eval_block_statement(&statement.consequence)
-        } else if let Some(alternative) = &statement.alternative {
-            self.eval_block_statement(alternative)
+            self.eval_statement(&statement.consequence)
         } else {
-            Ok(Object::Undefined(GUndefined))
+            let un_boxed = statement.alternative.as_ref();
+            match un_boxed {
+                Some(ref alt) => self.eval_statement(alt),
+                None => Ok(Object::Undefined(GUndefined)),
+            }
         }
     }
 
@@ -624,54 +625,54 @@ mod tests {
                     ),
                     "\x1b[33m0\x1b[0m",
                 ),
-                // (
-                //     String::from(
-                //         r#"
-                //             let a = 3;
-                //             if (a % 3 == 0) {
-                //                 a = 0;
-                //             } else if (a % 3 == 1) {
-                //                 a = 1;
-                //             } else {
-                //                 a = 2;
-                //             }
-                //             a;
-                //         "#,
-                //     ),
-                //     "\x1b[33m0\x1b[0m",
-                // ),
-                // (
-                //     String::from(
-                //         r#"
-                //             let a = 4;
-                //             if (a % 3 == 0) {
-                //                 a = 0;
-                //             } else if (a % 3 == 1) {
-                //                 a = 1;
-                //             } else {
-                //                 a = 2;
-                //             }
-                //             a;
-                //         "#,
-                //     ),
-                //     "\x1b[33m1\x1b[0m",
-                // ),
-                // (
-                //     String::from(
-                //         r#"
-                //             let a = 5;
-                //             if (a % 3 == 0) {
-                //                 a = 0;
-                //             } else if (a % 3 == 1) {
-                //                 a = 1;
-                //             } else {
-                //                 a = 2;
-                //             }
-                //             a;
-                //         "#,
-                //     ),
-                //     "\x1b[33m1\x1b[0m",
-                // ),
+                (
+                    String::from(
+                        r#"
+                            let a = 3;
+                            if (a % 3 == 0) {
+                                a = 0;
+                            } else if (a % 3 == 1) {
+                                a = 1;
+                            } else {
+                                a = 2;
+                            }
+                            a;
+                        "#,
+                    ),
+                    "\x1b[33m0\x1b[0m",
+                ),
+                (
+                    String::from(
+                        r#"
+                            let a = 4;
+                            if (a % 3 == 0) {
+                                a = 0;
+                            } else if (a % 3 == 1) {
+                                a = 1;
+                            } else {
+                                a = 2;
+                            }
+                            a;
+                        "#,
+                    ),
+                    "\x1b[33m1\x1b[0m",
+                ),
+                (
+                    String::from(
+                        r#"
+                            let a = 5;
+                            if (a % 3 == 0) {
+                                a = 0;
+                            } else if (a % 3 == 1) {
+                                a = 1;
+                            } else {
+                                a = 2;
+                            }
+                            a;
+                        "#,
+                    ),
+                    "\x1b[33m2\x1b[0m",
+                ),
             ];
 
             for (input, expected) in case {
