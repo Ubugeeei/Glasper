@@ -1,7 +1,7 @@
 use crate::core::{
-    eval::evaluator::eval,
+    eval::{environment::Environment, evaluator::Evaluator},
     lexer::Lexer,
-    parse::{ast::Statement, parser::Parser},
+    parse::parser::Parser,
 };
 use std::io::{self, BufRead, Write};
 
@@ -11,7 +11,8 @@ pub fn start() {
     println!("Welcome to Glasper v0.1.0 ");
     println!("exit using ctrl+c or ctrl+d or exit()");
 
-    let mut statements: Vec<Statement> = vec![];
+    let mut e = Environment::new();
+    let mut ev = Evaluator::new(&mut e);
 
     loop {
         print!("{}", PROMPT);
@@ -27,9 +28,11 @@ pub fn start() {
 
         let mut l = Lexer::new(input);
         let mut p = Parser::new(&mut l);
-        let mut program = p.parse_program();
-        let res = eval(&program);
-        println!("{}", res.unwrap());
-        statements.append(&mut program.statements);
+        let program = p.parse_program();
+        let res = ev.eval(&program);
+        match res {
+            Ok(o) => println!("{}", o),
+            Err(e) => println!("{}", e),
+        }
     }
 }
