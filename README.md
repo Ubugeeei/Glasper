@@ -23,13 +23,13 @@ $ echo 'export PATH=/usr/local/bin/glasper:$PATH' >> ~/.hogerc
 ## run source code
 
 ```sh
-$ glasper run example/main.js
+$ glasper example/main.js
 ```
 
 ## run interactive
 
 ```sh
-$ glasper run
+$ glasper
 Welcome to Glasper v0.1.0
 exit using ctrl+c or ctrl+d or exit()
 > # input your source
