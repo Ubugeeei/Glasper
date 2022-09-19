@@ -1,5 +1,7 @@
 <div align="center">
   <img src="https://user-images.githubusercontent.com/71201308/191076633-4efad1ee-c458-4309-886f-c5c3336fecb0.png" width="200">
+  
+  [![CI](https://github.com/Ubugeeei/Glasper/actions/workflows/rust.yml/badge.svg)](https://github.com/Ubugeeei/Glasper/actions/workflows/rust.yml)
 </div>
 
 
