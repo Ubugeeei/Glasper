@@ -52,7 +52,6 @@ impl HandleScope {
     }
 
     pub fn scope_out(&mut self) {
-        dbg!("scope out!!!!!!!!");
         self.scopes.pop();
     }
 }
