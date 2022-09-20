@@ -1,5 +1,6 @@
 use crate::engine::{
-    eval::{environment::Environment, evaluator::Evaluator, object::Object},
+    eval::{evaluator::Evaluator, object::Object},
+    handle_scope::HandleScope,
     parse::{ast::Program, parser::Parser},
     tokenize::lexer::Lexer,
 };
@@ -15,20 +16,20 @@ impl Isolate {
 }
 
 pub struct Context {
-    pub scope: Environment,
+    pub scope: HandleScope,
 }
 impl Context {
-    pub fn new(scope: Environment) -> Self {
+    pub fn new(scope: HandleScope) -> Self {
         Self { scope }
     }
 }
 
 pub struct Script<'a> {
     ast: Program,
-    scope: &'a mut Environment,
+    scope: &'a mut HandleScope,
 }
 impl<'a> Script<'a> {
-    pub fn compile(source: String, scope: &'a mut Environment) -> Self {
+    pub fn compile(source: String, scope: &'a mut HandleScope) -> Self {
         let mut l = Lexer::new(source);
         let mut p = Parser::new(&mut l);
         Script {

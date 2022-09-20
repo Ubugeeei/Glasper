@@ -2,7 +2,8 @@ use std::io::Error;
 
 use crate::engine::{
     api::{Context, Isolate, Script},
-    eval::{environment::Environment, object::Object},
+    eval::object::Object,
+    handle_scope::HandleScope,
 };
 
 pub struct JavaScriptRuntime {
@@ -16,7 +17,7 @@ impl Default for JavaScriptRuntime {
 
 impl JavaScriptRuntime {
     pub fn new() -> Self {
-        let scope = Environment::new();
+        let scope = HandleScope::new();
         let context = Context::new(scope);
         let isolate = Isolate::new(context);
         Self { isolate }
@@ -28,7 +29,7 @@ impl JavaScriptRuntime {
         script.run()
     }
 
-    fn get_scope(&mut self) -> &mut Environment {
+    fn get_scope(&mut self) -> &mut HandleScope {
         &mut self.isolate.context.scope
     }
 }

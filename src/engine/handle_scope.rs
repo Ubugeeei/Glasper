@@ -1,18 +1,18 @@
 use std::collections::HashMap;
 
-use super::object::Object;
+use super::eval::object::Object;
 
-pub struct Environment {
+pub struct HandleScope {
     pub store: HashMap<String, Variable>,
 }
-impl Default for Environment {
+impl Default for HandleScope {
     fn default() -> Self {
         Self::new()
     }
 }
-impl Environment {
-    pub fn new() -> Environment {
-        Environment {
+impl HandleScope {
+    pub fn new() -> HandleScope {
+        HandleScope {
             store: HashMap::new(),
         }
     }
@@ -51,7 +51,7 @@ mod test {
 
     #[test]
     fn test_set_get() {
-        let mut env = Environment::new();
+        let mut env = HandleScope::new();
         env.set(
             "a",
             Variable::new(VariableKind::Const, Object::Number(GNumber::new(1.0))),
