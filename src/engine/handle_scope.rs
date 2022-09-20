@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use super::eval::object::Object;
 
 pub struct HandleScope {
-    pub store: HashMap<String, Variable>,
+    pub scopes: Vec<HashMap<String, Variable>>,
 }
 impl Default for HandleScope {
     fn default() -> Self {
@@ -13,16 +13,47 @@ impl Default for HandleScope {
 impl HandleScope {
     pub fn new() -> HandleScope {
         HandleScope {
-            store: HashMap::new(),
+            scopes: vec![HashMap::new()],
         }
     }
 
     pub fn get(&self, name: &str) -> Option<&Variable> {
-        self.store.get(name)
+        for scope in self.scopes.iter().rev() {
+            if let Some(variable) = scope.get(name) {
+                return Some(variable);
+            }
+        }
+        None
     }
 
     pub fn set(&mut self, name: &str, var: Variable) {
-        self.store.insert(name.to_string(), var);
+        let last_idx = self.scopes.len() - 1;
+        self.scopes[last_idx].insert(name.to_string(), var);
+    }
+
+    pub fn assign(&mut self, name: &str, var: Variable) {
+        let target_scope_idx = {
+            let mut i = self.scopes.len() - 1;
+            loop {
+                if self.scopes[i].get(name).is_some() {
+                    break i;
+                }
+                if i == 0 {
+                    break self.scopes.len() - 1;
+                }
+                i -= 1;
+            }
+        };
+        self.scopes[target_scope_idx].insert(name.to_string(), var);
+    }
+
+    pub fn scope_in(&mut self) {
+        self.scopes.push(HashMap::new());
+    }
+
+    pub fn scope_out(&mut self) {
+        dbg!("scope out!!!!!!!!");
+        self.scopes.pop();
     }
 }
 
