@@ -208,7 +208,7 @@ impl<'a> Evaluator<'a> {
 
     fn eval_let_statement(&mut self, stmt: &LetStatement) -> Result<Object, Error> {
         match self.env.get(stmt.name.as_str()) {
-            // varidation
+            // validation
             Some(var) => match var.kind {
                 VariableKind::Const => Err(Error::new(
                     std::io::ErrorKind::Other,
@@ -233,7 +233,7 @@ impl<'a> Evaluator<'a> {
 
     fn eval_const_statement(&mut self, stmt: &ConstStatement) -> Result<Object, Error> {
         match self.env.get(stmt.name.as_str()) {
-            // varidation
+            // validation
             Some(var) => match var.kind {
                 VariableKind::Const => Err(Error::new(
                     std::io::ErrorKind::Other,
@@ -278,22 +278,22 @@ impl<'a> Evaluator<'a> {
             Expression::Identifier(name) => {
                 match self.env.get(name.as_str()) {
                     Some(var) => match var.kind {
-                        // varidation
+                        // validation
                         VariableKind::Const => Err(Error::new(
                             std::io::ErrorKind::Other,
                             "Uncaught TypeError: Assignment to constant variable.",
                         )),
-                        // assqign
+                        // assign
                         VariableKind::Let => {
                             let value = self.eval_expression(right)?;
                             let var = Variable::new(VariableKind::Let, value);
-                            self.env.set(name, var);
+                            self.env.assign(name, var);
                             Ok(value)
                         }
                         VariableKind::Var => {
                             let value = self.eval_expression(right)?;
                             let var = Variable::new(VariableKind::Var, value);
-                            self.env.set(name, var);
+                            self.env.assign(name, var);
                             Ok(value)
                         }
                     },
@@ -301,7 +301,7 @@ impl<'a> Evaluator<'a> {
                     None => {
                         let value = self.eval_expression(right)?;
                         let var = Variable::new(VariableKind::Var, value);
-                        self.env.set(name, var);
+                        self.env.assign(name, var);
                         Ok(value)
                     }
                 }
@@ -327,10 +327,12 @@ impl<'a> Evaluator<'a> {
     }
 
     fn eval_block_statement(&mut self, block: &BlockStatement) -> Result<Object, Error> {
+        self.env.scope_in();
         let mut result = Object::Undefined(GUndefined);
         for stmt in &block.statements {
             result = self.eval_statement(stmt)?;
         }
+        self.env.scope_out();
         Ok(result)
     }
 
@@ -512,7 +514,7 @@ mod tests {
     }
 
     #[test]
-    fn test_assign_var_varidation() {
+    fn test_assign_var_validation() {
         // reassign to let variable
         {
             let input = "let a = 1; a = 2;";
@@ -668,6 +670,24 @@ mod tests {
                         "#,
                     ),
                     "\x1b[33m2\x1b[0m",
+                ),
+                // scope
+                (
+                    String::from(
+                        r#"
+                            let a = 5;
+                            if (a % 2 == 0) {
+                                a = 0;
+
+                            } else {
+                                a = 1;
+                                let a = 99;
+                                a = 100;
+                            }
+                            a;
+                        "#,
+                    ),
+                    "\x1b[33m1\x1b[0m",
                 ),
             ];
 
