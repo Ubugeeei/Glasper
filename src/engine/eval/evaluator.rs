@@ -354,8 +354,8 @@ mod tests {
         let mut l = Lexer::new("let a = 1;".to_string());
         let mut p = Parser::new(&mut l);
         let program = p.parse_program();
-        let mut e = HandleScope::new();
-        let mut ev = Evaluator::new(&mut e);
+        let mut hs = HandleScope::new();
+        let mut ev = Evaluator::new(&mut hs);
         assert_eq!(program.statements.len(), 1);
         assert_eq!(
             format!("{}", ev.eval(&program).unwrap()),
@@ -368,8 +368,8 @@ mod tests {
         let mut l = Lexer::new("1".to_string());
         let mut p = Parser::new(&mut l);
         let program = p.parse_program();
-        let mut e = HandleScope::new();
-        let mut ev = Evaluator::new(&mut e);
+        let mut hs = HandleScope::new();
+        let mut ev = Evaluator::new(&mut hs);
         assert_eq!(program.statements.len(), 1);
         assert_eq!(
             format!("{}", ev.eval(&program).unwrap()),
@@ -383,8 +383,8 @@ mod tests {
             let mut l = Lexer::new("true".to_string());
             let mut p = Parser::new(&mut l);
             let program = p.parse_program();
-            let mut e = HandleScope::new();
-            let mut ev = Evaluator::new(&mut e);
+            let mut hs = HandleScope::new();
+            let mut ev = Evaluator::new(&mut hs);
             assert_eq!(program.statements.len(), 1);
             assert_eq!(
                 format!("{}", ev.eval(&program).unwrap()),
@@ -395,8 +395,8 @@ mod tests {
             let mut l = Lexer::new("false".to_string());
             let mut p = Parser::new(&mut l);
             let program = p.parse_program();
-            let mut e = HandleScope::new();
-            let mut ev = Evaluator::new(&mut e);
+            let mut hs = HandleScope::new();
+            let mut ev = Evaluator::new(&mut hs);
             assert_eq!(program.statements.len(), 1);
             assert_eq!(
                 format!("{}", ev.eval(&program).unwrap()),
@@ -422,8 +422,8 @@ mod tests {
             let mut l = Lexer::new(input.to_string());
             let mut p = Parser::new(&mut l);
             let program = p.parse_program();
-            let mut e = HandleScope::new();
-            let mut ev = Evaluator::new(&mut e);
+            let mut hs = HandleScope::new();
+            let mut ev = Evaluator::new(&mut hs);
             assert_eq!(program.statements.len(), 1);
             assert_eq!(format!("{}", ev.eval(&program).unwrap()), expected);
         }
@@ -482,8 +482,8 @@ mod tests {
             let mut l = Lexer::new(input.to_string());
             let mut p = Parser::new(&mut l);
             let program = p.parse_program();
-            let mut e = HandleScope::new();
-            let mut ev = Evaluator::new(&mut e);
+            let mut hs = HandleScope::new();
+            let mut ev = Evaluator::new(&mut hs);
             assert_eq!(program.statements.len(), 1);
             assert_eq!(format!("{}", ev.eval(&program).unwrap()), expected);
         }
@@ -505,8 +505,8 @@ mod tests {
             let mut l = Lexer::new(input.to_string());
             let mut p = Parser::new(&mut l);
             let program = p.parse_program();
-            let mut e = HandleScope::new();
-            let mut ev = Evaluator::new(&mut e);
+            let mut hs = HandleScope::new();
+            let mut ev = Evaluator::new(&mut hs);
             assert_eq!(format!("{}", ev.eval(&program).unwrap()), expected);
         }
     }
@@ -519,8 +519,8 @@ mod tests {
             let mut l = Lexer::new(input.to_string());
             let mut p = Parser::new(&mut l);
             let program = p.parse_program();
-            let mut e = HandleScope::new();
-            let mut ev = Evaluator::new(&mut e);
+            let mut hs = HandleScope::new();
+            let mut ev = Evaluator::new(&mut hs);
             assert_eq!(
                 format!("{}", ev.eval(&program).unwrap()),
                 "\x1b[33m2\x1b[0m"
@@ -533,8 +533,8 @@ mod tests {
             let mut l = Lexer::new(input.to_string());
             let mut p = Parser::new(&mut l);
             let program = p.parse_program();
-            let mut e = HandleScope::new();
-            let mut ev = Evaluator::new(&mut e);
+            let mut hs = HandleScope::new();
+            let mut ev = Evaluator::new(&mut hs);
             assert_eq!(
                 format!("{}", ev.eval(&program).unwrap()),
                 "\x1b[33m2\x1b[0m"
@@ -547,8 +547,8 @@ mod tests {
             let mut l = Lexer::new(input.to_string());
             let mut p = Parser::new(&mut l);
             let program = p.parse_program();
-            let mut e = HandleScope::new();
-            let mut ev = Evaluator::new(&mut e);
+            let mut hs = HandleScope::new();
+            let mut ev = Evaluator::new(&mut hs);
             assert_eq!(
                 format!("{}", ev.eval(&program).unwrap()),
                 "\x1b[33m2\x1b[0m"
@@ -561,8 +561,8 @@ mod tests {
             let mut l = Lexer::new(input.to_string());
             let mut p = Parser::new(&mut l);
             let program = p.parse_program();
-            let mut e = HandleScope::new();
-            let mut ev = Evaluator::new(&mut e);
+            let mut hs = HandleScope::new();
+            let mut ev = Evaluator::new(&mut hs);
             ev.eval(&program).unwrap_err();
         }
 
@@ -572,8 +572,8 @@ mod tests {
             let mut l = Lexer::new(input.to_string());
             let mut p = Parser::new(&mut l);
             let program = p.parse_program();
-            let mut e = HandleScope::new();
-            let mut ev = Evaluator::new(&mut e);
+            let mut hs = HandleScope::new();
+            let mut ev = Evaluator::new(&mut hs);
             ev.eval(&program).unwrap_err();
         }
 
@@ -583,8 +583,8 @@ mod tests {
             let mut l = Lexer::new(input.to_string());
             let mut p = Parser::new(&mut l);
             let program = p.parse_program();
-            let mut e = HandleScope::new();
-            let mut ev = Evaluator::new(&mut e);
+            let mut hs = HandleScope::new();
+            let mut ev = Evaluator::new(&mut hs);
             ev.eval(&program).unwrap_err();
         }
     }
@@ -675,8 +675,8 @@ mod tests {
                 let mut l = Lexer::new(input.to_string());
                 let mut p = Parser::new(&mut l);
                 let program = p.parse_program();
-                let mut e = HandleScope::new();
-                let mut ev = Evaluator::new(&mut e);
+                let mut hs = HandleScope::new();
+                let mut ev = Evaluator::new(&mut hs);
                 assert_eq!(format!("{}", ev.eval(&program).unwrap()), expected);
             }
         }

@@ -17,8 +17,8 @@ impl Default for JavaScriptRuntime {
 
 impl JavaScriptRuntime {
     pub fn new() -> Self {
-        let scope = HandleScope::new();
-        let context = Context::new(scope);
+        let handle_scope = HandleScope::new();
+        let context = Context::new(handle_scope);
         let isolate = Isolate::new(context);
         Self { isolate }
     }

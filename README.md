@@ -40,7 +40,7 @@ exit using ctrl+c or ctrl+d or exit()
 use engine api (src/engine/api.rs)
 
 ```rs
-let scope = HandleScope::new();
+let handle_scope = HandleScope::new();
 let context = Context::new(scope);
 let mut isolate = Isolate::new(context);
 let mut script = Script::compile(String::from("let a = 1;"),  &mut isolate.context.scope);
