@@ -13,7 +13,9 @@ impl Default for HandleScope {
 impl HandleScope {
     pub fn new() -> HandleScope {
         HandleScope {
-            scopes: vec![HashMap::new()],
+            scopes: vec![
+                HashMap::new(), // default scope
+            ],
         }
     }
 
@@ -23,6 +25,7 @@ impl HandleScope {
                 return Some(variable);
             }
         }
+
         None
     }
 

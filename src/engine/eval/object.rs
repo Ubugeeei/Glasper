@@ -9,6 +9,7 @@ pub enum Object {
     Number(GNumber),
     Boolean(GBoolean),
     Function(GFunction),
+    BuiltinFunction(GBuiltinFunction),
     Null(GNull),
     Undefined(GUndefined),
 }
@@ -21,6 +22,7 @@ impl Object {
             Self::Function(_) => "function".to_string(),
             Self::Null(_) => "object".to_string(),
             Self::Undefined(_) => "undefined".to_string(),
+            Self::BuiltinFunction(_) => "function".to_string(),
         }
     }
 }
@@ -32,6 +34,9 @@ impl Display for Object {
             Self::Function(_) => write!(f, "[Function]"),
             Self::Null(_) => write!(f, "null"),
             Self::Undefined(_) => write!(f, "\x1b[30mundefined\x1b[0m"),
+            Self::BuiltinFunction(b) => {
+                write!(f, "\x1b[33mf\x1b[0m {}() {{ [native code] }}", b.name)
+            }
         }
     }
 }
@@ -74,3 +79,17 @@ pub struct GNull;
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct GUndefined;
+
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub struct GBuiltinFunction {
+    name: String,
+    pub func: fn(Vec<Object>) -> Object,
+}
+impl GBuiltinFunction {
+    pub fn new(name: &str, func: fn(Vec<Object>) -> Object) -> GBuiltinFunction {
+        GBuiltinFunction {
+            name: name.to_string(),
+            func,
+        }
+    }
+}
