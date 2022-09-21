@@ -1,8 +1,9 @@
 use std::io::Error;
 
 use crate::engine::{
+    api::Context,
     eval::object::{GBoolean, GNull, GNumber, GUndefined, Object},
-    handle_scope::{HandleScope, Variable, VariableKind},
+    handle_scope::{Variable, VariableKind},
     parse::ast::{
         BlockStatement, CallExpression, ConstStatement, Expression, IfStatement, LetStatement,
         Program, Statement,
@@ -12,11 +13,11 @@ use crate::engine::{
 use super::object::GFunction;
 
 pub struct Evaluator<'a> {
-    env: &'a mut HandleScope,
+    ctx: &'a mut Context,
 }
 impl<'a> Evaluator<'a> {
-    pub fn new(env: &'a mut HandleScope) -> Self {
-        Evaluator { env }
+    pub fn new(ctx: &'a mut Context) -> Self {
+        Evaluator { ctx }
     }
 
     pub fn eval(&mut self, program: &Program) -> Result<Object, Error> {
@@ -95,9 +96,10 @@ impl<'a> Evaluator<'a> {
     fn eval_bang_operator_expression(&self, right: Object) -> Result<Object, Error> {
         match right {
             Object::Boolean(GBoolean { value }) => Ok(Object::Boolean(GBoolean { value: !value })),
-            Object::Null(_) | Object::Undefined(_) | Object::Function(_) => {
-                Ok(Object::Boolean(GBoolean { value: true }))
-            }
+            Object::Null(_)
+            | Object::Undefined(_)
+            | Object::Function(_)
+            | Object::BuiltinFunction(_) => Ok(Object::Boolean(GBoolean { value: true })),
             Object::Number(GNumber { value }) => {
                 if value == 0.0 {
                     Ok(Object::Boolean(GBoolean { value: true }))
@@ -223,7 +225,7 @@ impl<'a> Evaluator<'a> {
     }
 
     fn eval_let_statement(&mut self, stmt: &LetStatement) -> Result<Object, Error> {
-        match self.env.get(stmt.name.as_str()) {
+        match self.ctx.scope.get(stmt.name.as_str()) {
             // validation
             Some(var) => match var.kind {
                 VariableKind::Const => Err(Error::new(
@@ -233,7 +235,7 @@ impl<'a> Evaluator<'a> {
                 VariableKind::Let | VariableKind::Var => {
                     let value = self.eval_expression(&stmt.value)?;
                     let var = Variable::new(VariableKind::Let, value);
-                    self.env.set(&stmt.name, var);
+                    self.ctx.scope.set(&stmt.name, var);
                     Ok(Object::Undefined(GUndefined))
                 }
             },
@@ -241,14 +243,14 @@ impl<'a> Evaluator<'a> {
             None => {
                 let value = self.eval_expression(&stmt.value)?;
                 let var = Variable::new(VariableKind::Let, value);
-                self.env.set(&stmt.name, var);
+                self.ctx.scope.set(&stmt.name, var);
                 Ok(Object::Undefined(GUndefined))
             }
         }
     }
 
     fn eval_const_statement(&mut self, stmt: &ConstStatement) -> Result<Object, Error> {
-        match self.env.get(stmt.name.as_str()) {
+        match self.ctx.scope.get(stmt.name.as_str()) {
             // validation
             Some(var) => match var.kind {
                 VariableKind::Const => Err(Error::new(
@@ -261,7 +263,7 @@ impl<'a> Evaluator<'a> {
                 VariableKind::Let | VariableKind::Var => {
                     let value = self.eval_expression(&stmt.value)?;
                     let var = Variable::new(VariableKind::Const, value);
-                    self.env.set(&stmt.name, var);
+                    self.ctx.scope.set(&stmt.name, var);
                     Ok(Object::Undefined(GUndefined))
                 }
             },
@@ -269,19 +271,22 @@ impl<'a> Evaluator<'a> {
             None => {
                 let value = self.eval_expression(&stmt.value)?;
                 let var = Variable::new(VariableKind::Const, value);
-                self.env.set(&stmt.name, var);
+                self.ctx.scope.set(&stmt.name, var);
                 Ok(Object::Undefined(GUndefined))
             }
         }
     }
 
-    fn eval_identifier(&self, name: &str) -> Result<Object, Error> {
-        match self.env.get(name) {
+    fn eval_identifier(&mut self, name: &str) -> Result<Object, Error> {
+        match self.ctx.scope.get(name) {
             Some(var) => Ok(var.value.clone()),
-            None => Err(Error::new(
-                std::io::ErrorKind::Other,
-                format!("Uncaught ReferenceError: {} is not defined", name),
-            )),
+            None => match self.ctx.global().get(name) {
+                Some(var) => Ok(var.clone()),
+                None => Err(Error::new(
+                    std::io::ErrorKind::Other,
+                    format!("Uncaught ReferenceError: {} is not defined", name),
+                )),
+            },
         }
     }
 
@@ -292,7 +297,7 @@ impl<'a> Evaluator<'a> {
     ) -> Result<Object, Error> {
         match left {
             Expression::Identifier(name) => {
-                match self.env.get(name.as_str()) {
+                match self.ctx.scope.get(name.as_str()) {
                     Some(var) => match var.kind {
                         // validation
                         VariableKind::Const => Err(Error::new(
@@ -303,13 +308,13 @@ impl<'a> Evaluator<'a> {
                         VariableKind::Let => {
                             let value = self.eval_expression(right)?;
                             let var = Variable::new(VariableKind::Let, value.clone());
-                            self.env.assign(name, var);
+                            self.ctx.scope.assign(name, var);
                             Ok(value)
                         }
                         VariableKind::Var => {
                             let value = self.eval_expression(right)?;
                             let var = Variable::new(VariableKind::Var, value.clone());
-                            self.env.assign(name, var);
+                            self.ctx.scope.assign(name, var);
                             Ok(value)
                         }
                     },
@@ -317,7 +322,7 @@ impl<'a> Evaluator<'a> {
                     None => {
                         let value = self.eval_expression(right)?;
                         let var = Variable::new(VariableKind::Var, value.clone());
-                        self.env.assign(name, var);
+                        self.ctx.scope.assign(name, var);
                         Ok(value)
                     }
                 }
@@ -351,12 +356,12 @@ impl<'a> Evaluator<'a> {
         block: &BlockStatement,
         scope_type: ScopeType,
     ) -> Result<Object, Error> {
-        self.env.scope_in();
+        self.ctx.scope.scope_in();
         let mut result = Object::Undefined(GUndefined);
         for stmt in &block.statements {
             result = self.eval_statement(stmt, scope_type)?;
         }
-        self.env.scope_out();
+        self.ctx.scope.scope_out();
 
         if scope_type == ScopeType::Function {
             Ok(result)
@@ -373,8 +378,12 @@ impl<'a> Evaluator<'a> {
         }
 
         match function {
+            Object::BuiltinFunction(func) => {
+                let func = func.func;
+                Ok(func(args))
+            }
             Object::Function(func) => {
-                self.env.scope_in();
+                self.ctx.scope.scope_in();
                 for (i, param) in func.parameters.iter().enumerate() {
                     let name = param.clone().name;
                     let var = match param.default.clone() {
@@ -387,15 +396,16 @@ impl<'a> Evaluator<'a> {
 
                     // bind args
                     if let Some(a) = args.get(i) {
-                        self.env
+                        self.ctx
+                            .scope
                             .set(&name, Variable::new(VariableKind::Var, a.clone()));
                     } else {
-                        self.env.set(&name, var);
+                        self.ctx.scope.set(&name, var);
                     }
                 }
 
                 let result = self.eval_block_statement(&func.body, ScopeType::Function)?;
-                self.env.scope_in();
+                self.ctx.scope.scope_in();
                 Ok(result)
             }
             _ => Err(Error::new(
@@ -440,15 +450,17 @@ enum ScopeType {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::engine::{parse::parser::Parser, tokenize::lexer::Lexer};
+    use crate::engine::{handle_scope::HandleScope, parse::parser::Parser, tokenize::lexer::Lexer};
 
     #[test]
     fn test_eval_let_statement() {
         let mut l = Lexer::new("let a = 1;".to_string());
         let mut p = Parser::new(&mut l);
         let program = p.parse_program();
-        let mut hs = HandleScope::new();
-        let mut ev = Evaluator::new(&mut hs);
+
+        let handle_scope = HandleScope::new();
+        let mut context = Context::new(handle_scope);
+        let mut ev = Evaluator::new(&mut context);
         assert_eq!(program.statements.len(), 1);
         assert_eq!(
             format!("{}", ev.eval(&program).unwrap()),
@@ -461,8 +473,10 @@ mod tests {
         let mut l = Lexer::new("1".to_string());
         let mut p = Parser::new(&mut l);
         let program = p.parse_program();
-        let mut hs = HandleScope::new();
-        let mut ev = Evaluator::new(&mut hs);
+
+        let handle_scope = HandleScope::new();
+        let mut context = Context::new(handle_scope);
+        let mut ev = Evaluator::new(&mut context);
         assert_eq!(program.statements.len(), 1);
         assert_eq!(
             format!("{}", ev.eval(&program).unwrap()),
@@ -476,8 +490,10 @@ mod tests {
             let mut l = Lexer::new("true".to_string());
             let mut p = Parser::new(&mut l);
             let program = p.parse_program();
-            let mut hs = HandleScope::new();
-            let mut ev = Evaluator::new(&mut hs);
+
+            let handle_scope = HandleScope::new();
+            let mut context = Context::new(handle_scope);
+            let mut ev = Evaluator::new(&mut context);
             assert_eq!(program.statements.len(), 1);
             assert_eq!(
                 format!("{}", ev.eval(&program).unwrap()),
@@ -488,8 +504,10 @@ mod tests {
             let mut l = Lexer::new("false".to_string());
             let mut p = Parser::new(&mut l);
             let program = p.parse_program();
-            let mut hs = HandleScope::new();
-            let mut ev = Evaluator::new(&mut hs);
+
+            let handle_scope = HandleScope::new();
+            let mut context = Context::new(handle_scope);
+            let mut ev = Evaluator::new(&mut context);
             assert_eq!(program.statements.len(), 1);
             assert_eq!(
                 format!("{}", ev.eval(&program).unwrap()),
@@ -515,8 +533,10 @@ mod tests {
             let mut l = Lexer::new(input.to_string());
             let mut p = Parser::new(&mut l);
             let program = p.parse_program();
-            let mut hs = HandleScope::new();
-            let mut ev = Evaluator::new(&mut hs);
+
+            let handle_scope = HandleScope::new();
+            let mut context = Context::new(handle_scope);
+            let mut ev = Evaluator::new(&mut context);
             assert_eq!(program.statements.len(), 1);
             assert_eq!(format!("{}", ev.eval(&program).unwrap()), expected);
         }
@@ -575,8 +595,10 @@ mod tests {
             let mut l = Lexer::new(input.to_string());
             let mut p = Parser::new(&mut l);
             let program = p.parse_program();
-            let mut hs = HandleScope::new();
-            let mut ev = Evaluator::new(&mut hs);
+
+            let handle_scope = HandleScope::new();
+            let mut context = Context::new(handle_scope);
+            let mut ev = Evaluator::new(&mut context);
             assert_eq!(program.statements.len(), 1);
             assert_eq!(format!("{}", ev.eval(&program).unwrap()), expected);
         }
@@ -598,8 +620,10 @@ mod tests {
             let mut l = Lexer::new(input.to_string());
             let mut p = Parser::new(&mut l);
             let program = p.parse_program();
-            let mut hs = HandleScope::new();
-            let mut ev = Evaluator::new(&mut hs);
+
+            let handle_scope = HandleScope::new();
+            let mut context = Context::new(handle_scope);
+            let mut ev = Evaluator::new(&mut context);
             assert_eq!(format!("{}", ev.eval(&program).unwrap()), expected);
         }
     }
@@ -612,8 +636,10 @@ mod tests {
             let mut l = Lexer::new(input.to_string());
             let mut p = Parser::new(&mut l);
             let program = p.parse_program();
-            let mut hs = HandleScope::new();
-            let mut ev = Evaluator::new(&mut hs);
+
+            let handle_scope = HandleScope::new();
+            let mut context = Context::new(handle_scope);
+            let mut ev = Evaluator::new(&mut context);
             assert_eq!(
                 format!("{}", ev.eval(&program).unwrap()),
                 "\x1b[33m2\x1b[0m"
@@ -626,8 +652,10 @@ mod tests {
             let mut l = Lexer::new(input.to_string());
             let mut p = Parser::new(&mut l);
             let program = p.parse_program();
-            let mut hs = HandleScope::new();
-            let mut ev = Evaluator::new(&mut hs);
+
+            let handle_scope = HandleScope::new();
+            let mut context = Context::new(handle_scope);
+            let mut ev = Evaluator::new(&mut context);
             assert_eq!(
                 format!("{}", ev.eval(&program).unwrap()),
                 "\x1b[33m2\x1b[0m"
@@ -640,8 +668,10 @@ mod tests {
             let mut l = Lexer::new(input.to_string());
             let mut p = Parser::new(&mut l);
             let program = p.parse_program();
-            let mut hs = HandleScope::new();
-            let mut ev = Evaluator::new(&mut hs);
+
+            let handle_scope = HandleScope::new();
+            let mut context = Context::new(handle_scope);
+            let mut ev = Evaluator::new(&mut context);
             assert_eq!(
                 format!("{}", ev.eval(&program).unwrap()),
                 "\x1b[33m2\x1b[0m"
@@ -654,8 +684,10 @@ mod tests {
             let mut l = Lexer::new(input.to_string());
             let mut p = Parser::new(&mut l);
             let program = p.parse_program();
-            let mut hs = HandleScope::new();
-            let mut ev = Evaluator::new(&mut hs);
+
+            let handle_scope = HandleScope::new();
+            let mut context = Context::new(handle_scope);
+            let mut ev = Evaluator::new(&mut context);
             ev.eval(&program).unwrap_err();
         }
 
@@ -665,8 +697,10 @@ mod tests {
             let mut l = Lexer::new(input.to_string());
             let mut p = Parser::new(&mut l);
             let program = p.parse_program();
-            let mut hs = HandleScope::new();
-            let mut ev = Evaluator::new(&mut hs);
+
+            let handle_scope = HandleScope::new();
+            let mut context = Context::new(handle_scope);
+            let mut ev = Evaluator::new(&mut context);
             ev.eval(&program).unwrap_err();
         }
 
@@ -676,8 +710,10 @@ mod tests {
             let mut l = Lexer::new(input.to_string());
             let mut p = Parser::new(&mut l);
             let program = p.parse_program();
-            let mut hs = HandleScope::new();
-            let mut ev = Evaluator::new(&mut hs);
+
+            let handle_scope = HandleScope::new();
+            let mut context = Context::new(handle_scope);
+            let mut ev = Evaluator::new(&mut context);
             ev.eval(&program).unwrap_err();
         }
     }
@@ -786,8 +822,9 @@ mod tests {
                 let mut l = Lexer::new(input.to_string());
                 let mut p = Parser::new(&mut l);
                 let program = p.parse_program();
-                let mut hs = HandleScope::new();
-                let mut ev = Evaluator::new(&mut hs);
+                let handle_scope = HandleScope::new();
+                let mut context = Context::new(handle_scope);
+                let mut ev = Evaluator::new(&mut context);
                 assert_eq!(format!("{}", ev.eval(&program).unwrap()), expected);
             }
         }
@@ -866,8 +903,9 @@ mod tests {
                 let mut l = Lexer::new(input.to_string());
                 let mut p = Parser::new(&mut l);
                 let program = p.parse_program();
-                let mut hs = HandleScope::new();
-                let mut ev = Evaluator::new(&mut hs);
+                let handle_scope = HandleScope::new();
+                let mut context = Context::new(handle_scope);
+                let mut ev = Evaluator::new(&mut context);
                 assert_eq!(format!("{}", ev.eval(&program).unwrap()), expected);
             }
         }

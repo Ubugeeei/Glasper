@@ -1,11 +1,12 @@
-let result = 0;
+let num = 1;
 
-const a = 1;
-const b = 2;
-const c = a * b + 1;
-
-if (c > 4) {
-	result = c;
+if (num % 15 == 0) {
+	console_log(true, true)
+} else if (num % 5 == 0) {
+	console_log(false, true)
+} else if (num % 3 == 0) {
+	console_log(true, false)
 } else {
-	result = 4;
+	console_log(num)
 }
+
