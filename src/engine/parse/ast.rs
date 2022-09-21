@@ -12,7 +12,7 @@ impl Program {
     }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum Statement {
     Let(LetStatement),
     Const(ConstStatement),
@@ -29,7 +29,7 @@ pub enum Statement {
     // block
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct BlockStatement {
     pub statements: Vec<Statement>,
 }
@@ -39,7 +39,7 @@ impl BlockStatement {
     }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct LetStatement {
     pub name: String,
     pub value: Expression,
@@ -50,7 +50,7 @@ impl LetStatement {
     }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct ConstStatement {
     pub name: String,
     pub value: Expression,
@@ -61,7 +61,7 @@ impl ConstStatement {
     }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct IfStatement {
     pub condition: Expression,
     pub consequence: Box<Statement>,
@@ -81,7 +81,7 @@ impl IfStatement {
     }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum Expression {
     Number(f64),
     Boolean(bool),
@@ -96,7 +96,7 @@ pub enum Expression {
 }
 impl Expression {}
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct PrefixExpression {
     pub operator: String,
     pub right: Box<Expression>,
@@ -107,7 +107,7 @@ impl PrefixExpression {
     }
 }
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub struct SuffixExpression {
     pub operator: String,
     pub target_var_name: String,
@@ -121,7 +121,7 @@ impl SuffixExpression {
     }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct InfixExpression {
     pub left: Box<Expression>,
     pub operator: String,
@@ -137,7 +137,7 @@ impl InfixExpression {
     }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct FunctionExpression {
     pub parameters: Vec<FunctionParameter>,
     pub body: BlockStatement,
@@ -148,7 +148,7 @@ impl FunctionExpression {
     }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct FunctionParameter {
     pub name: String,
     pub default: Option<Expression>,
@@ -159,10 +159,10 @@ impl FunctionParameter {
     }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct CallExpression {
-    function: Box<Expression>,
-    arguments: Vec<Expression>,
+    pub function: Box<Expression>,
+    pub arguments: Vec<Expression>,
 }
 impl CallExpression {
     pub fn new(function: Box<Expression>, arguments: Vec<Expression>) -> CallExpression {
