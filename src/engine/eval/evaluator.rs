@@ -822,6 +822,44 @@ mod tests {
                     ),
                     "\x1b[33m6\x1b[0m",
                 ),
+                // default args
+                (
+                    String::from(
+                        r#"
+                            
+                            let ret = function(a = 2, b = 1 + 2 * 3) {
+                                return a + b;
+                            };
+                            ret();
+                    "#,
+                    ),
+                    "\x1b[33m9\x1b[0m",
+                ),
+                // scope
+                (
+                    String::from(
+                        r#"
+                            let a = 1;
+                            let ret = function(a) {
+                                return a;
+                            };
+                            ret(100);
+                    "#,
+                    ),
+                    "\x1b[33m100\x1b[0m",
+                ),
+                (
+                    String::from(
+                        r#"
+                            let a = 1;
+                            let ret = function() {
+                                return a;
+                            };
+                            ret();
+                    "#,
+                    ),
+                    "\x1b[33m1\x1b[0m",
+                ),
             ];
 
             for (input, expected) in case {
