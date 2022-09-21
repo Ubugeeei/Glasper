@@ -2,10 +2,13 @@
 
 use std::fmt::Display;
 
-#[derive(Debug, PartialEq, Clone, Copy)]
+use crate::engine::parse::ast::{BlockStatement, FunctionParameter};
+
+#[derive(Debug, PartialEq, Clone)]
 pub enum Object {
     Number(GNumber),
     Boolean(GBoolean),
+    Function(GFunction),
     Null(GNull),
     Undefined(GUndefined),
 }
@@ -15,6 +18,7 @@ impl Object {
         match self {
             Self::Number(_) => "number".to_string(),
             Self::Boolean(_) => "boolean".to_string(),
+            Self::Function(_) => "function".to_string(),
             Self::Null(_) => "object".to_string(),
             Self::Undefined(_) => "undefined".to_string(),
         }
@@ -25,13 +29,14 @@ impl Display for Object {
         match self {
             Self::Number(n) => write!(f, "\x1b[33m{}\x1b[0m", n.value),
             Self::Boolean(b) => write!(f, "\x1b[33m{}\x1b[0m", b.value),
+            Self::Function(_) => write!(f, "[Function]"),
             Self::Null(_) => write!(f, "null"),
             Self::Undefined(_) => write!(f, "\x1b[30mundefined\x1b[0m"),
         }
     }
 }
 
-#[derive(Debug, PartialEq, Clone, Copy)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct GNumber {
     pub value: f64,
 }
@@ -42,7 +47,7 @@ impl GNumber {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone, Copy)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub struct GBoolean {
     pub value: bool,
 }
@@ -53,8 +58,19 @@ impl GBoolean {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone, Copy)]
+#[derive(Debug, PartialEq, Clone)]
+pub struct GFunction {
+    pub parameters: Vec<FunctionParameter>,
+    pub body: BlockStatement,
+}
+impl GFunction {
+    pub fn new(parameters: Vec<FunctionParameter>, body: BlockStatement) -> GFunction {
+        GFunction { parameters, body }
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub struct GNull;
 
-#[derive(Debug, PartialEq, Eq, Clone, Copy)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub struct GUndefined;
