@@ -41,7 +41,7 @@ use engine api (src/engine/api.rs)
 
 ```rs
 let handle_scope = HandleScope::new();
-let context = Context::new(scope);
+let context = Context::new(handle_scope);
 let mut isolate = Isolate::new(context);
 let mut script = Script::compile(String::from("let a = 1;"),  &mut isolate.context.scope);
 script.run()
