@@ -22,19 +22,23 @@ impl<'a> Evaluator<'a> {
     pub fn eval(&mut self, program: &Program) -> Result<Object, Error> {
         let mut result = Object::Undefined(GUndefined);
         for statement in &program.statements {
-            result = self.eval_statement(statement)?;
+            result = self.eval_statement(statement, ScopeType::Block)?;
         }
         Ok(result)
     }
 
-    fn eval_statement(&mut self, statement: &Statement) -> Result<Object, Error> {
+    fn eval_statement(
+        &mut self,
+        statement: &Statement,
+        scope_type: ScopeType,
+    ) -> Result<Object, Error> {
         match statement {
             Statement::Expression(expr) => self.eval_expression(expr),
             Statement::Let(stmt) => self.eval_let_statement(stmt),
             Statement::Const(stmt) => self.eval_const_statement(stmt),
-            Statement::If(stmt) => self.eval_if_statement(stmt),
-            Statement::Block(stmt) => self.eval_block_statement(stmt),
-            _ => Ok(Object::Undefined(GUndefined)),
+            Statement::If(stmt) => self.eval_if_statement(stmt, scope_type),
+            Statement::Block(stmt) => self.eval_block_statement(stmt, scope_type),
+            Statement::Return(expr) => self.eval_return_statement(expr, scope_type),
         }
     }
 
@@ -325,27 +329,40 @@ impl<'a> Evaluator<'a> {
         }
     }
 
-    fn eval_if_statement(&mut self, statement: &IfStatement) -> Result<Object, Error> {
+    fn eval_if_statement(
+        &mut self,
+        statement: &IfStatement,
+        scope_type: ScopeType,
+    ) -> Result<Object, Error> {
         let condition = self.eval_expression(&statement.condition)?;
         if self.is_truthy(condition) {
-            self.eval_statement(&statement.consequence)
+            self.eval_statement(&statement.consequence, scope_type)
         } else {
             let un_boxed = statement.alternative.as_ref();
             match un_boxed {
-                Some(ref alt) => self.eval_statement(alt),
+                Some(ref alt) => self.eval_statement(alt, scope_type),
                 None => Ok(Object::Undefined(GUndefined)),
             }
         }
     }
 
-    fn eval_block_statement(&mut self, block: &BlockStatement) -> Result<Object, Error> {
+    fn eval_block_statement(
+        &mut self,
+        block: &BlockStatement,
+        scope_type: ScopeType,
+    ) -> Result<Object, Error> {
         self.env.scope_in();
         let mut result = Object::Undefined(GUndefined);
         for stmt in &block.statements {
-            result = self.eval_statement(stmt)?;
+            result = self.eval_statement(stmt, scope_type)?;
         }
         self.env.scope_out();
-        Ok(result)
+
+        if scope_type == ScopeType::Function {
+            Ok(result)
+        } else {
+            Ok(Object::Undefined(GUndefined))
+        }
     }
 
     fn eval_call_expression(&mut self, expr: &CallExpression) -> Result<Object, Error> {
@@ -377,7 +394,7 @@ impl<'a> Evaluator<'a> {
                     }
                 }
 
-                let result = self.eval_block_statement(&func.body)?;
+                let result = self.eval_block_statement(&func.body, ScopeType::Function)?;
                 self.env.scope_in();
                 Ok(result)
             }
@@ -388,6 +405,22 @@ impl<'a> Evaluator<'a> {
         }
     }
 
+    fn eval_return_statement(
+        &mut self,
+        stmt: &Expression,
+        scope_type: ScopeType,
+    ) -> Result<Object, Error> {
+        if scope_type != ScopeType::Function {
+            return Err(Error::new(
+                std::io::ErrorKind::Other,
+                "Uncaught SyntaxError: Illegal return statement",
+            ));
+        }
+
+        let value = self.eval_expression(stmt)?;
+        Ok(value)
+    }
+
     fn is_truthy(&self, obj: Object) -> bool {
         match obj {
             Object::Boolean(b) => b.value,
@@ -396,6 +429,12 @@ impl<'a> Evaluator<'a> {
             _ => true,
         }
     }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum ScopeType {
+    Block,
+    Function,
 }
 
 #[cfg(test)]
@@ -757,19 +796,33 @@ mod tests {
     #[test]
     fn test_eval_function() {
         {
-            let case = vec![(
-                String::from(
-                    r#"
-                        let a = 5;
-                        let assign = function() {
-                            a = 100;
-                        };
-                        assign();
-                        a;
+            let case = vec![
+                (
+                    String::from(
+                        r#"
+                            let a = 5;
+                            let assign = function() {
+                                a = 100;
+                            };
+                            assign();
+                            a;
                     "#,
+                    ),
+                    "\x1b[33m100\x1b[0m",
                 ),
-                "\x1b[33m100\x1b[0m",
-            )];
+                (
+                    String::from(
+                        r#"
+                            
+                            let add = function(a, b, c) {
+                                return a + b + c;
+                            };
+                            add(1, 2, 3);
+                    "#,
+                    ),
+                    "\x1b[33m6\x1b[0m",
+                ),
+            ];
 
             for (input, expected) in case {
                 let mut l = Lexer::new(input.to_string());
