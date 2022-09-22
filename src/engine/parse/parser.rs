@@ -195,10 +195,7 @@ impl<'a> Parser<'a> {
                 self.next_token();
                 Box::new(Some(self.parse_statement()?))
             }
-            _ => {
-                println!("alternative is None");
-                Box::new(None)
-            }
+            _ => Box::new(None),
         };
 
         Ok(Statement::If(IfStatement::new(
