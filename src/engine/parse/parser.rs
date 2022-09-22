@@ -218,6 +218,11 @@ impl<'a> Parser<'a> {
 
     fn parse_return_statement(&mut self) -> Result<Statement, Error> {
         self.next_token();
+
+        if self.cur_token.token_type == TokenType::SemiColon {
+            return Ok(Statement::Return(Expression::Undefined));
+        }
+
         let value: Expression = self.parse_expression(Precedence::Lowest)?;
         if self.peeked_token.token_type == TokenType::SemiColon {
             self.next_token()

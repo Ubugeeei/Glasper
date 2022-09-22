@@ -12,6 +12,7 @@ pub enum Object {
     BuiltinFunction(GBuiltinFunction),
     Null(GNull),
     Undefined(GUndefined),
+    Return(Box<Object>),
 }
 
 impl Object {
@@ -23,6 +24,7 @@ impl Object {
             Self::Null(_) => "object".to_string(),
             Self::Undefined(_) => "undefined".to_string(),
             Self::BuiltinFunction(_) => "function".to_string(),
+            Self::Return(_) => "".to_string(),
         }
     }
 }
@@ -37,6 +39,7 @@ impl Display for Object {
             Self::BuiltinFunction(b) => {
                 write!(f, "\x1b[33mf\x1b[0m {}() {{ [native code] }}", b.name)
             }
+            Self::Return(o) => write!(f, "{}", o),
         }
     }
 }

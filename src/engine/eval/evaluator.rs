@@ -23,7 +23,13 @@ impl<'a> Evaluator<'a> {
     pub fn eval(&mut self, program: &Program) -> Result<Object, Error> {
         let mut result = Object::Undefined(GUndefined);
         for statement in &program.statements {
-            result = self.eval_statement(statement, ScopeType::Block)?;
+            match self.eval_statement(statement, ScopeType::Block)? {
+                Object::Return(o) => {
+                    result = *o;
+                    break;
+                }
+                o => result = o,
+            };
         }
         Ok(result)
     }
@@ -107,6 +113,10 @@ impl<'a> Evaluator<'a> {
                     Ok(Object::Boolean(GBoolean { value: false }))
                 }
             }
+            _ => Err(Error::new(
+                std::io::ErrorKind::Other,
+                "Unexpected type for bang operator. at eval_bang_operator_expression",
+            )),
         }
     }
 
@@ -359,7 +369,10 @@ impl<'a> Evaluator<'a> {
         self.ctx.scope.scope_in();
         let mut result = Object::Undefined(GUndefined);
         for stmt in &block.statements {
-            result = self.eval_statement(stmt, scope_type)?;
+            if let Object::Return(ret) = self.eval_statement(stmt, scope_type)? {
+                result = Object::Return(ret);
+                break;
+            };
         }
         self.ctx.scope.scope_out();
 
@@ -428,7 +441,7 @@ impl<'a> Evaluator<'a> {
         }
 
         let value = self.eval_expression(stmt)?;
-        Ok(value)
+        Ok(Object::Return(Box::new(value)))
     }
 
     fn is_truthy(&self, obj: Object) -> bool {
