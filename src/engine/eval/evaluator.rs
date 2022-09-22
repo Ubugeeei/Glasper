@@ -98,24 +98,9 @@ impl<'a> Evaluator<'a> {
     }
 
     fn eval_bang_operator_expression(&self, right: Object) -> Result<Object, Error> {
-        match right {
-            Object::Boolean(GBoolean { value }) => Ok(Object::Boolean(GBoolean { value: !value })),
-            Object::Null(_)
-            | Object::Undefined(_)
-            | Object::Function(_)
-            | Object::BuiltinFunction(_) => Ok(Object::Boolean(GBoolean { value: true })),
-            Object::Number(GNumber { value }) => {
-                if value == 0.0 {
-                    Ok(Object::Boolean(GBoolean { value: true }))
-                } else {
-                    Ok(Object::Boolean(GBoolean { value: false }))
-                }
-            }
-            _ => Err(Error::new(
-                std::io::ErrorKind::Other,
-                "Unexpected type for bang operator. at eval_bang_operator_expression",
-            )),
-        }
+        Ok(Object::Boolean(GBoolean {
+            value: !self.is_truthy(right),
+        }))
     }
 
     fn eval_minus_prefix_operator_expression(&self, right: Object) -> Result<Object, Error> {
@@ -450,9 +435,10 @@ impl<'a> Evaluator<'a> {
     fn is_truthy(&self, obj: Object) -> bool {
         match obj {
             Object::Boolean(b) => b.value,
+            Object::Number(n) => n.value != 0.0,
+            Object::String(s) => !s.value.is_empty(),
             Object::Null(_) => false,
             Object::Undefined(_) => false,
-            Object::Number(n) => n.value != 0.0,
             _ => true,
         }
     }
