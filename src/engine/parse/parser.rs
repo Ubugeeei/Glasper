@@ -85,11 +85,26 @@ impl<'a> Parser<'a> {
         }
         let name = self.cur_token.literal.clone();
 
+        // declare without initial value
         if self.peeked_token.token_type != TokenType::Assign {
-            return Err(Error::new(
-                ErrorKind::InvalidInput,
-                format!("expected token '=' but found {}", self.cur_token.literal),
-            ));
+            self.next_token();
+            if self.cur_token.token_type == TokenType::SemiColon
+                || self.cur_token.token_type == TokenType::Eof
+            {
+                self.next_token(); // skip ';'
+                return Ok(Statement::Let(LetStatement::new(
+                    name,
+                    Expression::Undefined,
+                )));
+            } else {
+                return Err(Error::new(
+                    ErrorKind::InvalidInput,
+                    format!(
+                        "Uncaught SyntaxError: Unexpected token '{}'",
+                        self.cur_token.literal
+                    ),
+                ));
+            }
         }
 
         // skip assign
@@ -573,12 +588,12 @@ pub mod tests {
                 r#"
                     let five = 5;
                     let ten = 10;
+                    let a;
         "#,
             );
             let mut l = Lexer::new(source);
             let mut p = Parser::new(&mut l);
             let program = p.parse_program();
-            assert_eq!(program.statements.len(), 2);
             assert_eq!(
                 program.statements,
                 vec![
@@ -589,7 +604,8 @@ pub mod tests {
                     Statement::Let(LetStatement::new(
                         String::from("ten"),
                         Expression::Number(10.0)
-                    ))
+                    )),
+                    Statement::Let(LetStatement::new(String::from("a"), Expression::Undefined)),
                 ]
             );
         }
@@ -599,7 +615,28 @@ pub mod tests {
             let source = String::from(
                 r#"
                     let = 5;
-                    let 10;
+                "#,
+            );
+            let mut l = Lexer::new(source);
+            let mut p = Parser::new(&mut l);
+            let program = p.parse_program();
+            assert_eq!(program.statements.len(), 0);
+        }
+        {
+            let source = String::from(
+                r#"
+                    let = ;
+                "#,
+            );
+            let mut l = Lexer::new(source);
+            let mut p = Parser::new(&mut l);
+            let program = p.parse_program();
+            assert_eq!(program.statements.len(), 0);
+        }
+        {
+            let source = String::from(
+                r#"
+                    let a a;
                 "#,
             );
             let mut l = Lexer::new(source);
