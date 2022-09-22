@@ -13,6 +13,8 @@ Options:
     -h, --help                    print command line options (currently set)
 "#;
 
+const VERSION: &str = env!("CARGO_PKG_VERSION");
+
 fn main() {
     let args: Vec<String> = env::args().collect();
     if args.len() == 1 {
@@ -22,7 +24,9 @@ fn main() {
             "-h" | "--help" => {
                 println!("{}", HELP);
             }
-            "-v" | "--version" => {}
+            "-v" | "--version" => {
+                println!("v{}", VERSION);
+            }
             arg => {
                 cli::file::run(arg);
             }
