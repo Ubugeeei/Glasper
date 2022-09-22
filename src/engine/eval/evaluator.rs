@@ -23,12 +23,9 @@ impl<'a> Evaluator<'a> {
     pub fn eval(&mut self, program: &Program) -> Result<Object, Error> {
         let mut result = Object::Undefined(GUndefined);
         for statement in &program.statements {
-            match self.eval_statement(statement, ScopeType::Block)? {
-                Object::Return(o) => {
-                    result = *o;
-                    break;
-                }
-                o => result = o,
+            result = self.eval_statement(statement, ScopeType::Block)?;
+            if let Object::Return(o) = result {
+                return Ok(*o);
             };
         }
         Ok(result)
@@ -369,9 +366,10 @@ impl<'a> Evaluator<'a> {
         self.ctx.scope.scope_in();
         let mut result = Object::Undefined(GUndefined);
         for stmt in &block.statements {
-            if let Object::Return(ret) = self.eval_statement(stmt, scope_type)? {
-                result = Object::Return(ret);
-                break;
+            result = self.eval_statement(stmt, scope_type)?;
+            if let Object::Return(_) = result {
+                self.ctx.scope.scope_out();
+                return Ok(result);
             };
         }
         self.ctx.scope.scope_out();
@@ -419,7 +417,11 @@ impl<'a> Evaluator<'a> {
 
                 let result = self.eval_block_statement(&func.body, ScopeType::Function)?;
                 self.ctx.scope.scope_in();
-                Ok(result)
+
+                match result {
+                    Object::Return(ret) => Ok(*ret),
+                    _ => Ok(Object::Undefined(GUndefined)),
+                }
             }
             _ => Err(Error::new(
                 std::io::ErrorKind::Other,
@@ -449,6 +451,7 @@ impl<'a> Evaluator<'a> {
             Object::Boolean(b) => b.value,
             Object::Null(_) => false,
             Object::Undefined(_) => false,
+            Object::Number(n) => n.value != 0.0,
             _ => true,
         }
     }
