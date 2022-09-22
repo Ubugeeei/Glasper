@@ -91,7 +91,6 @@ impl<'a> Parser<'a> {
             if self.cur_token.token_type == TokenType::SemiColon
                 || self.cur_token.token_type == TokenType::Eof
             {
-                self.next_token(); // skip ';'
                 return Ok(Statement::Let(LetStatement::new(
                     name,
                     Expression::Undefined,
@@ -187,15 +186,19 @@ impl<'a> Parser<'a> {
 
         // parse consequence
         let consequence = Box::new(self.parse_statement()?);
-        self.next_token(); // skip '}'
 
         // parse alternative
-        let alternative = match self.cur_token.token_type {
+        let alternative = match self.peeked_token.token_type {
             TokenType::Else => {
+                self.next_token();
+                // skip 'else'
                 self.next_token();
                 Box::new(Some(self.parse_statement()?))
             }
-            _ => Box::new(None),
+            _ => {
+                println!("alternative is None");
+                Box::new(None)
+            }
         };
 
         Ok(Statement::If(IfStatement::new(
@@ -256,14 +259,16 @@ impl<'a> Parser<'a> {
 
     fn parse_expression(&mut self, precedence: Precedence) -> Result<Expression, Error> {
         let mut expr = match self.cur_token.token_type {
+            TokenType::True | TokenType::False => Expression::Boolean(self.parse_boolean()?),
+            TokenType::Number => Expression::Number(self.parse_number()?),
+            TokenType::String => Expression::String(self.parse_string()?),
+            TokenType::Null => Expression::Null,
+            TokenType::Undefined => Expression::Undefined,
+
             TokenType::Ident => match self.peeked_token.token_type {
                 TokenType::Inc | TokenType::Dec => self.parse_suffix_expression()?,
                 _ => Expression::Identifier(self.parse_identifier()?),
             },
-            TokenType::Number => Expression::Number(self.parse_number()?),
-            TokenType::True | TokenType::False => Expression::Boolean(self.parse_boolean()?),
-            TokenType::Null => Expression::Null,
-            TokenType::Undefined => Expression::Undefined,
 
             // prefix_expression
             TokenType::Bang => self.parse_prefix_expression()?,
@@ -361,6 +366,10 @@ impl<'a> Parser<'a> {
             }
         }
         Ok(self.cur_token.literal.parse::<f64>().unwrap())
+    }
+
+    fn parse_string(&mut self) -> Result<String, Error> {
+        Ok(self.cur_token.literal.to_string())
     }
 
     fn parse_boolean(&mut self) -> Result<bool, Error> {
@@ -589,7 +598,10 @@ pub mod tests {
                     let five = 5;
                     let ten = 10;
                     let a;
-        "#,
+                    let b = true;
+                    let c = false;
+                    let d = "hello world";
+                "#,
             );
             let mut l = Lexer::new(source);
             let mut p = Parser::new(&mut l);
@@ -606,6 +618,18 @@ pub mod tests {
                         Expression::Number(10.0)
                     )),
                     Statement::Let(LetStatement::new(String::from("a"), Expression::Undefined)),
+                    Statement::Let(LetStatement::new(
+                        String::from("b"),
+                        Expression::Boolean(true)
+                    )),
+                    Statement::Let(LetStatement::new(
+                        String::from("c"),
+                        Expression::Boolean(false)
+                    )),
+                    Statement::Let(LetStatement::new(
+                        String::from("d"),
+                        Expression::String(String::from("hello world"))
+                    )),
                 ]
             );
         }

@@ -85,6 +85,7 @@ impl IfStatement {
 pub enum Expression {
     Number(f64),
     Boolean(bool),
+    String(String),
     Null,
     Undefined,
     Identifier(String),

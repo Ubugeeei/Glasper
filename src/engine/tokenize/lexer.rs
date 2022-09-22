@@ -125,6 +125,8 @@ impl Lexer {
                 }
             }
 
+            '"' | '\'' => Token::new(TokenType::String, self.read_string()),
+
             _ => {
                 if Self::is_letter(self.ch) {
                     let id = self.read_identifier();
@@ -181,6 +183,24 @@ impl Lexer {
         }
         self.read_position -= 1;
         self.input[position..self.position].to_string()
+    }
+
+    fn read_string(&mut self) -> String {
+        let quote = self.ch;
+        let position = self.position + 1;
+        self.read_char();
+
+        loop {
+            if self.ch == quote && self.input.chars().nth(self.position - 1).unwrap() != '\\' {
+                break;
+            }
+            self.read_char();
+        }
+
+        self.input[position..self.position]
+            .chars()
+            .filter(|x| x != &'\\')
+            .collect::<String>()
     }
 
     fn skip_whitespace(&mut self) {
@@ -249,6 +269,34 @@ pub mod tests {
             let source = String::from("4e-2;");
             let mut l = Lexer::new(source);
             assert_eq!(l.next_token().token_type, TokenType::Number);
+            assert_eq!(l.next_token().token_type, TokenType::SemiColon);
+        }
+    }
+
+    #[test]
+    fn test_string() {
+        {
+            let source = String::from("\"hello world\";");
+            let mut l = Lexer::new(source);
+            let s = l.next_token();
+            assert_eq!(s, Token::new(TokenType::String, "hello world".to_string()));
+            assert_eq!(l.next_token().token_type, TokenType::SemiColon);
+        }
+        {
+            let source = String::from("'hello world';");
+            let mut l = Lexer::new(source);
+            let s = l.next_token();
+            assert_eq!(s, Token::new(TokenType::String, "hello world".to_string()));
+            assert_eq!(l.next_token().token_type, TokenType::SemiColon);
+        }
+        {
+            let source = String::from("'I\\'m Ubugeeei!';");
+            let mut l = Lexer::new(source);
+            let s = l.next_token();
+            assert_eq!(
+                s,
+                Token::new(TokenType::String, "I'm Ubugeeei!".to_string())
+            );
             assert_eq!(l.next_token().token_type, TokenType::SemiColon);
         }
     }

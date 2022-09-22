@@ -1,14 +1,19 @@
-let num = 1;
-
-if (num % 15 == 0) {
-	console_log(true, true)
-} else if (num % 5 == 0) {
-	console_log(false, true)
-} else if (num % 3 == 0) {
-	console_log(true, false)
-} else {
-	console_log(num)
+const fizzBuzz = function(num) {
+	if (!num) return 0;
+	
+	if (num % 15 == 0) {
+		console_log("FizzBuzz");
+	} else if (num % 5 == 0) {
+		console_log("Buzz");
+	} else if (num % 3 == 0) {
+		console_log("Fizz");
+	} else {
+		console_log(num);
+	}
+	fizzBuzz(num - 1);
 }
+
+fizzBuzz(20);
 
 
 const isEven = function(num) {
@@ -29,5 +34,4 @@ const factorial = function(num) {
 		return num * factorial(num - 1);
 	}
 }
-
 console_log(factorial(5));

@@ -10,7 +10,7 @@ use crate::engine::{
     },
 };
 
-use super::object::GFunction;
+use super::object::{GFunction, GString};
 
 pub struct Evaluator<'a> {
     ctx: &'a mut Context,
@@ -49,8 +49,9 @@ impl<'a> Evaluator<'a> {
     fn eval_expression(&mut self, expr: &Expression) -> Result<Object, Error> {
         match expr {
             // literals
-            Expression::Number(i) => Ok(Object::Number(GNumber { value: *i })),
             Expression::Boolean(b) => Ok(Object::Boolean(GBoolean { value: *b })),
+            Expression::Number(i) => Ok(Object::Number(GNumber { value: *i })),
+            Expression::String(s) => Ok(Object::String(GString { value: s.clone() })),
             Expression::Function(f) => Ok(Object::Function(GFunction::new(
                 f.clone().parameters,
                 f.clone().body,
@@ -97,24 +98,9 @@ impl<'a> Evaluator<'a> {
     }
 
     fn eval_bang_operator_expression(&self, right: Object) -> Result<Object, Error> {
-        match right {
-            Object::Boolean(GBoolean { value }) => Ok(Object::Boolean(GBoolean { value: !value })),
-            Object::Null(_)
-            | Object::Undefined(_)
-            | Object::Function(_)
-            | Object::BuiltinFunction(_) => Ok(Object::Boolean(GBoolean { value: true })),
-            Object::Number(GNumber { value }) => {
-                if value == 0.0 {
-                    Ok(Object::Boolean(GBoolean { value: true }))
-                } else {
-                    Ok(Object::Boolean(GBoolean { value: false }))
-                }
-            }
-            _ => Err(Error::new(
-                std::io::ErrorKind::Other,
-                "Unexpected type for bang operator. at eval_bang_operator_expression",
-            )),
-        }
+        Ok(Object::Boolean(GBoolean {
+            value: !self.is_truthy(right),
+        }))
     }
 
     fn eval_minus_prefix_operator_expression(&self, right: Object) -> Result<Object, Error> {
@@ -449,9 +435,10 @@ impl<'a> Evaluator<'a> {
     fn is_truthy(&self, obj: Object) -> bool {
         match obj {
             Object::Boolean(b) => b.value,
+            Object::Number(n) => n.value != 0.0,
+            Object::String(s) => !s.value.is_empty(),
             Object::Null(_) => false,
             Object::Undefined(_) => false,
-            Object::Number(n) => n.value != 0.0,
             _ => true,
         }
     }
@@ -751,6 +738,18 @@ mod tests {
                         "#,
                     ),
                     "\x1b[33m1\x1b[0m",
+                ),
+                (
+                    String::from(
+                        r#"
+                            let a = 5;
+                            if (a % 2 == 0) {
+                                a = 0;
+                            }
+                            a;
+                        "#,
+                    ),
+                    "\x1b[33m5\x1b[0m",
                 ),
                 (
                     String::from(
