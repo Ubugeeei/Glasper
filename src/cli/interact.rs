@@ -1,28 +1,46 @@
-use crate::runtime::js::JavaScriptRuntime;
-use std::io::{self, BufRead, Write};
+extern crate rustyline;
+use rustyline::Editor;
 
-const PROMPT: &str = "> ";
+use crate::runtime::js::JavaScriptRuntime;
 
 pub fn start() {
     println!("Welcome to Glasper v0.1.0 ");
     println!("exit using ctrl+c or ctrl+d or exit()");
+
     let mut runtime = JavaScriptRuntime::new();
+    let mut rl = Editor::<()>::new();
 
     loop {
-        print!("{}", PROMPT);
-        io::stdout().flush().unwrap();
+        let input = rl.readline("> ");
+        match input {
+            Ok(line) => {
+                rl.add_history_entry(&line);
 
-        let stdin = io::stdin();
-        let input = stdin.lock().lines().map(|l| l.unwrap()).next().unwrap();
+                /*
+                 *
+                 * exit
+                 *
+                 */
+                if line == "exit()" {
+                    println!("Bye!");
+                    break;
+                }
 
-        if &input == "exit()" {
-            println!("Bye!");
-            break;
-        }
+                /*
+                 *
+                 * execute
+                 *
+                 */
+                match runtime.execute(line) {
+                    Ok(o) => println!("{}", o),
+                    Err(e) => println!("{}", e),
+                }
+            }
 
-        match runtime.execute(input) {
-            Ok(o) => println!("{}", o),
-            Err(e) => println!("{}", e),
+            Err(err) => {
+                println!("error: {:?}", err);
+                break;
+            }
         }
     }
 }
