@@ -10,7 +10,7 @@ use crate::engine::{
     },
 };
 
-use super::object::GFunction;
+use super::object::{GFunction, GString};
 
 pub struct Evaluator<'a> {
     ctx: &'a mut Context,
@@ -49,8 +49,9 @@ impl<'a> Evaluator<'a> {
     fn eval_expression(&mut self, expr: &Expression) -> Result<Object, Error> {
         match expr {
             // literals
-            Expression::Number(i) => Ok(Object::Number(GNumber { value: *i })),
             Expression::Boolean(b) => Ok(Object::Boolean(GBoolean { value: *b })),
+            Expression::Number(i) => Ok(Object::Number(GNumber { value: *i })),
+            Expression::String(s) => Ok(Object::String(GString { value: s.clone() })),
             Expression::Function(f) => Ok(Object::Function(GFunction::new(
                 f.clone().parameters,
                 f.clone().body,

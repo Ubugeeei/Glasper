@@ -6,8 +6,9 @@ use crate::engine::parse::ast::{BlockStatement, FunctionParameter};
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum Object {
-    Number(GNumber),
     Boolean(GBoolean),
+    Number(GNumber),
+    String(GString),
     Function(GFunction),
     BuiltinFunction(GBuiltinFunction),
     Null(GNull),
@@ -18,8 +19,9 @@ pub enum Object {
 impl Object {
     fn get_type(&self) -> String {
         match self {
-            Self::Number(_) => "number".to_string(),
             Self::Boolean(_) => "boolean".to_string(),
+            Self::Number(_) => "number".to_string(),
+            Self::String(_) => "string".to_string(),
             Self::Function(_) => "function".to_string(),
             Self::Null(_) => "object".to_string(),
             Self::Undefined(_) => "undefined".to_string(),
@@ -31,14 +33,19 @@ impl Object {
 impl Display for Object {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::Number(n) => write!(f, "\x1b[33m{}\x1b[0m", n.value),
             Self::Boolean(b) => write!(f, "\x1b[33m{}\x1b[0m", b.value),
+            Self::Number(n) => write!(f, "\x1b[33m{}\x1b[0m", n.value),
+            Self::String(s) => write!(f, "\x1b[32m\"{}\"\x1b[0m", s.value),
+
             Self::Function(_) => write!(f, "[Function]"),
+
             Self::Null(_) => write!(f, "null"),
             Self::Undefined(_) => write!(f, "\x1b[30mundefined\x1b[0m"),
+
             Self::BuiltinFunction(b) => {
                 write!(f, "\x1b[33mf\x1b[0m {}() {{ [native code] }}", b.name)
             }
+
             Self::Return(o) => write!(f, "{}", o),
         }
     }
@@ -52,6 +59,17 @@ pub struct GNumber {
 impl GNumber {
     pub fn new(value: f64) -> GNumber {
         GNumber { value }
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub struct GString {
+    pub value: String,
+}
+// TODO: impl prototype
+impl GString {
+    pub fn new(value: String) -> GString {
+        GString { value }
     }
 }
 
