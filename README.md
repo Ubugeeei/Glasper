@@ -8,7 +8,7 @@
 
 A toy JavaScript runtime implementation in Rust.
 
-# build and setup
+# Installation
 
 ```sh
 $ make install
@@ -16,15 +16,14 @@ $ make install
 $ echo 'export PATH=/usr/local/bin/gls:$PATH' >> ~/.hogerc
 ```
 
-# usage
+# Usage
 
-## run source code
-
+## Run source code
 ```sh
 $ gls example/main.js
 ```
 
-## run interactive
+## Run interactive
 
 ```sh
 $ gls
@@ -33,7 +32,11 @@ exit using ctrl+c or ctrl+d or exit()
 > # input your source
 ```
 
-## use as library (JavaScript engine)
+you can get more info by help command.
+```sh
+$ gls --help
+```
+## Use as library (JavaScript engine)
 
 use engine api (src/engine/api.rs)
 
