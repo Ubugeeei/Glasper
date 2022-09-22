@@ -11,11 +11,9 @@ A toy JavaScript runtime implementation in Rust.
 # build and setup
 
 ```sh
-$ cargo build --release
-
+$ make install
 # set path your shell
-$ cp target/release/glasper /usr/local/bin/
-$ echo 'export PATH=/usr/local/bin/glasper:$PATH' >> ~/.hogerc
+$ echo 'export PATH=/usr/local/bin/gls:$PATH' >> ~/.hogerc
 ```
 
 # usage
@@ -23,13 +21,13 @@ $ echo 'export PATH=/usr/local/bin/glasper:$PATH' >> ~/.hogerc
 ## run source code
 
 ```sh
-$ glasper example/main.js
+$ gls example/main.js
 ```
 
 ## run interactive
 
 ```sh
-$ glasper
+$ gls
 Welcome to Glasper v0.1.0
 exit using ctrl+c or ctrl+d or exit()
 > # input your source
