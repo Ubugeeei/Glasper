@@ -2,11 +2,9 @@
   <img src="https://user-images.githubusercontent.com/71201308/191806164-dd912fe2-266b-447b-813b-6b8a93ad1391.png" width="200">
 
   [![CI](https://github.com/Ubugeeei/Glasper/actions/workflows/rust.yml/badge.svg)](https://github.com/Ubugeeei/Glasper/actions/workflows/rust.yml)
+
+A toy JavaScript engine and runtime implementation in Rust.
 </div>
-
-# Glasper
-
-A toy JavaScript runtime implementation in Rust.
 
 # Installation
 
