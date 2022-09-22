@@ -1,5 +1,5 @@
 extern crate rustyline;
-use rustyline::Editor;
+use rustyline::{error::ReadlineError, Editor};
 
 use crate::runtime::js::JavaScriptRuntime;
 
@@ -35,6 +35,10 @@ pub fn start() {
                     Ok(o) => println!("{}", o),
                     Err(e) => println!("{}", e),
                 }
+            }
+
+            Err(ReadlineError::Interrupted) | Err(ReadlineError::Eof) => {
+                break;
             }
 
             Err(err) => {
