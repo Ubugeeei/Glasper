@@ -15,6 +15,7 @@ pub enum TokenType {
 
     Ident,
     Number,
+    String,
 
     /*
      * symbols
@@ -45,6 +46,7 @@ pub enum TokenType {
     Or,
     And,
     Conditional, // ?
+    // BackQuote, // TODO: implement
 
     /*
      * combination of symbols
