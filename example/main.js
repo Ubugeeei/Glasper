@@ -1,12 +1,16 @@
 /**
+ *
  * std out
+ *
  */
 {
 	console_log("Hello World!");
 }
 
 /**
+ *
  * primitive types
+ *
  */
 {
 	console_log("true:", true);
@@ -24,7 +28,9 @@
 }
 
 /**
+ *
  * variables
+ *
  */
 {
 	{
@@ -53,7 +59,9 @@
 }
 
 /**
+ *
  * scope
+ *
  */
 {
 	let v = 1;
@@ -67,7 +75,9 @@
 }
 
 /**
+ *
  * operators
+ *
  */
 {
 	console_log("2 + 2:", 2 + 2);
@@ -92,7 +102,9 @@
 }
 
 /**
+ *
  * if statement branch
+ *
  */
 {
 	let num = 2;
@@ -104,7 +116,9 @@
 }
 
 /**
+ *
  * function
+ *
  */
 {
 	const add = function (a, b) {
@@ -115,7 +129,9 @@
 }
 
 /**
+ *
  * recursive function
+ *
  */
 {
 	const factorial = function (num) {
@@ -129,7 +145,9 @@
 }
 
 /**
+ *
  * fizzBuzz example
+ *
  */
 {
 	const fizzBuzz = function (num) {
