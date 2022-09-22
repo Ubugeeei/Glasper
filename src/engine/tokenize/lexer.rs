@@ -162,7 +162,6 @@ impl Lexer {
         }
         self.position = self.read_position;
         self.read_position += 1;
-        dbg!(self.ch);
     }
 
     fn read_number(&mut self) -> String {
@@ -280,7 +279,6 @@ pub mod tests {
             let source = String::from("\"hello world\";");
             let mut l = Lexer::new(source);
             let s = l.next_token();
-            dbg!(&s);
             assert_eq!(s, Token::new(TokenType::String, "hello world".to_string()));
             assert_eq!(l.next_token().token_type, TokenType::SemiColon);
         }
@@ -288,7 +286,6 @@ pub mod tests {
             let source = String::from("'hello world';");
             let mut l = Lexer::new(source);
             let s = l.next_token();
-            dbg!(&s);
             assert_eq!(s, Token::new(TokenType::String, "hello world".to_string()));
             assert_eq!(l.next_token().token_type, TokenType::SemiColon);
         }
@@ -296,7 +293,6 @@ pub mod tests {
             let source = String::from("'I\\'m Ubugeeei!';");
             let mut l = Lexer::new(source);
             let s = l.next_token();
-            dbg!(&s);
             assert_eq!(
                 s,
                 Token::new(TokenType::String, "I'm Ubugeeei!".to_string())
