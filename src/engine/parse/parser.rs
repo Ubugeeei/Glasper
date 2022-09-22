@@ -186,15 +186,19 @@ impl<'a> Parser<'a> {
 
         // parse consequence
         let consequence = Box::new(self.parse_statement()?);
-        self.next_token(); // skip '}'
 
         // parse alternative
-        let alternative = match self.cur_token.token_type {
+        let alternative = match self.peeked_token.token_type {
             TokenType::Else => {
+                self.next_token();
+                // skip 'else'
                 self.next_token();
                 Box::new(Some(self.parse_statement()?))
             }
-            _ => Box::new(None),
+            _ => {
+                println!("alternative is None");
+                Box::new(None)
+            }
         };
 
         Ok(Statement::If(IfStatement::new(

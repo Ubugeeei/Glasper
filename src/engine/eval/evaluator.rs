@@ -742,6 +742,18 @@ mod tests {
                 (
                     String::from(
                         r#"
+                            let a = 5;
+                            if (a % 2 == 0) {
+                                a = 0;
+                            }
+                            a;
+                        "#,
+                    ),
+                    "\x1b[33m5\x1b[0m",
+                ),
+                (
+                    String::from(
+                        r#"
                             let a = 6;
                             if (a % 2 == 0) {
                                 a = 0;
