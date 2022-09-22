@@ -49,7 +49,36 @@ impl Lexer {
                     Token::new(TokenType::Asterisk, self.ch.to_string())
                 }
             }
-            '/' => Token::new(TokenType::Slash, self.ch.to_string()),
+            '/' => {
+                match self.peek_char() {
+                    // skip line comment
+                    '/' => {
+                        self.read_char();
+                        loop {
+                            self.read_char();
+                            if self.ch == '\n' {
+                                self.read_char();
+                                break self.next_token();
+                            }
+                        }
+                    }
+
+                    // skip block comment
+                    '*' => {
+                        self.read_char();
+                        loop {
+                            self.read_char();
+                            if self.ch == '*' && self.peek_char() == '/' {
+                                self.read_char();
+                                self.read_char();
+                                break self.next_token();
+                            }
+                        }
+                    }
+
+                    _ => Token::new(TokenType::Slash, self.ch.to_string()),
+                }
+            }
             '%' => Token::new(TokenType::Percent, self.ch.to_string()),
 
             '|' => {
@@ -532,6 +561,110 @@ pub mod tests {
 
         t = l.next_token();
         assert_eq!(t.token_type, TokenType::RParen);
+
+        t = l.next_token();
+        assert_eq!(t.token_type, TokenType::SemiColon);
+
+        t = l.next_token();
+        assert_eq!(t.token_type, TokenType::Eof);
+    }
+
+    #[test]
+    fn test_skip_line_comment() {
+        let source = String::from(
+            r#"
+                let five = 5;
+                // This is a comment
+                let ten = 10;
+                // This is a comment
+            "#,
+        );
+        let mut l = Lexer::new(source);
+
+        let mut t = l.next_token();
+        assert_eq!(t.token_type, TokenType::Let);
+
+        t = l.next_token();
+        assert_eq!(t.token_type, TokenType::Ident);
+        assert_eq!(t.literal, String::from("five"));
+
+        t = l.next_token();
+        assert_eq!(t.token_type, TokenType::Assign);
+
+        t = l.next_token();
+        assert_eq!(t.token_type, TokenType::Number);
+        assert_eq!(t.literal, String::from("5"));
+
+        t = l.next_token();
+        assert_eq!(t.token_type, TokenType::SemiColon);
+
+        t = l.next_token();
+        assert_eq!(t.token_type, TokenType::Let);
+        assert_eq!(t.literal, String::from("let"));
+
+        t = l.next_token();
+        assert_eq!(t.token_type, TokenType::Ident);
+        assert_eq!(t.literal, String::from("ten"));
+
+        t = l.next_token();
+        assert_eq!(t.token_type, TokenType::Assign);
+
+        t = l.next_token();
+        assert_eq!(t.token_type, TokenType::Number);
+        assert_eq!(t.literal, String::from("10"));
+
+        t = l.next_token();
+        assert_eq!(t.token_type, TokenType::SemiColon);
+
+        t = l.next_token();
+        assert_eq!(t.token_type, TokenType::Eof);
+    }
+
+    #[test]
+    fn test_skip_block_comment() {
+        let source = String::from(
+            r#"
+                let five = 5;
+                /* This is a comment */
+                let ten = 10;
+                /**
+                 * This is a comment
+                 */
+            "#,
+        );
+        let mut l = Lexer::new(source);
+
+        let mut t = l.next_token();
+        assert_eq!(t.token_type, TokenType::Let);
+
+        t = l.next_token();
+        assert_eq!(t.token_type, TokenType::Ident);
+        assert_eq!(t.literal, String::from("five"));
+
+        t = l.next_token();
+        assert_eq!(t.token_type, TokenType::Assign);
+
+        t = l.next_token();
+        assert_eq!(t.token_type, TokenType::Number);
+        assert_eq!(t.literal, String::from("5"));
+
+        t = l.next_token();
+        assert_eq!(t.token_type, TokenType::SemiColon);
+
+        t = l.next_token();
+        assert_eq!(t.token_type, TokenType::Let);
+        assert_eq!(t.literal, String::from("let"));
+
+        t = l.next_token();
+        assert_eq!(t.token_type, TokenType::Ident);
+        assert_eq!(t.literal, String::from("ten"));
+
+        t = l.next_token();
+        assert_eq!(t.token_type, TokenType::Assign);
+
+        t = l.next_token();
+        assert_eq!(t.token_type, TokenType::Number);
+        assert_eq!(t.literal, String::from("10"));
 
         t = l.next_token();
         assert_eq!(t.token_type, TokenType::SemiColon);
