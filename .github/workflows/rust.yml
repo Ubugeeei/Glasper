@@ -18,7 +18,7 @@ jobs:
 
       # NOTE: install deps for ci
       - name: install_dependencies
-        run: echo "install deps"
+        run: rustup component add rustfmt --toolchain 1.64.0-x86_64-apple-darwin
 
       - name: Check Tools
         run: rustup show
