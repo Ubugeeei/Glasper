@@ -202,8 +202,8 @@ impl ObjectProperty {
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct MemberExpression {
-    object: Box<Expression>,
-    property: Box<Expression>,
+    pub object: Box<Expression>,
+    pub property: Box<Expression>,
 }
 impl MemberExpression {
     pub fn new(object: Box<Expression>, property: Box<Expression>) -> MemberExpression {

@@ -6,7 +6,7 @@ use crate::engine::{
     handle_scope::{Variable, VariableKind},
     parse::ast::{
         BlockStatement, CallExpression, ConstStatement, Expression, IfStatement, LetStatement,
-        ObjectExpression, Program, Statement,
+        MemberExpression, ObjectExpression, Program, Statement,
     },
 };
 
@@ -59,7 +59,10 @@ impl<'a> Evaluator<'a> {
             Expression::Null => Ok(Object::Null(GNull)),
             Expression::Undefined => Ok(Object::Undefined(GUndefined)),
             Expression::NaN => Ok(Object::NaN(GNaN)),
+
+            // objects
             Expression::Object(o) => self.eval_object_expression(o),
+            Expression::Member(m) => self.eval_member_expression(m),
 
             Expression::Identifier(name) => self.eval_identifier(name),
 
@@ -458,6 +461,28 @@ impl<'a> Evaluator<'a> {
             properties.insert(key, value);
         }
         Ok(Object::Object(GObject { properties }))
+    }
+
+    fn eval_member_expression(&mut self, m: &MemberExpression) -> Result<Object, Error> {
+        let obj = self.eval_expression(&m.object)?;
+        let prop = self.eval_expression(&m.property)?;
+
+        match prop {
+            Object::String(s) => match obj {
+                Object::Object(o) => match o.properties.get(&s.value) {
+                    Some(v) => Ok(v.clone()),
+                    None => Ok(Object::Undefined(GUndefined)),
+                },
+                _ => Err(Error::new(
+                    std::io::ErrorKind::Other,
+                    "Uncaught SyntaxError: Invalid or unexpected token",
+                )),
+            },
+            _ => Err(Error::new(
+                std::io::ErrorKind::Other,
+                "Uncaught SyntaxError: Invalid or unexpected token",
+            )),
+        }
     }
 
     fn eval_assign_expression(
