@@ -1,4 +1,4 @@
-use std::io::Error;
+use std::{collections::HashMap, io::Error};
 
 use crate::engine::{
     api::Context,
@@ -6,11 +6,11 @@ use crate::engine::{
     handle_scope::{Variable, VariableKind},
     parse::ast::{
         BlockStatement, CallExpression, ConstStatement, Expression, IfStatement, LetStatement,
-        Program, Statement,
+        ObjectExpression, Program, Statement,
     },
 };
 
-use super::object::{GFunction, GNaN, GString};
+use super::object::{GFunction, GNaN, GObject, GString};
 
 pub struct Evaluator<'a> {
     ctx: &'a mut Context,
@@ -59,6 +59,7 @@ impl<'a> Evaluator<'a> {
             Expression::Null => Ok(Object::Null(GNull)),
             Expression::Undefined => Ok(Object::Undefined(GUndefined)),
             Expression::NaN => Ok(Object::NaN(GNaN)),
+            Expression::Object(o) => self.eval_object_expression(o),
 
             Expression::Identifier(name) => self.eval_identifier(name),
 
@@ -447,6 +448,16 @@ impl<'a> Evaluator<'a> {
                 )),
             },
         }
+    }
+
+    fn eval_object_expression(&mut self, obj: &ObjectExpression) -> Result<Object, Error> {
+        let mut properties = HashMap::new();
+        for prop in &obj.properties {
+            let key = prop.key.clone();
+            let value = self.eval_expression(&prop.value)?;
+            properties.insert(key, value);
+        }
+        Ok(Object::Object(GObject { properties }))
     }
 
     fn eval_assign_expression(

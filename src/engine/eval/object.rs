@@ -1,6 +1,6 @@
 #![allow(dead_code)]
 
-use std::fmt::Display;
+use std::{collections::HashMap, fmt::Display};
 
 use crate::engine::parse::ast::{BlockStatement, FunctionParameter};
 
@@ -9,6 +9,7 @@ pub enum Object {
     Boolean(GBoolean),
     Number(GNumber),
     String(GString),
+    Object(GObject),
     Function(GFunction),
     BuiltinFunction(GBuiltinFunction),
     Null(GNull),
@@ -23,6 +24,7 @@ impl Object {
             Self::Boolean(_) => "boolean".to_string(),
             Self::Number(_) => "number".to_string(),
             Self::String(_) => "string".to_string(),
+            Self::Object(_) => "object".to_string(),
             Self::Function(_) => "function".to_string(),
             Self::Null(_) => "object".to_string(),
             Self::Undefined(_) => "undefined".to_string(),
@@ -38,6 +40,8 @@ impl Display for Object {
             Self::Boolean(b) => write!(f, "\x1b[33m{}\x1b[0m", b.value),
             Self::Number(n) => write!(f, "\x1b[33m{}\x1b[0m", n.value),
             Self::String(s) => write!(f, "\x1b[32m'{}'\x1b[0m", s.value),
+
+            Self::Object(_) => write!(f, "\x1b[34m[Object]\x1b[0m"),
 
             Self::Function(_) => write!(f, "[Function]"),
 
@@ -140,6 +144,11 @@ impl GBoolean {
     pub fn new(value: bool) -> GBoolean {
         GBoolean { value }
     }
+}
+
+#[derive(Debug, PartialEq, Clone)]
+pub struct GObject {
+    pub properties: HashMap<String, Object>,
 }
 
 #[derive(Debug, PartialEq, Clone)]
