@@ -271,4 +271,50 @@ mod test {
             assert_eq!(GBoolean::into(input), expected);
         }
     }
+
+    #[test]
+    fn test_into_string() {
+        let case = vec![
+            (
+                Object::Number(GNumber { value: 1.0 }),
+                Object::String(GString {
+                    value: "1".to_string(),
+                }),
+            ),
+            (
+                Object::Boolean(GBoolean { value: true }),
+                Object::String(GString {
+                    value: "true".to_string(),
+                }),
+            ),
+            (
+                Object::Boolean(GBoolean { value: false }),
+                Object::String(GString {
+                    value: "false".to_string(),
+                }),
+            ),
+            (
+                Object::Null(GNull {}),
+                Object::String(GString {
+                    value: "null".to_string(),
+                }),
+            ),
+            (
+                Object::Undefined(GUndefined {}),
+                Object::String(GString {
+                    value: "undefined".to_string(),
+                }),
+            ),
+            (
+                Object::NaN(GNaN {}),
+                Object::String(GString {
+                    value: "".to_string(),
+                }),
+            ),
+        ];
+
+        for (input, expected) in case {
+            assert_eq!(GString::into(input), expected);
+        }
+    }
 }
