@@ -147,6 +147,7 @@ impl<'a> Evaluator<'a> {
                     "^" => Ok(Object::Number(GNumber::new((l as i64 ^ r as i64) as f64))),
                     "<" => Ok(Object::Boolean(GBoolean::new(l < r))),
                     ">" => Ok(Object::Boolean(GBoolean::new(l > r))),
+                    "<=" => Ok(Object::Boolean(GBoolean::new(l <= r))),
                     "==" => Ok(Object::Boolean(GBoolean::new(l == r))), // TODO: Implicit type casting
                     "!=" => Ok(Object::Boolean(GBoolean::new(l != r))), // TODO: Implicit type casting
                     "===" => Ok(Object::Boolean(GBoolean::new(l == r))),
@@ -579,8 +580,9 @@ mod tests {
             ("1 > 1", "\x1b[33mfalse\x1b[0m"),
             ("1 == 1", "\x1b[33mtrue\x1b[0m"),
             ("1 != 1", "\x1b[33mfalse\x1b[0m"),
-            ("1 < 2", "\x1b[33mtrue\x1b[0m"),
-            ("1 > 2", "\x1b[33mfalse\x1b[0m"),
+            ("1 < 1", "\x1b[33mfalse\x1b[0m"),
+            ("1 > 1", "\x1b[33mfalse\x1b[0m"),
+            ("1 <= 1", "\x1b[33mtrue\x1b[0m"),
             ("1 == 2", "\x1b[33mfalse\x1b[0m"),
             ("1 === 2", "\x1b[33mfalse\x1b[0m"),
             ("1 !== 2", "\x1b[33mtrue\x1b[0m"),
