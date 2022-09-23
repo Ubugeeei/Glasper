@@ -58,6 +58,25 @@ impl Display for Object {
 pub struct GNumber {
     pub value: f64,
 }
+impl GNumber {
+    pub fn into(o: Object) -> Object {
+        match o {
+            Object::Number(n) => Object::Number(n),
+            Object::Boolean(GBoolean { value }) => Object::Number(GNumber {
+                value: if value { 1.0 } else { 0.0 },
+            }),
+            Object::String(s) => {
+                let value = s.value.parse::<f64>();
+                match value {
+                    Ok(v) => Object::Number(GNumber { value: v }),
+                    Err(_) => Object::NaN(GNaN {}),
+                }
+            }
+            Object::Null(_) => Object::Number(GNumber { value: 0.0 }),
+            _ => Object::NaN(GNaN),
+        }
+    }
+}
 // TODO: impl prototype
 impl GNumber {
     pub fn new(value: f64) -> GNumber {
