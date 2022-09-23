@@ -127,6 +127,7 @@ impl Lexer {
                 _ => Token::new(TokenType::Gt, self.ch.to_string()),
             },
             '~' => Token::new(TokenType::BitNot, self.ch.to_string()),
+            ':' => Token::new(TokenType::Colon, self.ch.to_string()),
             ';' => Token::new(TokenType::SemiColon, self.ch.to_string()),
             ',' => Token::new(TokenType::Comma, self.ch.to_string()),
             '.' => Token::new(TokenType::Period, self.ch.to_string()),
@@ -350,7 +351,7 @@ pub mod tests {
 
     #[test]
     fn test_symbol_token() {
-        let source = String::from("=+-*/%!<>(){},.;?|&^~");
+        let source = String::from("=+-*/%!<>(){},.:;?|&^~");
         let mut l = Lexer::new(source);
         assert_eq!(l.next_token().token_type, TokenType::Assign);
         assert_eq!(l.next_token().token_type, TokenType::Plus);
@@ -367,6 +368,7 @@ pub mod tests {
         assert_eq!(l.next_token().token_type, TokenType::RBrace);
         assert_eq!(l.next_token().token_type, TokenType::Comma);
         assert_eq!(l.next_token().token_type, TokenType::Period);
+        assert_eq!(l.next_token().token_type, TokenType::Colon);
         assert_eq!(l.next_token().token_type, TokenType::SemiColon);
         assert_eq!(l.next_token().token_type, TokenType::Conditional);
         assert_eq!(l.next_token().token_type, TokenType::BitOr);

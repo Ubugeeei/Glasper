@@ -49,6 +49,7 @@ pub enum TokenType {
     Conditional, // ?
     // others
     Comma,
+    Colon,
     SemiColon,
     Period,
 
