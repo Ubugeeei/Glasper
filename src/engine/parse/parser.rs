@@ -409,7 +409,7 @@ impl<'a> Parser<'a> {
             }
         }
 
-        Ok(Expression::Object(ObjectExpression::new(properties)))
+        Ok(Expression::RuntimeObject(ObjectExpression::new(properties)))
     }
 
     fn parse_object_property(&mut self) -> Result<ObjectProperty, Error> {
@@ -1716,12 +1716,11 @@ pub mod tests {
                 .to_string(),
                 Statement::Const(ConstStatement::new(
                     String::from("ob"),
-                    Expression::Object(ObjectExpression::new(vec![ObjectProperty::new(
+                    Expression::RuntimeObject(ObjectExpression::new(vec![ObjectProperty::new(
                         String::from("prop"),
-                        Expression::Object(ObjectExpression::new(vec![ObjectProperty::new(
-                            String::from("value"),
-                            Expression::Number(1.0),
-                        )])),
+                        Expression::RuntimeObject(ObjectExpression::new(vec![
+                            ObjectProperty::new(String::from("value"), Expression::Number(1.0)),
+                        ])),
                     )])),
                 )),
             ),

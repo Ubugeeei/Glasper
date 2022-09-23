@@ -1,5 +1,5 @@
 use crate::engine::{
-    eval::{evaluator::Evaluator, object::Object},
+    eval::{evaluator::Evaluator, object::RuntimeObject},
     handle_scope::HandleScope,
     parse::{ast::Program, parser::Parser},
     tokenize::lexer::Lexer,
@@ -33,7 +33,7 @@ impl Context {
 }
 
 pub struct Global {
-    scope: HashMap<String, Object>,
+    scope: HashMap<String, RuntimeObject>,
 }
 impl Default for Global {
     fn default() -> Self {
@@ -47,11 +47,11 @@ impl Global {
         }
     }
 
-    pub fn get(&self, key: &str) -> Option<&Object> {
+    pub fn get(&self, key: &str) -> Option<&RuntimeObject> {
         self.scope.get(key)
     }
 
-    pub fn set(&mut self, name: &str, ob: Object) {
+    pub fn set(&mut self, name: &str, ob: RuntimeObject) {
         self.scope.insert(name.to_string(), ob);
     }
 }
@@ -69,7 +69,7 @@ impl<'a> Script<'a> {
             context,
         }
     }
-    pub fn run(&mut self) -> Result<Object, Error> {
+    pub fn run(&mut self) -> Result<RuntimeObject, Error> {
         let mut ev = Evaluator::new(self.context);
         ev.eval(&self.ast)
     }

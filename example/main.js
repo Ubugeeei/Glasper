@@ -24,7 +24,7 @@
 	console.log("1.1e-3:", 1.1e-3);
 	console.log("hello string");
 	console.log("undefined:", undefined);
-	console.log("null:", null); // (Object)
+	console.log("null:", null); // (RuntimeObject)
 }
 
 /**

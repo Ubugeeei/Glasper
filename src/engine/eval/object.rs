@@ -5,26 +5,26 @@ use std::{collections::HashMap, fmt::Display};
 use crate::engine::parse::ast::{BlockStatement, FunctionParameter};
 
 #[derive(Debug, PartialEq, Clone)]
-pub enum Object {
-    Boolean(GBoolean),
-    Number(GNumber),
-    String(GString),
-    Object(GObject),
-    Function(GFunction),
-    BuiltinFunction(GBuiltinFunction),
-    Null(GNull),
-    Undefined(GUndefined),
-    NaN(GNaN),
-    Return(Box<Object>),
+pub enum RuntimeObject {
+    Boolean(JSBoolean),
+    Number(JSNumber),
+    String(JSString),
+    RuntimeObject(JSObject),
+    Function(JSFunction),
+    BuiltinFunction(JSBuiltinFunction),
+    Null(JSNull),
+    Undefined(JSUndefined),
+    NaN(JSNaN),
+    Return(Box<RuntimeObject>),
 }
 
-impl Object {
+impl RuntimeObject {
     pub fn get_type(&self) -> String {
         match self {
             Self::Boolean(_) => "boolean".to_string(),
             Self::Number(_) => "number".to_string(),
             Self::String(_) => "string".to_string(),
-            Self::Object(_) => "object".to_string(),
+            Self::RuntimeObject(_) => "object".to_string(),
             Self::Function(_) => "function".to_string(),
             Self::Null(_) => "object".to_string(),
             Self::Undefined(_) => "undefined".to_string(),
@@ -34,7 +34,7 @@ impl Object {
         }
     }
 }
-impl Display for Object {
+impl Display for RuntimeObject {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::Boolean(b) => write!(f, "\x1b[33m{}\x1b[0m", b.value),
@@ -42,7 +42,7 @@ impl Display for Object {
             // Self::String(s) => write!(f, "\x1b[32m'{}'\x1b[0m", s.value),
             Self::String(s) => write!(f, "{}", s.value),
 
-            Self::Object(_) => write!(f, "\x1b[34m[Object]\x1b[0m"),
+            Self::RuntimeObject(_) => write!(f, "\x1b[34m[RuntimeObject]\x1b[0m"),
 
             Self::Function(_) => write!(f, "[Function]"),
 
@@ -60,58 +60,58 @@ impl Display for Object {
 }
 
 #[derive(Debug, PartialEq, Clone)]
-pub struct GNumber {
+pub struct JSNumber {
     pub value: f64,
 }
-impl GNumber {
-    pub fn into(o: Object) -> Object {
+impl JSNumber {
+    pub fn into(o: RuntimeObject) -> RuntimeObject {
         match o {
-            Object::Number(n) => Object::Number(n),
-            Object::Boolean(GBoolean { value }) => Object::Number(GNumber {
+            RuntimeObject::Number(n) => RuntimeObject::Number(n),
+            RuntimeObject::Boolean(JSBoolean { value }) => RuntimeObject::Number(JSNumber {
                 value: if value { 1.0 } else { 0.0 },
             }),
-            Object::String(s) => {
+            RuntimeObject::String(s) => {
                 let value = s.value.parse::<f64>();
                 match value {
-                    Ok(v) => Object::Number(GNumber { value: v }),
-                    Err(_) => Object::NaN(GNaN {}),
+                    Ok(v) => RuntimeObject::Number(JSNumber { value: v }),
+                    Err(_) => RuntimeObject::NaN(JSNaN {}),
                 }
             }
-            Object::Null(_) => Object::Number(GNumber { value: 0.0 }),
-            _ => Object::NaN(GNaN),
+            RuntimeObject::Null(_) => RuntimeObject::Number(JSNumber { value: 0.0 }),
+            _ => RuntimeObject::NaN(JSNaN),
         }
     }
 }
 // TODO: impl prototype
-impl GNumber {
-    pub fn new(value: f64) -> GNumber {
-        GNumber { value }
+impl JSNumber {
+    pub fn new(value: f64) -> JSNumber {
+        JSNumber { value }
     }
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
-pub struct GString {
+pub struct JSString {
     pub value: String,
 }
 // TODO: impl prototype
-impl GString {
-    pub fn into(o: Object) -> Object {
+impl JSString {
+    pub fn into(o: RuntimeObject) -> RuntimeObject {
         match o {
-            Object::String(s) => Object::String(s),
-            Object::Number(n) => Object::String(GString {
+            RuntimeObject::String(s) => RuntimeObject::String(s),
+            RuntimeObject::Number(n) => RuntimeObject::String(JSString {
                 value: n.value.to_string(),
             }),
-            Object::Boolean(GBoolean { value }) => Object::String(GString {
+            RuntimeObject::Boolean(JSBoolean { value }) => RuntimeObject::String(JSString {
                 value: value.to_string(),
             }),
-            Object::Null(_) => Object::String(GString {
+            RuntimeObject::Null(_) => RuntimeObject::String(JSString {
                 value: "null".to_string(),
             }),
-            Object::Undefined(_) => Object::String(GString {
+            RuntimeObject::Undefined(_) => RuntimeObject::String(JSString {
                 value: "undefined".to_string(),
             }),
             // TODO: literal
-            _ => Object::String(GString {
+            _ => RuntimeObject::String(JSString {
                 value: "".to_string(),
             }),
         }
@@ -119,67 +119,67 @@ impl GString {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
-pub struct GBoolean {
+pub struct JSBoolean {
     pub value: bool,
 }
-impl GBoolean {
-    pub fn into(o: Object) -> Object {
+impl JSBoolean {
+    pub fn into(o: RuntimeObject) -> RuntimeObject {
         match o {
-            Object::Boolean(b) => Object::Boolean(b),
-            Object::Number(GNumber { value }) => Object::Boolean(GBoolean {
+            RuntimeObject::Boolean(b) => RuntimeObject::Boolean(b),
+            RuntimeObject::Number(JSNumber { value }) => RuntimeObject::Boolean(JSBoolean {
                 value: value != 0.0,
             }),
-            Object::String(GString { value }) => Object::Boolean(GBoolean {
+            RuntimeObject::String(JSString { value }) => RuntimeObject::Boolean(JSBoolean {
                 value: value != *"",
             }),
-            Object::Null(_) | Object::Undefined(_) | Object::NaN(_) => {
-                Object::Boolean(GBoolean { value: false })
+            RuntimeObject::Null(_) | RuntimeObject::Undefined(_) | RuntimeObject::NaN(_) => {
+                RuntimeObject::Boolean(JSBoolean { value: false })
             }
-            _ => Object::Boolean(GBoolean { value: true }),
+            _ => RuntimeObject::Boolean(JSBoolean { value: true }),
         }
     }
 }
 
 // TODO: impl prototype
-impl GBoolean {
-    pub fn new(value: bool) -> GBoolean {
-        GBoolean { value }
+impl JSBoolean {
+    pub fn new(value: bool) -> JSBoolean {
+        JSBoolean { value }
     }
 }
 
 #[derive(Debug, PartialEq, Clone)]
-pub struct GObject {
-    pub properties: HashMap<String, Object>,
+pub struct JSObject {
+    pub properties: HashMap<String, RuntimeObject>,
 }
 
 #[derive(Debug, PartialEq, Clone)]
-pub struct GFunction {
+pub struct JSFunction {
     pub parameters: Vec<FunctionParameter>,
     pub body: BlockStatement,
 }
-impl GFunction {
-    pub fn new(parameters: Vec<FunctionParameter>, body: BlockStatement) -> GFunction {
-        GFunction { parameters, body }
+impl JSFunction {
+    pub fn new(parameters: Vec<FunctionParameter>, body: BlockStatement) -> JSFunction {
+        JSFunction { parameters, body }
     }
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
-pub struct GNull;
+pub struct JSNull;
 
 #[derive(Debug, PartialEq, Eq, Clone)]
-pub struct GUndefined;
+pub struct JSUndefined;
 
 #[derive(Debug, PartialEq, Eq, Clone)]
-pub struct GNaN;
+pub struct JSNaN;
 
 #[derive(Debug, PartialEq, Eq, Clone)]
-pub struct GBuiltinFunction {
+pub struct JSBuiltinFunction {
     name: String,
-    pub func: fn(Vec<Object>) -> Object,
+    pub func: fn(Vec<RuntimeObject>) -> RuntimeObject,
 }
-impl GBuiltinFunction {
-    pub fn new(name: &str, func: fn(Vec<Object>) -> Object) -> GBuiltinFunction {
-        GBuiltinFunction {
+impl JSBuiltinFunction {
+    pub fn new(name: &str, func: fn(Vec<RuntimeObject>) -> RuntimeObject) -> JSBuiltinFunction {
+        JSBuiltinFunction {
             name: name.to_string(),
             func,
         }
@@ -193,50 +193,53 @@ mod test {
     fn test_into_number() {
         let case = vec![
             (
-                Object::Number(GNumber { value: 1.0 }),
-                Object::Number(GNumber { value: 1.0 }),
+                RuntimeObject::Number(JSNumber { value: 1.0 }),
+                RuntimeObject::Number(JSNumber { value: 1.0 }),
             ),
             (
-                Object::Boolean(GBoolean { value: true }),
-                Object::Number(GNumber { value: 1.0 }),
+                RuntimeObject::Boolean(JSBoolean { value: true }),
+                RuntimeObject::Number(JSNumber { value: 1.0 }),
             ),
             (
-                Object::Boolean(GBoolean { value: false }),
-                Object::Number(GNumber { value: 0.0 }),
+                RuntimeObject::Boolean(JSBoolean { value: false }),
+                RuntimeObject::Number(JSNumber { value: 0.0 }),
             ),
             (
-                Object::String(GString {
+                RuntimeObject::String(JSString {
                     value: "1".to_string(),
                 }),
-                Object::Number(GNumber { value: 1.0 }),
+                RuntimeObject::Number(JSNumber { value: 1.0 }),
             ),
             (
-                Object::String(GString {
+                RuntimeObject::String(JSString {
                     value: "1.0".to_string(),
                 }),
-                Object::Number(GNumber { value: 1.0 }),
+                RuntimeObject::Number(JSNumber { value: 1.0 }),
             ),
             (
-                Object::String(GString {
+                RuntimeObject::String(JSString {
                     value: "1.1".to_string(),
                 }),
-                Object::Number(GNumber { value: 1.1 }),
+                RuntimeObject::Number(JSNumber { value: 1.1 }),
             ),
             (
-                Object::String(GString {
+                RuntimeObject::String(JSString {
                     value: "a".to_string(),
                 }),
-                Object::NaN(GNaN {}),
+                RuntimeObject::NaN(JSNaN {}),
             ),
             (
-                Object::Null(GNull {}),
-                Object::Number(GNumber { value: 0.0 }),
+                RuntimeObject::Null(JSNull {}),
+                RuntimeObject::Number(JSNumber { value: 0.0 }),
             ),
-            (Object::Undefined(GUndefined {}), Object::NaN(GNaN {})),
+            (
+                RuntimeObject::Undefined(JSUndefined {}),
+                RuntimeObject::NaN(JSNaN {}),
+            ),
         ];
 
         for (input, expected) in case {
-            assert_eq!(GNumber::into(input), expected);
+            assert_eq!(JSNumber::into(input), expected);
         }
     }
 
@@ -244,41 +247,41 @@ mod test {
     fn test_into_boolean() {
         let case = vec![
             (
-                Object::Number(GNumber { value: 1.0 }),
-                Object::Boolean(GBoolean { value: true }),
+                RuntimeObject::Number(JSNumber { value: 1.0 }),
+                RuntimeObject::Boolean(JSBoolean { value: true }),
             ),
             (
-                Object::Number(GNumber { value: 0.0 }),
-                Object::Boolean(GBoolean { value: false }),
+                RuntimeObject::Number(JSNumber { value: 0.0 }),
+                RuntimeObject::Boolean(JSBoolean { value: false }),
             ),
             (
-                Object::String(GString {
+                RuntimeObject::String(JSString {
                     value: "1".to_string(),
                 }),
-                Object::Boolean(GBoolean { value: true }),
+                RuntimeObject::Boolean(JSBoolean { value: true }),
             ),
             (
-                Object::String(GString {
+                RuntimeObject::String(JSString {
                     value: "".to_string(),
                 }),
-                Object::Boolean(GBoolean { value: false }),
+                RuntimeObject::Boolean(JSBoolean { value: false }),
             ),
             (
-                Object::Null(GNull {}),
-                Object::Boolean(GBoolean { value: false }),
+                RuntimeObject::Null(JSNull {}),
+                RuntimeObject::Boolean(JSBoolean { value: false }),
             ),
             (
-                Object::Undefined(GUndefined {}),
-                Object::Boolean(GBoolean { value: false }),
+                RuntimeObject::Undefined(JSUndefined {}),
+                RuntimeObject::Boolean(JSBoolean { value: false }),
             ),
             (
-                Object::NaN(GNaN {}),
-                Object::Boolean(GBoolean { value: false }),
+                RuntimeObject::NaN(JSNaN {}),
+                RuntimeObject::Boolean(JSBoolean { value: false }),
             ),
         ];
 
         for (input, expected) in case {
-            assert_eq!(GBoolean::into(input), expected);
+            assert_eq!(JSBoolean::into(input), expected);
         }
     }
 
@@ -286,45 +289,45 @@ mod test {
     fn test_into_string() {
         let case = vec![
             (
-                Object::Number(GNumber { value: 1.0 }),
-                Object::String(GString {
+                RuntimeObject::Number(JSNumber { value: 1.0 }),
+                RuntimeObject::String(JSString {
                     value: "1".to_string(),
                 }),
             ),
             (
-                Object::Boolean(GBoolean { value: true }),
-                Object::String(GString {
+                RuntimeObject::Boolean(JSBoolean { value: true }),
+                RuntimeObject::String(JSString {
                     value: "true".to_string(),
                 }),
             ),
             (
-                Object::Boolean(GBoolean { value: false }),
-                Object::String(GString {
+                RuntimeObject::Boolean(JSBoolean { value: false }),
+                RuntimeObject::String(JSString {
                     value: "false".to_string(),
                 }),
             ),
             (
-                Object::Null(GNull {}),
-                Object::String(GString {
+                RuntimeObject::Null(JSNull {}),
+                RuntimeObject::String(JSString {
                     value: "null".to_string(),
                 }),
             ),
             (
-                Object::Undefined(GUndefined {}),
-                Object::String(GString {
+                RuntimeObject::Undefined(JSUndefined {}),
+                RuntimeObject::String(JSString {
                     value: "undefined".to_string(),
                 }),
             ),
             (
-                Object::NaN(GNaN {}),
-                Object::String(GString {
+                RuntimeObject::NaN(JSNaN {}),
+                RuntimeObject::String(JSString {
                     value: "".to_string(),
                 }),
             ),
         ];
 
         for (input, expected) in case {
-            assert_eq!(GString::into(input), expected);
+            assert_eq!(JSString::into(input), expected);
         }
     }
 }

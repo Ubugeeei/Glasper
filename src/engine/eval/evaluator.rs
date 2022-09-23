@@ -2,7 +2,7 @@ use std::{collections::HashMap, io::Error};
 
 use crate::engine::{
     api::Context,
-    eval::object::{GBoolean, GNull, GNumber, GUndefined, Object},
+    eval::object::{JSBoolean, JSNull, JSNumber, JSUndefined, RuntimeObject},
     handle_scope::{Variable, VariableKind},
     parse::ast::{
         BlockStatement, CallExpression, ConstStatement, Expression, IfStatement, LetStatement,
@@ -10,7 +10,7 @@ use crate::engine::{
     },
 };
 
-use super::object::{GFunction, GNaN, GObject, GString};
+use super::object::{JSFunction, JSNaN, JSObject, JSString};
 
 pub struct Evaluator<'a> {
     ctx: &'a mut Context,
@@ -20,11 +20,11 @@ impl<'a> Evaluator<'a> {
         Evaluator { ctx }
     }
 
-    pub fn eval(&mut self, program: &Program) -> Result<Object, Error> {
-        let mut result = Object::Undefined(GUndefined);
+    pub fn eval(&mut self, program: &Program) -> Result<RuntimeObject, Error> {
+        let mut result = RuntimeObject::Undefined(JSUndefined);
         for statement in &program.statements {
             result = self.eval_statement(statement, ScopeType::Block)?;
-            if let Object::Return(o) = result {
+            if let RuntimeObject::Return(o) = result {
                 return Ok(*o);
             };
         }
@@ -35,7 +35,7 @@ impl<'a> Evaluator<'a> {
         &mut self,
         statement: &Statement,
         scope_type: ScopeType,
-    ) -> Result<Object, Error> {
+    ) -> Result<RuntimeObject, Error> {
         match statement {
             Statement::Expression(expr) => self.eval_expression(expr),
             Statement::Let(stmt) => self.eval_let_statement(stmt),
@@ -46,22 +46,22 @@ impl<'a> Evaluator<'a> {
         }
     }
 
-    fn eval_expression(&mut self, expr: &Expression) -> Result<Object, Error> {
+    fn eval_expression(&mut self, expr: &Expression) -> Result<RuntimeObject, Error> {
         match expr {
             // literals
-            Expression::Boolean(b) => Ok(Object::Boolean(GBoolean { value: *b })),
-            Expression::Number(i) => Ok(Object::Number(GNumber { value: *i })),
-            Expression::String(s) => Ok(Object::String(GString { value: s.clone() })),
-            Expression::Function(f) => Ok(Object::Function(GFunction::new(
+            Expression::Boolean(b) => Ok(RuntimeObject::Boolean(JSBoolean { value: *b })),
+            Expression::Number(i) => Ok(RuntimeObject::Number(JSNumber { value: *i })),
+            Expression::String(s) => Ok(RuntimeObject::String(JSString { value: s.clone() })),
+            Expression::Function(f) => Ok(RuntimeObject::Function(JSFunction::new(
                 f.clone().parameters,
                 f.clone().body,
             ))),
-            Expression::Null => Ok(Object::Null(GNull)),
-            Expression::Undefined => Ok(Object::Undefined(GUndefined)),
-            Expression::NaN => Ok(Object::NaN(GNaN)),
+            Expression::Null => Ok(RuntimeObject::Null(JSNull)),
+            Expression::Undefined => Ok(RuntimeObject::Undefined(JSUndefined)),
+            Expression::NaN => Ok(RuntimeObject::NaN(JSNaN)),
 
             // objects
-            Expression::Object(o) => self.eval_object_expression(o),
+            Expression::RuntimeObject(o) => self.eval_object_expression(o),
             Expression::Member(m) => self.eval_member_expression(m),
 
             Expression::Identifier(name) => self.eval_identifier(name),
@@ -81,14 +81,14 @@ impl<'a> Evaluator<'a> {
             // others
             Expression::Call(expr) => self.eval_call_expression(expr),
 
-            _ => Ok(Object::Undefined(GUndefined)),
+            _ => Ok(RuntimeObject::Undefined(JSUndefined)),
         }
     }
 
     fn eval_prefix_expression(
         &mut self,
         expr: &crate::engine::parse::ast::PrefixExpression,
-    ) -> Result<Object, Error> {
+    ) -> Result<RuntimeObject, Error> {
         let right = self.eval_expression(&expr.right)?;
         match expr.operator.as_str() {
             "!" => self.eval_bang_operator_expression(right),
@@ -105,15 +105,18 @@ impl<'a> Evaluator<'a> {
         }
     }
 
-    fn eval_bang_operator_expression(&self, right: Object) -> Result<Object, Error> {
-        Ok(Object::Boolean(GBoolean {
+    fn eval_bang_operator_expression(&self, right: RuntimeObject) -> Result<RuntimeObject, Error> {
+        Ok(RuntimeObject::Boolean(JSBoolean {
             value: !self.is_truthy(right),
         }))
     }
 
-    fn eval_minus_prefix_operator_expression(&self, right: Object) -> Result<Object, Error> {
-        if let Object::Number(GNumber { value }) = right {
-            Ok(Object::Number(GNumber { value: -value }))
+    fn eval_minus_prefix_operator_expression(
+        &self,
+        right: RuntimeObject,
+    ) -> Result<RuntimeObject, Error> {
+        if let RuntimeObject::Number(JSNumber { value }) = right {
+            Ok(RuntimeObject::Number(JSNumber { value: -value }))
         } else {
             Err(Error::new(
                 std::io::ErrorKind::Other,
@@ -122,9 +125,12 @@ impl<'a> Evaluator<'a> {
         }
     }
 
-    fn eval_bit_not_operator_expression(&self, right: Object) -> Result<Object, Error> {
-        if let Object::Number(GNumber { value }) = right {
-            Ok(Object::Number(GNumber {
+    fn eval_bit_not_operator_expression(
+        &self,
+        right: RuntimeObject,
+    ) -> Result<RuntimeObject, Error> {
+        if let RuntimeObject::Number(JSNumber { value }) = right {
+            Ok(RuntimeObject::Number(JSNumber {
                 value: (!(value as i64)) as f64,
             }))
         } else {
@@ -135,8 +141,11 @@ impl<'a> Evaluator<'a> {
         }
     }
 
-    fn eval_typeof_operator_expression(&self, right: Object) -> Result<Object, Error> {
-        Ok(Object::String(GString {
+    fn eval_typeof_operator_expression(
+        &self,
+        right: RuntimeObject,
+    ) -> Result<RuntimeObject, Error> {
+        Ok(RuntimeObject::String(JSString {
             value: right.get_type(),
         }))
     }
@@ -144,214 +153,248 @@ impl<'a> Evaluator<'a> {
     fn eval_infix_expression(
         &self,
         operator: String,
-        left: Object,
-        right: Object,
-    ) -> Result<Object, Error> {
+        left: RuntimeObject,
+        right: RuntimeObject,
+    ) -> Result<RuntimeObject, Error> {
         match operator.as_str() {
             "+" => match (left.clone(), right.clone()) {
-                (Object::String(GString { value }), _) => {
-                    let r = match GString::into(right) {
-                        Object::String(GString { value: r }) => r,
+                (RuntimeObject::String(JSString { value }), _) => {
+                    let r = match JSString::into(right) {
+                        RuntimeObject::String(JSString { value: r }) => r,
                         _ => "".to_string(),
                     };
-                    Ok(Object::String(GString {
+                    Ok(RuntimeObject::String(JSString {
                         value: format!("{}{}", value, r),
                     }))
                 }
-                (_, Object::String(GString { value })) => {
-                    let l = match GString::into(left) {
-                        Object::String(GString { value: l }) => l,
+                (_, RuntimeObject::String(JSString { value })) => {
+                    let l = match JSString::into(left) {
+                        RuntimeObject::String(JSString { value: l }) => l,
                         _ => "".to_string(),
                     };
-                    Ok(Object::String(GString {
+                    Ok(RuntimeObject::String(JSString {
                         value: format!("{}{}", l, value),
                     }))
                 }
                 _ => {
-                    let l = GNumber::into(left);
-                    let r = GNumber::into(right);
+                    let l = JSNumber::into(left);
+                    let r = JSNumber::into(right);
                     match (l, r) {
-                        (Object::Number(l), Object::Number(r)) => Ok(Object::Number(GNumber {
-                            value: l.value + r.value,
-                        })),
-                        _ => Ok(Object::NaN(GNaN)),
+                        (RuntimeObject::Number(l), RuntimeObject::Number(r)) => {
+                            Ok(RuntimeObject::Number(JSNumber {
+                                value: l.value + r.value,
+                            }))
+                        }
+                        _ => Ok(RuntimeObject::NaN(JSNaN)),
                     }
                 }
             },
             "-" => {
-                let l = GNumber::into(left);
-                let r = GNumber::into(right);
+                let l = JSNumber::into(left);
+                let r = JSNumber::into(right);
                 match (l, r) {
-                    (Object::Number(l), Object::Number(r)) => Ok(Object::Number(GNumber {
-                        value: l.value - r.value,
-                    })),
-                    _ => Ok(Object::NaN(GNaN)),
+                    (RuntimeObject::Number(l), RuntimeObject::Number(r)) => {
+                        Ok(RuntimeObject::Number(JSNumber {
+                            value: l.value - r.value,
+                        }))
+                    }
+                    _ => Ok(RuntimeObject::NaN(JSNaN)),
                 }
             }
             "*" => {
-                let l = GNumber::into(left);
-                let r = GNumber::into(right);
+                let l = JSNumber::into(left);
+                let r = JSNumber::into(right);
                 match (l, r) {
-                    (Object::Number(l), Object::Number(r)) => Ok(Object::Number(GNumber {
-                        value: l.value * r.value,
-                    })),
-                    _ => Ok(Object::NaN(GNaN)),
+                    (RuntimeObject::Number(l), RuntimeObject::Number(r)) => {
+                        Ok(RuntimeObject::Number(JSNumber {
+                            value: l.value * r.value,
+                        }))
+                    }
+                    _ => Ok(RuntimeObject::NaN(JSNaN)),
                 }
             }
             "/" => {
-                let l = GNumber::into(left);
-                let r = GNumber::into(right);
+                let l = JSNumber::into(left);
+                let r = JSNumber::into(right);
                 match (l, r) {
-                    (Object::Number(l), Object::Number(r)) => Ok(Object::Number(GNumber {
-                        value: l.value / r.value,
-                    })),
-                    _ => Ok(Object::NaN(GNaN)),
+                    (RuntimeObject::Number(l), RuntimeObject::Number(r)) => {
+                        Ok(RuntimeObject::Number(JSNumber {
+                            value: l.value / r.value,
+                        }))
+                    }
+                    _ => Ok(RuntimeObject::NaN(JSNaN)),
                 }
             }
             "%" => {
-                let l = GNumber::into(left);
-                let r = GNumber::into(right);
+                let l = JSNumber::into(left);
+                let r = JSNumber::into(right);
                 match (l, r) {
-                    (Object::Number(l), Object::Number(r)) => Ok(Object::Number(GNumber {
-                        value: l.value % r.value,
-                    })),
-                    _ => Ok(Object::NaN(GNaN)),
+                    (RuntimeObject::Number(l), RuntimeObject::Number(r)) => {
+                        Ok(RuntimeObject::Number(JSNumber {
+                            value: l.value % r.value,
+                        }))
+                    }
+                    _ => Ok(RuntimeObject::NaN(JSNaN)),
                 }
             }
             "**" => {
-                let l = GNumber::into(left);
-                let r = GNumber::into(right);
+                let l = JSNumber::into(left);
+                let r = JSNumber::into(right);
                 match (l, r) {
-                    (Object::Number(l), Object::Number(r)) => Ok(Object::Number(GNumber {
-                        value: l.value.powf(r.value),
-                    })),
-                    _ => Ok(Object::NaN(GNaN)),
+                    (RuntimeObject::Number(l), RuntimeObject::Number(r)) => {
+                        Ok(RuntimeObject::Number(JSNumber {
+                            value: l.value.powf(r.value),
+                        }))
+                    }
+                    _ => Ok(RuntimeObject::NaN(JSNaN)),
                 }
             }
             "|" => {
-                let l = GNumber::into(left);
-                let r = GNumber::into(right);
+                let l = JSNumber::into(left);
+                let r = JSNumber::into(right);
                 match (l, r) {
-                    (Object::Number(l), Object::Number(r)) => Ok(Object::Number(GNumber {
-                        value: ((l.value as i64) | (r.value as i64)) as f64,
-                    })),
-                    _ => Ok(Object::NaN(GNaN)),
+                    (RuntimeObject::Number(l), RuntimeObject::Number(r)) => {
+                        Ok(RuntimeObject::Number(JSNumber {
+                            value: ((l.value as i64) | (r.value as i64)) as f64,
+                        }))
+                    }
+                    _ => Ok(RuntimeObject::NaN(JSNaN)),
                 }
             }
             "&" => {
-                let l = GNumber::into(left);
-                let r = GNumber::into(right);
+                let l = JSNumber::into(left);
+                let r = JSNumber::into(right);
                 match (l, r) {
-                    (Object::Number(l), Object::Number(r)) => Ok(Object::Number(GNumber {
-                        value: ((l.value as i64) & (r.value as i64)) as f64,
-                    })),
-                    _ => Ok(Object::NaN(GNaN)),
+                    (RuntimeObject::Number(l), RuntimeObject::Number(r)) => {
+                        Ok(RuntimeObject::Number(JSNumber {
+                            value: ((l.value as i64) & (r.value as i64)) as f64,
+                        }))
+                    }
+                    _ => Ok(RuntimeObject::NaN(JSNaN)),
                 }
             }
             "<<" => match (left.clone(), right) {
-                (Object::Number(l), Object::Number(r)) => Ok(Object::Number(GNumber {
-                    value: ((l.value as i64) << (r.value as i64)) as f64,
-                })),
-                (Object::Number(_), _) => Ok(left),
-                _ => Ok(Object::Number(GNumber { value: 0.0 })),
+                (RuntimeObject::Number(l), RuntimeObject::Number(r)) => {
+                    Ok(RuntimeObject::Number(JSNumber {
+                        value: ((l.value as i64) << (r.value as i64)) as f64,
+                    }))
+                }
+                (RuntimeObject::Number(_), _) => Ok(left),
+                _ => Ok(RuntimeObject::Number(JSNumber { value: 0.0 })),
             },
             ">>" => match (left.clone(), right) {
-                (Object::Number(l), Object::Number(r)) => Ok(Object::Number(GNumber {
-                    value: ((l.value as i64) >> (r.value as i64)) as f64,
-                })),
-                (Object::Number(_), _) => Ok(left),
-                _ => Ok(Object::Number(GNumber { value: 0.0 })),
+                (RuntimeObject::Number(l), RuntimeObject::Number(r)) => {
+                    Ok(RuntimeObject::Number(JSNumber {
+                        value: ((l.value as i64) >> (r.value as i64)) as f64,
+                    }))
+                }
+                (RuntimeObject::Number(_), _) => Ok(left),
+                _ => Ok(RuntimeObject::Number(JSNumber { value: 0.0 })),
             },
             // TODO: implement
             // ">>>" => ,
             "^" => {
-                let l = GNumber::into(left);
-                let r = GNumber::into(right);
+                let l = JSNumber::into(left);
+                let r = JSNumber::into(right);
                 match (l, r) {
-                    (Object::Number(l), Object::Number(r)) => Ok(Object::Number(GNumber {
-                        value: (l.value as i64 ^ r.value as i64) as f64,
-                    })),
-                    _ => Ok(Object::NaN(GNaN)),
+                    (RuntimeObject::Number(l), RuntimeObject::Number(r)) => {
+                        Ok(RuntimeObject::Number(JSNumber {
+                            value: (l.value as i64 ^ r.value as i64) as f64,
+                        }))
+                    }
+                    _ => Ok(RuntimeObject::NaN(JSNaN)),
                 }
             }
             "<" => {
                 // TODO:
-                let l = GNumber::into(left);
-                let r = GNumber::into(right);
+                let l = JSNumber::into(left);
+                let r = JSNumber::into(right);
                 match (l, r) {
-                    (Object::Number(l), Object::Number(r)) => Ok(Object::Boolean(GBoolean {
-                        value: l.value < r.value,
-                    })),
-                    _ => Ok(Object::NaN(GNaN)),
+                    (RuntimeObject::Number(l), RuntimeObject::Number(r)) => {
+                        Ok(RuntimeObject::Boolean(JSBoolean {
+                            value: l.value < r.value,
+                        }))
+                    }
+                    _ => Ok(RuntimeObject::NaN(JSNaN)),
                 }
             }
             ">" => {
                 // TODO:
-                let l = GNumber::into(left);
-                let r = GNumber::into(right);
+                let l = JSNumber::into(left);
+                let r = JSNumber::into(right);
                 match (l, r) {
-                    (Object::Number(l), Object::Number(r)) => Ok(Object::Boolean(GBoolean {
-                        value: l.value > r.value,
-                    })),
-                    _ => Ok(Object::NaN(GNaN)),
+                    (RuntimeObject::Number(l), RuntimeObject::Number(r)) => {
+                        Ok(RuntimeObject::Boolean(JSBoolean {
+                            value: l.value > r.value,
+                        }))
+                    }
+                    _ => Ok(RuntimeObject::NaN(JSNaN)),
                 }
             }
             "<=" => {
                 // TODO:
-                let l = GNumber::into(left);
-                let r = GNumber::into(right);
+                let l = JSNumber::into(left);
+                let r = JSNumber::into(right);
                 match (l, r) {
-                    (Object::Number(l), Object::Number(r)) => Ok(Object::Boolean(GBoolean {
-                        value: l.value <= r.value,
-                    })),
-                    _ => Ok(Object::NaN(GNaN)),
+                    (RuntimeObject::Number(l), RuntimeObject::Number(r)) => {
+                        Ok(RuntimeObject::Boolean(JSBoolean {
+                            value: l.value <= r.value,
+                        }))
+                    }
+                    _ => Ok(RuntimeObject::NaN(JSNaN)),
                 }
             }
             ">=" => {
                 // TODO:
-                let l = GNumber::into(left);
-                let r = GNumber::into(right);
+                let l = JSNumber::into(left);
+                let r = JSNumber::into(right);
                 match (l, r) {
-                    (Object::Number(l), Object::Number(r)) => Ok(Object::Boolean(GBoolean {
-                        value: l.value >= r.value,
-                    })),
-                    _ => Ok(Object::NaN(GNaN)),
+                    (RuntimeObject::Number(l), RuntimeObject::Number(r)) => {
+                        Ok(RuntimeObject::Boolean(JSBoolean {
+                            value: l.value >= r.value,
+                        }))
+                    }
+                    _ => Ok(RuntimeObject::NaN(JSNaN)),
                 }
             }
             "==" => {
                 // TODO:
-                let l = GNumber::into(left);
-                let r = GNumber::into(right);
+                let l = JSNumber::into(left);
+                let r = JSNumber::into(right);
                 match (l, r) {
-                    (Object::Number(l), Object::Number(r)) => Ok(Object::Boolean(GBoolean {
-                        value: l.value == r.value,
-                    })),
-                    _ => Ok(Object::NaN(GNaN)),
+                    (RuntimeObject::Number(l), RuntimeObject::Number(r)) => {
+                        Ok(RuntimeObject::Boolean(JSBoolean {
+                            value: l.value == r.value,
+                        }))
+                    }
+                    _ => Ok(RuntimeObject::NaN(JSNaN)),
                 }
             }
             "!=" => {
                 // TODO:
-                let l = GNumber::into(left);
-                let r = GNumber::into(right);
+                let l = JSNumber::into(left);
+                let r = JSNumber::into(right);
                 match (l, r) {
-                    (Object::Number(l), Object::Number(r)) => Ok(Object::Boolean(GBoolean {
-                        value: l.value != r.value,
-                    })),
-                    _ => Ok(Object::NaN(GNaN)),
+                    (RuntimeObject::Number(l), RuntimeObject::Number(r)) => {
+                        Ok(RuntimeObject::Boolean(JSBoolean {
+                            value: l.value != r.value,
+                        }))
+                    }
+                    _ => Ok(RuntimeObject::NaN(JSNaN)),
                 }
             }
-            "===" => Ok(Object::Boolean(GBoolean {
+            "===" => Ok(RuntimeObject::Boolean(JSBoolean {
                 value: left == right,
             })),
-            "!==" => Ok(Object::Boolean(GBoolean {
+            "!==" => Ok(RuntimeObject::Boolean(JSBoolean {
                 value: left != right,
             })),
 
             // short-circuit evaluation
             "||" => {
-                let l = GBoolean::into(left.clone());
+                let l = JSBoolean::into(left.clone());
                 match l {
-                    Object::Boolean(l) => {
+                    RuntimeObject::Boolean(l) => {
                         if l.value {
                             Ok(left)
                         } else {
@@ -362,10 +405,10 @@ impl<'a> Evaluator<'a> {
                 }
             }
             "&&" => {
-                let l = GBoolean::into(left.clone());
-                let r = GBoolean::into(right.clone());
+                let l = JSBoolean::into(left.clone());
+                let r = JSBoolean::into(right.clone());
                 match (l, r) {
-                    (Object::Boolean(l), Object::Boolean(r)) => {
+                    (RuntimeObject::Boolean(l), RuntimeObject::Boolean(r)) => {
                         if l.value && r.value {
                             Ok(right)
                         } else {
@@ -376,7 +419,7 @@ impl<'a> Evaluator<'a> {
                 }
             }
             "??" => match left {
-                Object::Null(_) | Object::Undefined(_) => Ok(right),
+                RuntimeObject::Null(_) | RuntimeObject::Undefined(_) => Ok(right),
                 _ => Ok(left),
             },
 
@@ -387,7 +430,7 @@ impl<'a> Evaluator<'a> {
         }
     }
 
-    fn eval_let_statement(&mut self, stmt: &LetStatement) -> Result<Object, Error> {
+    fn eval_let_statement(&mut self, stmt: &LetStatement) -> Result<RuntimeObject, Error> {
         match self.ctx.scope.get(stmt.name.as_str()) {
             // validation
             Some(var) => match var.kind {
@@ -399,7 +442,7 @@ impl<'a> Evaluator<'a> {
                     let value = self.eval_expression(&stmt.value)?;
                     let var = Variable::new(VariableKind::Let, value);
                     self.ctx.scope.set(&stmt.name, var);
-                    Ok(Object::Undefined(GUndefined))
+                    Ok(RuntimeObject::Undefined(JSUndefined))
                 }
             },
             // initial set
@@ -407,12 +450,12 @@ impl<'a> Evaluator<'a> {
                 let value = self.eval_expression(&stmt.value)?;
                 let var = Variable::new(VariableKind::Let, value);
                 self.ctx.scope.set(&stmt.name, var);
-                Ok(Object::Undefined(GUndefined))
+                Ok(RuntimeObject::Undefined(JSUndefined))
             }
         }
     }
 
-    fn eval_const_statement(&mut self, stmt: &ConstStatement) -> Result<Object, Error> {
+    fn eval_const_statement(&mut self, stmt: &ConstStatement) -> Result<RuntimeObject, Error> {
         match self.ctx.scope.get(stmt.name.as_str()) {
             // validation
             Some(var) => match var.kind {
@@ -427,7 +470,7 @@ impl<'a> Evaluator<'a> {
                     let value = self.eval_expression(&stmt.value)?;
                     let var = Variable::new(VariableKind::Const, value);
                     self.ctx.scope.set(&stmt.name, var);
-                    Ok(Object::Undefined(GUndefined))
+                    Ok(RuntimeObject::Undefined(JSUndefined))
                 }
             },
             // initial set
@@ -435,12 +478,12 @@ impl<'a> Evaluator<'a> {
                 let value = self.eval_expression(&stmt.value)?;
                 let var = Variable::new(VariableKind::Const, value);
                 self.ctx.scope.set(&stmt.name, var);
-                Ok(Object::Undefined(GUndefined))
+                Ok(RuntimeObject::Undefined(JSUndefined))
             }
         }
     }
 
-    fn eval_identifier(&mut self, name: &str) -> Result<Object, Error> {
+    fn eval_identifier(&mut self, name: &str) -> Result<RuntimeObject, Error> {
         match self.ctx.scope.get(name) {
             Some(var) => Ok(var.value.clone()),
             None => match self.ctx.global().get(name) {
@@ -453,25 +496,25 @@ impl<'a> Evaluator<'a> {
         }
     }
 
-    fn eval_object_expression(&mut self, obj: &ObjectExpression) -> Result<Object, Error> {
+    fn eval_object_expression(&mut self, obj: &ObjectExpression) -> Result<RuntimeObject, Error> {
         let mut properties = HashMap::new();
         for prop in &obj.properties {
             let key = prop.key.clone();
             let value = self.eval_expression(&prop.value)?;
             properties.insert(key, value);
         }
-        Ok(Object::Object(GObject { properties }))
+        Ok(RuntimeObject::RuntimeObject(JSObject { properties }))
     }
 
-    fn eval_member_expression(&mut self, m: &MemberExpression) -> Result<Object, Error> {
+    fn eval_member_expression(&mut self, m: &MemberExpression) -> Result<RuntimeObject, Error> {
         let obj = self.eval_expression(&m.object)?;
         let prop = self.eval_expression(&m.property)?;
 
         match prop {
-            Object::String(s) => match obj {
-                Object::Object(o) => match o.properties.get(&s.value) {
+            RuntimeObject::String(s) => match obj {
+                RuntimeObject::RuntimeObject(o) => match o.properties.get(&s.value) {
                     Some(v) => Ok(v.clone()),
-                    None => Ok(Object::Undefined(GUndefined)),
+                    None => Ok(RuntimeObject::Undefined(JSUndefined)),
                 },
                 _ => Err(Error::new(
                     std::io::ErrorKind::Other,
@@ -489,7 +532,7 @@ impl<'a> Evaluator<'a> {
         &mut self,
         left: &Expression,
         right: &Expression,
-    ) -> Result<Object, Error> {
+    ) -> Result<RuntimeObject, Error> {
         match left {
             Expression::Identifier(name) => {
                 match self.ctx.scope.get(name.as_str()) {
@@ -530,8 +573,8 @@ impl<'a> Evaluator<'a> {
                 let new_value = self.eval_expression(right)?;
 
                 match prop {
-                    Object::String(s) => match obj {
-                        Object::Object(mut o) => {
+                    RuntimeObject::String(s) => match obj {
+                        RuntimeObject::RuntimeObject(mut o) => {
                             let o_name = if let Expression::Identifier(name) = &m.object.as_ref() {
                                 name.clone()
                             } else {
@@ -544,7 +587,7 @@ impl<'a> Evaluator<'a> {
                             let v = self.ctx.scope.get(&o_name);
                             match v {
                                 Some(Variable { value, .. }) => {
-                                    if let Object::Object(mut o) = value.clone() {
+                                    if let RuntimeObject::RuntimeObject(mut o) = value.clone() {
                                         o.properties.insert(s.value.clone(), new_value.clone());
                                     }
                                 }
@@ -580,7 +623,7 @@ impl<'a> Evaluator<'a> {
         &mut self,
         statement: &IfStatement,
         scope_type: ScopeType,
-    ) -> Result<Object, Error> {
+    ) -> Result<RuntimeObject, Error> {
         let condition = self.eval_expression(&statement.condition)?;
         if self.is_truthy(condition) {
             self.eval_statement(&statement.consequence, scope_type)
@@ -588,7 +631,7 @@ impl<'a> Evaluator<'a> {
             let un_boxed = statement.alternative.as_ref();
             match un_boxed {
                 Some(ref alt) => self.eval_statement(alt, scope_type),
-                None => Ok(Object::Undefined(GUndefined)),
+                None => Ok(RuntimeObject::Undefined(JSUndefined)),
             }
         }
     }
@@ -597,12 +640,12 @@ impl<'a> Evaluator<'a> {
         &mut self,
         block: &BlockStatement,
         scope_type: ScopeType,
-    ) -> Result<Object, Error> {
+    ) -> Result<RuntimeObject, Error> {
         self.ctx.scope.scope_in();
-        let mut result = Object::Undefined(GUndefined);
+        let mut result = RuntimeObject::Undefined(JSUndefined);
         for stmt in &block.statements {
             result = self.eval_statement(stmt, scope_type)?;
-            if let Object::Return(_) = result {
+            if let RuntimeObject::Return(_) = result {
                 self.ctx.scope.scope_out();
                 return Ok(result);
             };
@@ -612,11 +655,11 @@ impl<'a> Evaluator<'a> {
         if scope_type == ScopeType::Function {
             Ok(result)
         } else {
-            Ok(Object::Undefined(GUndefined))
+            Ok(RuntimeObject::Undefined(JSUndefined))
         }
     }
 
-    fn eval_call_expression(&mut self, expr: &CallExpression) -> Result<Object, Error> {
+    fn eval_call_expression(&mut self, expr: &CallExpression) -> Result<RuntimeObject, Error> {
         let function = self.eval_expression(&expr.function)?;
         let mut args = Vec::new();
         for arg in &expr.arguments {
@@ -624,11 +667,11 @@ impl<'a> Evaluator<'a> {
         }
 
         match function {
-            Object::BuiltinFunction(func) => {
+            RuntimeObject::BuiltinFunction(func) => {
                 let func = func.func;
                 Ok(func(args))
             }
-            Object::Function(func) => {
+            RuntimeObject::Function(func) => {
                 self.ctx.scope.scope_in();
                 for (i, param) in func.parameters.iter().enumerate() {
                     let name = param.clone().name;
@@ -637,7 +680,9 @@ impl<'a> Evaluator<'a> {
                             let value = self.eval_expression(&v)?;
                             Variable::new(VariableKind::Var, value)
                         }
-                        None => Variable::new(VariableKind::Var, Object::Undefined(GUndefined)),
+                        None => {
+                            Variable::new(VariableKind::Var, RuntimeObject::Undefined(JSUndefined))
+                        }
                     };
 
                     // bind args
@@ -654,8 +699,8 @@ impl<'a> Evaluator<'a> {
                 self.ctx.scope.scope_in();
 
                 match result {
-                    Object::Return(ret) => Ok(*ret),
-                    _ => Ok(Object::Undefined(GUndefined)),
+                    RuntimeObject::Return(ret) => Ok(*ret),
+                    _ => Ok(RuntimeObject::Undefined(JSUndefined)),
                 }
             }
             _ => Err(Error::new(
@@ -669,7 +714,7 @@ impl<'a> Evaluator<'a> {
         &mut self,
         stmt: &Expression,
         scope_type: ScopeType,
-    ) -> Result<Object, Error> {
+    ) -> Result<RuntimeObject, Error> {
         if scope_type != ScopeType::Function {
             return Err(Error::new(
                 std::io::ErrorKind::Other,
@@ -678,16 +723,16 @@ impl<'a> Evaluator<'a> {
         }
 
         let value = self.eval_expression(stmt)?;
-        Ok(Object::Return(Box::new(value)))
+        Ok(RuntimeObject::Return(Box::new(value)))
     }
 
-    fn is_truthy(&self, obj: Object) -> bool {
+    fn is_truthy(&self, obj: RuntimeObject) -> bool {
         match obj {
-            Object::Boolean(b) => b.value,
-            Object::Number(n) => n.value != 0.0,
-            Object::String(s) => !s.value.is_empty(),
-            Object::Null(_) => false,
-            Object::Undefined(_) => false,
+            RuntimeObject::Boolean(b) => b.value,
+            RuntimeObject::Number(n) => n.value != 0.0,
+            RuntimeObject::String(s) => !s.value.is_empty(),
+            RuntimeObject::Null(_) => false,
+            RuntimeObject::Undefined(_) => false,
             _ => true,
         }
     }
@@ -1196,7 +1241,7 @@ mod tests {
                         a;
                     "#,
                 ),
-                "\x1b[34m[Object]\x1b[0m",
+                "\x1b[34m[RuntimeObject]\x1b[0m",
             ),
             (
                 String::from(

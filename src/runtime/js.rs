@@ -2,7 +2,7 @@ use std::io::Error;
 
 use crate::engine::{
     api::{Context, Isolate, Script},
-    eval::object::Object,
+    eval::object::RuntimeObject,
     handle_scope::HandleScope,
 };
 
@@ -32,7 +32,7 @@ impl JavaScriptRuntime {
         }
     }
 
-    pub fn execute(&mut self, source: String) -> Result<Object, Error> {
+    pub fn execute(&mut self, source: String) -> Result<RuntimeObject, Error> {
         let scope = self.get_cxt();
         let mut script = Script::compile(source, scope);
         script.run()

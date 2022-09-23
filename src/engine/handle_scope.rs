@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use super::eval::object::Object;
+use super::eval::object::RuntimeObject;
 
 pub struct HandleScope {
     pub scopes: Vec<HashMap<String, Variable>>,
@@ -62,10 +62,10 @@ impl HandleScope {
 #[derive(PartialEq, Debug)]
 pub struct Variable {
     pub kind: VariableKind,
-    pub value: Object,
+    pub value: RuntimeObject,
 }
 impl Variable {
-    pub fn new(kind: VariableKind, value: Object) -> Variable {
+    pub fn new(kind: VariableKind, value: RuntimeObject) -> Variable {
         Variable { kind, value }
     }
 }
@@ -80,20 +80,23 @@ pub enum VariableKind {
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::engine::eval::object::GNumber;
+    use crate::engine::eval::object::JSNumber;
 
     #[test]
     fn test_set_get() {
         let mut env = HandleScope::new();
         env.set(
             "a",
-            Variable::new(VariableKind::Const, Object::Number(GNumber::new(1.0))),
+            Variable::new(
+                VariableKind::Const,
+                RuntimeObject::Number(JSNumber::new(1.0)),
+            ),
         );
         assert_eq!(
             env.get("a"),
             Some(&Variable::new(
                 VariableKind::Const,
-                Object::Number(GNumber::new(1.0))
+                RuntimeObject::Number(JSNumber::new(1.0))
             ))
         );
     }
