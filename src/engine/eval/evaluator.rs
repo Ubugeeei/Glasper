@@ -522,6 +522,53 @@ impl<'a> Evaluator<'a> {
                     }
                 }
             }
+            Expression::Member(m) => {
+                // TODO: assign to ast
+
+                let obj = self.eval_expression(&m.object)?;
+                let prop = self.eval_expression(&m.property)?;
+                let new_value = self.eval_expression(right)?;
+
+                match prop {
+                    Object::String(s) => match obj {
+                        Object::Object(mut o) => {
+                            let o_name = if let Expression::Identifier(name) = &m.object.as_ref() {
+                                name.clone()
+                            } else {
+                                return Err(Error::new(
+                                    std::io::ErrorKind::Other,
+                                    "Uncaught SyntaxError: Invalid or unexpected token",
+                                ));
+                            };
+
+                            let v = self.ctx.scope.get(&o_name);
+                            match v {
+                                Some(Variable { value, .. }) => {
+                                    if let Object::Object(mut o) = value.clone() {
+                                        o.properties.insert(s.value.clone(), new_value.clone());
+                                    }
+                                }
+                                None => {
+                                    return Err(Error::new(
+                                        std::io::ErrorKind::Other,
+                                        "Uncaught SyntaxError: Invalid or unexpected token",
+                                    ));
+                                }
+                            }
+                            o.properties.insert(s.value, new_value.clone());
+                            Ok(new_value)
+                        }
+                        _ => Err(Error::new(
+                            std::io::ErrorKind::Other,
+                            "Uncaught SyntaxError: Invalid or unexpected token",
+                        )),
+                    },
+                    _ => Err(Error::new(
+                        std::io::ErrorKind::Other,
+                        "Uncaught SyntaxError: Invalid or unexpected token",
+                    )),
+                }
+            }
             _ => Err(Error::new(
                 std::io::ErrorKind::Other,
                 "Uncaught SyntaxError: Invalid left-hand side in assignment",
