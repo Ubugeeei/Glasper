@@ -101,7 +101,8 @@
 	console_log("2 !== 2:", 2 !== 2);
 	console_log("2 > 2:", 2 > 2);
 	console_log("2 < 2:", 2 < 2);
-	console_log("2 <= 2:", 2 < 2);
+	console_log("2 <= 2:", 2 <= 2);
+	console_log("2 >= 2:", 2 >= 2);
 	console_log("2 + 2 * 2:", 2 + 2 * 2);
 }
 
