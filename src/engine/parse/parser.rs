@@ -317,6 +317,7 @@ impl<'a> Parser<'a> {
                 | TokenType::Lt
                 | TokenType::Gt
                 | TokenType::Lte
+                | TokenType::Gte
                 | TokenType::Eq
                 | TokenType::NotEq
                 | TokenType::EqStrict
@@ -1126,6 +1127,14 @@ pub mod tests {
                     Statement::Expression(Expression::Infix(InfixExpression::new(
                         Box::new(Expression::Number(1.0)),
                         String::from("<="),
+                        Box::new(Expression::Number(2.0)),
+                    ))),
+                ),
+                (
+                    String::from("1 >= 2;"),
+                    Statement::Expression(Expression::Infix(InfixExpression::new(
+                        Box::new(Expression::Number(1.0)),
+                        String::from(">="),
                         Box::new(Expression::Number(2.0)),
                     ))),
                 ),
