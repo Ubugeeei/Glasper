@@ -87,6 +87,8 @@ impl<'a> Evaluator<'a> {
         match expr.operator.as_str() {
             "!" => self.eval_bang_operator_expression(right),
             "-" => self.eval_minus_prefix_operator_expression(right),
+            "~" => self.eval_bit_not_operator_expression(right),
+            "typeof" => self.eval_typeof_operator_expression(right),
             o => Err(Error::new(
                 std::io::ErrorKind::Other,
                 format!(
@@ -114,6 +116,25 @@ impl<'a> Evaluator<'a> {
         }
     }
 
+    fn eval_bit_not_operator_expression(&self, right: Object) -> Result<Object, Error> {
+        if let Object::Number(GNumber { value }) = right {
+            Ok(Object::Number(GNumber {
+                value: (!(value as i64)) as f64,
+            }))
+        } else {
+            Err(Error::new(
+                std::io::ErrorKind::Other,
+                "Unexpected prefix operator. at eval_bit_not_operator_expression",
+            ))
+        }
+    }
+
+    fn eval_typeof_operator_expression(&self, right: Object) -> Result<Object, Error> {
+        Ok(Object::String(GString {
+            value: right.get_type(),
+        }))
+    }
+
     fn eval_infix_expression(
         &self,
         operator: String,
@@ -133,8 +154,12 @@ impl<'a> Evaluator<'a> {
                     "^" => Ok(Object::Number(GNumber::new((l as i64 ^ r as i64) as f64))),
                     "<" => Ok(Object::Boolean(GBoolean::new(l < r))),
                     ">" => Ok(Object::Boolean(GBoolean::new(l > r))),
-                    "==" => Ok(Object::Boolean(GBoolean::new(l == r))),
-                    "!=" => Ok(Object::Boolean(GBoolean::new(l != r))),
+                    "<=" => Ok(Object::Boolean(GBoolean::new(l <= r))),
+                    ">=" => Ok(Object::Boolean(GBoolean::new(l >= r))),
+                    "==" => Ok(Object::Boolean(GBoolean::new(l == r))), // TODO: Implicit type casting
+                    "!=" => Ok(Object::Boolean(GBoolean::new(l != r))), // TODO: Implicit type casting
+                    "===" => Ok(Object::Boolean(GBoolean::new(l == r))),
+                    "!==" => Ok(Object::Boolean(GBoolean::new(l != r))),
                     "**" => Ok(Object::Number(GNumber::new(l.powf(r)))),
                     "??" => Ok(Object::Number(GNumber::new(l))),
                     "||" => {
@@ -170,6 +195,7 @@ impl<'a> Evaluator<'a> {
                 match operator.as_str() {
                     "==" => Ok(Object::Boolean(GBoolean::new(l == r))),
                     "!=" => Ok(Object::Boolean(GBoolean::new(l != r))),
+                    "===" => Ok(Object::Boolean(GBoolean::new(l != r))),
                     "??" => Ok(Object::Boolean(GBoolean::new(l))),
                     "||" => {
                         if l {
@@ -530,6 +556,9 @@ mod tests {
             ("!!5", "\x1b[33mtrue\x1b[0m"),
             ("-5", "\x1b[33m-5\x1b[0m"),
             ("-10", "\x1b[33m-10\x1b[0m"),
+            ("~10", "\x1b[33m-11\x1b[0m"), // 0b0101
+            ("typeof 10", "\x1b[32m\"number\"\x1b[0m"),
+            ("typeof !10", "\x1b[32m\"boolean\"\x1b[0m"),
         ];
 
         for (input, expected) in case {
@@ -561,9 +590,13 @@ mod tests {
             ("1 > 1", "\x1b[33mfalse\x1b[0m"),
             ("1 == 1", "\x1b[33mtrue\x1b[0m"),
             ("1 != 1", "\x1b[33mfalse\x1b[0m"),
-            ("1 < 2", "\x1b[33mtrue\x1b[0m"),
-            ("1 > 2", "\x1b[33mfalse\x1b[0m"),
+            ("1 < 1", "\x1b[33mfalse\x1b[0m"),
+            ("1 > 1", "\x1b[33mfalse\x1b[0m"),
+            ("1 <= 1", "\x1b[33mtrue\x1b[0m"),
+            ("1 >= 1", "\x1b[33mtrue\x1b[0m"),
             ("1 == 2", "\x1b[33mfalse\x1b[0m"),
+            ("1 === 2", "\x1b[33mfalse\x1b[0m"),
+            ("1 !== 2", "\x1b[33mtrue\x1b[0m"),
             ("1 != 2", "\x1b[33mtrue\x1b[0m"),
             ("true == true", "\x1b[33mtrue\x1b[0m"),
             ("true != true", "\x1b[33mfalse\x1b[0m"),

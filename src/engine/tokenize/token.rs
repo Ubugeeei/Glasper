@@ -31,9 +31,12 @@ pub enum TokenType {
     BitOr,
     BitAnd,
     BitXOr,
+    BitNot,
     // comp
-    LT,
-    GT,
+    Lt,
+    Gt,
+    Lte,
+    Gte,
     // brackets
     LParen,
     RParen,
@@ -53,6 +56,8 @@ pub enum TokenType {
      */
     Eq,
     NotEq,
+    EqStrict,
+    NotEqStrict,
     Inc,
     Dec,
     Exp,
@@ -60,6 +65,7 @@ pub enum TokenType {
     ShL,
     ShR,
     SaR,
+    Typeof,
 
     /*
      * keywords
@@ -87,11 +93,13 @@ impl Token {
     pub fn get_precedence(&mut self) -> Precedence {
         match self.token_type {
             TokenType::Assign => Precedence::Assign,
-            TokenType::Eq => Precedence::Equals,
+            TokenType::Eq | TokenType::EqStrict | TokenType::NotEqStrict => Precedence::Equals,
             TokenType::NullishCoalescing => Precedence::NullishCoalescing,
             TokenType::Or | TokenType::And => Precedence::Bool,
             TokenType::NotEq => Precedence::Equals,
-            TokenType::LT | TokenType::GT => Precedence::LessGreater,
+            TokenType::Lt | TokenType::Gt | TokenType::Lte | TokenType::Gte => {
+                Precedence::LessGreater
+            }
             TokenType::BitOr | TokenType::BitAnd | TokenType::BitXOr => Precedence::Sum,
             TokenType::Plus | TokenType::Minus => Precedence::Sum,
             TokenType::Exp => Precedence::Exp,
@@ -115,6 +123,7 @@ pub fn lookup_indent(ident: &str) -> TokenType {
         "return" => TokenType::Return,
         "null" => TokenType::Null,
         "undefined" => TokenType::Undefined,
+        "typeof" => TokenType::Typeof,
         _ => TokenType::Ident,
     }
 }

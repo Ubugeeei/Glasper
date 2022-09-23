@@ -270,6 +270,8 @@ impl<'a> Parser<'a> {
             // prefix_expression
             TokenType::Bang => self.parse_prefix_expression()?,
             TokenType::Minus => self.parse_prefix_expression()?,
+            TokenType::BitNot => self.parse_prefix_expression()?,
+            TokenType::Typeof => self.parse_prefix_expression()?,
 
             // grouped
             TokenType::LParen => self.parse_grouped_expression()?,
@@ -313,10 +315,14 @@ impl<'a> Parser<'a> {
                 | TokenType::BitAnd
                 | TokenType::BitOr
                 | TokenType::BitXOr
-                | TokenType::LT
-                | TokenType::GT
+                | TokenType::Lt
+                | TokenType::Gt
+                | TokenType::Lte
+                | TokenType::Gte
                 | TokenType::Eq
                 | TokenType::NotEq
+                | TokenType::EqStrict
+                | TokenType::NotEqStrict
                 | TokenType::Assign
                 | TokenType::ShL
                 | TokenType::ShR
@@ -999,6 +1005,36 @@ pub mod tests {
                 )))
             );
         }
+
+        {
+            let source = String::from("~flag;");
+            let mut l = Lexer::new(source);
+            let mut p = Parser::new(&mut l);
+            let program = p.parse_program();
+            assert_eq!(program.statements.len(), 1);
+            assert_eq!(
+                program.statements[0],
+                Statement::Expression(Expression::Prefix(PrefixExpression::new(
+                    String::from("~"),
+                    Box::new(Expression::Identifier(String::from("flag")))
+                )))
+            );
+        }
+
+        {
+            let source = String::from("typeof flag;");
+            let mut l = Lexer::new(source);
+            let mut p = Parser::new(&mut l);
+            let program = p.parse_program();
+            assert_eq!(program.statements.len(), 1);
+            assert_eq!(
+                program.statements[0],
+                Statement::Expression(Expression::Prefix(PrefixExpression::new(
+                    String::from("typeof"),
+                    Box::new(Expression::Identifier(String::from("flag")))
+                )))
+            );
+        }
     }
 
     #[test]
@@ -1103,6 +1139,22 @@ pub mod tests {
                     ))),
                 ),
                 (
+                    String::from("1 <= 2;"),
+                    Statement::Expression(Expression::Infix(InfixExpression::new(
+                        Box::new(Expression::Number(1.0)),
+                        String::from("<="),
+                        Box::new(Expression::Number(2.0)),
+                    ))),
+                ),
+                (
+                    String::from("1 >= 2;"),
+                    Statement::Expression(Expression::Infix(InfixExpression::new(
+                        Box::new(Expression::Number(1.0)),
+                        String::from(">="),
+                        Box::new(Expression::Number(2.0)),
+                    ))),
+                ),
+                (
                     String::from("1 == 2;"),
                     Statement::Expression(Expression::Infix(InfixExpression::new(
                         Box::new(Expression::Number(1.0)),
@@ -1115,6 +1167,22 @@ pub mod tests {
                     Statement::Expression(Expression::Infix(InfixExpression::new(
                         Box::new(Expression::Number(1.0)),
                         String::from("!="),
+                        Box::new(Expression::Number(2.0)),
+                    ))),
+                ),
+                (
+                    String::from("1 === 2;"),
+                    Statement::Expression(Expression::Infix(InfixExpression::new(
+                        Box::new(Expression::Number(1.0)),
+                        String::from("==="),
+                        Box::new(Expression::Number(2.0)),
+                    ))),
+                ),
+                (
+                    String::from("1 !== 2;"),
+                    Statement::Expression(Expression::Infix(InfixExpression::new(
+                        Box::new(Expression::Number(1.0)),
+                        String::from("!=="),
                         Box::new(Expression::Number(2.0)),
                     ))),
                 ),
