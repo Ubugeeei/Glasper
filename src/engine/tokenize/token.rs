@@ -31,6 +31,7 @@ pub enum TokenType {
     BitOr,
     BitAnd,
     BitXOr,
+    BitNot,
     // comp
     LT,
     GT,
