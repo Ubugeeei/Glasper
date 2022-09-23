@@ -10,7 +10,7 @@ use crate::engine::{
     },
 };
 
-use super::object::{GFunction, GString};
+use super::object::{GFunction, GNaN, GString};
 
 pub struct Evaluator<'a> {
     ctx: &'a mut Context,
@@ -58,6 +58,8 @@ impl<'a> Evaluator<'a> {
             ))),
             Expression::Null => Ok(Object::Null(GNull)),
             Expression::Undefined => Ok(Object::Undefined(GUndefined)),
+            Expression::NaN => Ok(Object::NaN(GNaN)),
+
             Expression::Identifier(name) => self.eval_identifier(name),
 
             // operators
@@ -141,101 +143,239 @@ impl<'a> Evaluator<'a> {
         left: Object,
         right: Object,
     ) -> Result<Object, Error> {
-        match (left.clone(), right) {
-            (Object::Number(GNumber { value: l }), Object::Number(GNumber { value: r })) => {
-                match operator.as_str() {
-                    "+" => Ok(Object::Number(GNumber::new(l + r))),
-                    "-" => Ok(Object::Number(GNumber::new(l - r))),
-                    "*" => Ok(Object::Number(GNumber::new(l * r))),
-                    "/" => Ok(Object::Number(GNumber::new(l / r))),
-                    "%" => Ok(Object::Number(GNumber::new(l % r))),
-                    "|" => Ok(Object::Number(GNumber::new((l as i64 | r as i64) as f64))),
-                    "&" => Ok(Object::Number(GNumber::new((l as i64 & r as i64) as f64))),
-                    "^" => Ok(Object::Number(GNumber::new((l as i64 ^ r as i64) as f64))),
-                    "<" => Ok(Object::Boolean(GBoolean::new(l < r))),
-                    ">" => Ok(Object::Boolean(GBoolean::new(l > r))),
-                    "<=" => Ok(Object::Boolean(GBoolean::new(l <= r))),
-                    ">=" => Ok(Object::Boolean(GBoolean::new(l >= r))),
-                    "==" => Ok(Object::Boolean(GBoolean::new(l == r))), // TODO: Implicit type casting
-                    "!=" => Ok(Object::Boolean(GBoolean::new(l != r))), // TODO: Implicit type casting
-                    "===" => Ok(Object::Boolean(GBoolean::new(l == r))),
-                    "!==" => Ok(Object::Boolean(GBoolean::new(l != r))),
-                    "**" => Ok(Object::Number(GNumber::new(l.powf(r)))),
-                    "??" => Ok(Object::Number(GNumber::new(l))),
-                    "||" => {
-                        if l == 0.0 {
-                            Ok(Object::Number(GNumber::new(r)))
-                        } else {
-                            Ok(Object::Number(GNumber::new(l)))
-                        }
-                    }
-                    "&&" => {
-                        if l == 0.0 {
-                            Ok(Object::Number(GNumber::new(l)))
-                        } else {
-                            Ok(Object::Number(GNumber::new(r)))
-                        }
-                    }
-                    "<<" => Ok(Object::Number(GNumber::new(
-                        ((l as i64) << r as i64) as f64,
-                    ))),
-                    ">>" => Ok(Object::Number(GNumber::new((l as i64 >> r as i64) as f64))),
-                    // TODO: implement
-                    // ">>>" => ,
-                    o => Err(Error::new(
-                        std::io::ErrorKind::Other,
-                        format!(
-                            "Unexpected infix operator '{}'. at eval_infix_expression",
-                            o
-                        ),
-                    )),
+        match operator.as_str() {
+            "+" => match (left.clone(), right.clone()) {
+                (Object::String(GString { value }), _) => {
+                    let r = match GString::into(right) {
+                        Object::String(GString { value: r }) => r,
+                        _ => "".to_string(),
+                    };
+                    Ok(Object::String(GString {
+                        value: format!("{}{}", value, r),
+                    }))
                 }
-            }
-            (Object::Boolean(GBoolean { value: l }), Object::Boolean(GBoolean { value: r })) => {
-                match operator.as_str() {
-                    "==" => Ok(Object::Boolean(GBoolean::new(l == r))),
-                    "!=" => Ok(Object::Boolean(GBoolean::new(l != r))),
-                    "===" => Ok(Object::Boolean(GBoolean::new(l != r))),
-                    "??" => Ok(Object::Boolean(GBoolean::new(l))),
-                    "||" => {
-                        if l {
-                            Ok(Object::Boolean(GBoolean::new(l)))
-                        } else {
-                            Ok(Object::Boolean(GBoolean::new(r)))
-                        }
-                    }
-                    "&&" => {
-                        if l {
-                            Ok(Object::Boolean(GBoolean::new(r)))
-                        } else {
-                            Ok(Object::Boolean(GBoolean::new(l)))
-                        }
-                    }
-                    o => Err(Error::new(
-                        std::io::ErrorKind::Other,
-                        format!(
-                            "Unexpected infix operator '{}'. at eval_infix_expression",
-                            o
-                        ),
-                    )),
+                (_, Object::String(GString { value })) => {
+                    let l = match GString::into(left) {
+                        Object::String(GString { value: l }) => l,
+                        _ => "".to_string(),
+                    };
+                    Ok(Object::String(GString {
+                        value: format!("{}{}", l, value),
+                    }))
                 }
-            }
-            (Object::Null(_), r) | (Object::Undefined(_), r) => match operator.as_str() {
-                "??" => Ok(r),
-                "||" => Ok(r),
-                "&&" => match left {
-                    Object::Null(_) => Ok(Object::Null(GNull)),
-                    Object::Undefined(_) => Ok(Object::Undefined(GUndefined)),
-                    _ => unreachable!(),
-                },
-                o => Err(Error::new(
-                    std::io::ErrorKind::Other,
-                    format!(
-                        "Unexpected infix operator '{}'. at eval_infix_expression",
-                        o
-                    ),
-                )),
+                _ => {
+                    let l = GNumber::into(left);
+                    let r = GNumber::into(right);
+                    match (l, r) {
+                        (Object::Number(l), Object::Number(r)) => Ok(Object::Number(GNumber {
+                            value: l.value + r.value,
+                        })),
+                        _ => Ok(Object::NaN(GNaN)),
+                    }
+                }
             },
+            "-" => {
+                let l = GNumber::into(left);
+                let r = GNumber::into(right);
+                match (l, r) {
+                    (Object::Number(l), Object::Number(r)) => Ok(Object::Number(GNumber {
+                        value: l.value - r.value,
+                    })),
+                    _ => Ok(Object::NaN(GNaN)),
+                }
+            }
+            "*" => {
+                let l = GNumber::into(left);
+                let r = GNumber::into(right);
+                match (l, r) {
+                    (Object::Number(l), Object::Number(r)) => Ok(Object::Number(GNumber {
+                        value: l.value * r.value,
+                    })),
+                    _ => Ok(Object::NaN(GNaN)),
+                }
+            }
+            "/" => {
+                let l = GNumber::into(left);
+                let r = GNumber::into(right);
+                match (l, r) {
+                    (Object::Number(l), Object::Number(r)) => Ok(Object::Number(GNumber {
+                        value: l.value / r.value,
+                    })),
+                    _ => Ok(Object::NaN(GNaN)),
+                }
+            }
+            "%" => {
+                let l = GNumber::into(left);
+                let r = GNumber::into(right);
+                match (l, r) {
+                    (Object::Number(l), Object::Number(r)) => Ok(Object::Number(GNumber {
+                        value: l.value % r.value,
+                    })),
+                    _ => Ok(Object::NaN(GNaN)),
+                }
+            }
+            "**" => {
+                let l = GNumber::into(left);
+                let r = GNumber::into(right);
+                match (l, r) {
+                    (Object::Number(l), Object::Number(r)) => Ok(Object::Number(GNumber {
+                        value: l.value.powf(r.value),
+                    })),
+                    _ => Ok(Object::NaN(GNaN)),
+                }
+            }
+            "|" => {
+                let l = GNumber::into(left);
+                let r = GNumber::into(right);
+                match (l, r) {
+                    (Object::Number(l), Object::Number(r)) => Ok(Object::Number(GNumber {
+                        value: ((l.value as i64) | (r.value as i64)) as f64,
+                    })),
+                    _ => Ok(Object::NaN(GNaN)),
+                }
+            }
+            "&" => {
+                let l = GNumber::into(left);
+                let r = GNumber::into(right);
+                match (l, r) {
+                    (Object::Number(l), Object::Number(r)) => Ok(Object::Number(GNumber {
+                        value: ((l.value as i64) & (r.value as i64)) as f64,
+                    })),
+                    _ => Ok(Object::NaN(GNaN)),
+                }
+            }
+            "<<" => match (left.clone(), right) {
+                (Object::Number(l), Object::Number(r)) => Ok(Object::Number(GNumber {
+                    value: ((l.value as i64) << (r.value as i64)) as f64,
+                })),
+                (Object::Number(_), _) => Ok(left),
+                _ => Ok(Object::Number(GNumber { value: 0.0 })),
+            },
+            ">>" => match (left.clone(), right) {
+                (Object::Number(l), Object::Number(r)) => Ok(Object::Number(GNumber {
+                    value: ((l.value as i64) >> (r.value as i64)) as f64,
+                })),
+                (Object::Number(_), _) => Ok(left),
+                _ => Ok(Object::Number(GNumber { value: 0.0 })),
+            },
+            // TODO: implement
+            // ">>>" => ,
+            "^" => {
+                let l = GNumber::into(left);
+                let r = GNumber::into(right);
+                match (l, r) {
+                    (Object::Number(l), Object::Number(r)) => Ok(Object::Number(GNumber {
+                        value: (l.value as i64 ^ r.value as i64) as f64,
+                    })),
+                    _ => Ok(Object::NaN(GNaN)),
+                }
+            }
+            "<" => {
+                // TODO:
+                let l = GNumber::into(left);
+                let r = GNumber::into(right);
+                match (l, r) {
+                    (Object::Number(l), Object::Number(r)) => Ok(Object::Boolean(GBoolean {
+                        value: l.value < r.value,
+                    })),
+                    _ => Ok(Object::NaN(GNaN)),
+                }
+            }
+            ">" => {
+                // TODO:
+                let l = GNumber::into(left);
+                let r = GNumber::into(right);
+                match (l, r) {
+                    (Object::Number(l), Object::Number(r)) => Ok(Object::Boolean(GBoolean {
+                        value: l.value > r.value,
+                    })),
+                    _ => Ok(Object::NaN(GNaN)),
+                }
+            }
+            "<=" => {
+                // TODO:
+                let l = GNumber::into(left);
+                let r = GNumber::into(right);
+                match (l, r) {
+                    (Object::Number(l), Object::Number(r)) => Ok(Object::Boolean(GBoolean {
+                        value: l.value <= r.value,
+                    })),
+                    _ => Ok(Object::NaN(GNaN)),
+                }
+            }
+            ">=" => {
+                // TODO:
+                let l = GNumber::into(left);
+                let r = GNumber::into(right);
+                match (l, r) {
+                    (Object::Number(l), Object::Number(r)) => Ok(Object::Boolean(GBoolean {
+                        value: l.value >= r.value,
+                    })),
+                    _ => Ok(Object::NaN(GNaN)),
+                }
+            }
+            "==" => {
+                // TODO:
+                let l = GNumber::into(left);
+                let r = GNumber::into(right);
+                match (l, r) {
+                    (Object::Number(l), Object::Number(r)) => Ok(Object::Boolean(GBoolean {
+                        value: l.value == r.value,
+                    })),
+                    _ => Ok(Object::NaN(GNaN)),
+                }
+            }
+            "!=" => {
+                // TODO:
+                let l = GNumber::into(left);
+                let r = GNumber::into(right);
+                match (l, r) {
+                    (Object::Number(l), Object::Number(r)) => Ok(Object::Boolean(GBoolean {
+                        value: l.value != r.value,
+                    })),
+                    _ => Ok(Object::NaN(GNaN)),
+                }
+            }
+            "===" => Ok(Object::Boolean(GBoolean {
+                value: left == right,
+            })),
+            "!==" => Ok(Object::Boolean(GBoolean {
+                value: left != right,
+            })),
+
+            // short-circuit evaluation
+            "||" => {
+                let l = GBoolean::into(left.clone());
+                match l {
+                    Object::Boolean(l) => {
+                        if l.value {
+                            Ok(left)
+                        } else {
+                            Ok(right)
+                        }
+                    }
+                    _ => unreachable!("unreachable"),
+                }
+            }
+            "&&" => {
+                let l = GBoolean::into(left.clone());
+                let r = GBoolean::into(right.clone());
+                match (l, r) {
+                    (Object::Boolean(l), Object::Boolean(r)) => {
+                        if l.value && r.value {
+                            Ok(right)
+                        } else {
+                            Ok(left)
+                        }
+                    }
+                    _ => unreachable!("unreachable"),
+                }
+            }
+            "??" => match left {
+                Object::Null(_) | Object::Undefined(_) => Ok(right),
+                _ => Ok(left),
+            },
+
             _ => Err(Error::new(
                 std::io::ErrorKind::Other,
                 "Unexpected infix operator. at eval_infix_expression",

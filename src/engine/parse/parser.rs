@@ -261,6 +261,7 @@ impl<'a> Parser<'a> {
             TokenType::String => Expression::String(self.parse_string()?),
             TokenType::Null => Expression::Null,
             TokenType::Undefined => Expression::Undefined,
+            TokenType::NaN => Expression::NaN,
 
             TokenType::Ident => match self.peeked_token.token_type {
                 TokenType::Inc | TokenType::Dec => self.parse_suffix_expression()?,
