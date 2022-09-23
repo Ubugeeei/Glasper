@@ -557,8 +557,8 @@ mod tests {
             ("-5", "\x1b[33m-5\x1b[0m"),
             ("-10", "\x1b[33m-10\x1b[0m"),
             ("~10", "\x1b[33m-11\x1b[0m"), // 0b0101
-            ("typeof 10", "\x1b[32m\"number\"\x1b[0m"),
-            ("typeof !10", "\x1b[32m\"boolean\"\x1b[0m"),
+            ("typeof 10", "\x1b[32m'number'\x1b[0m"),
+            ("typeof !10", "\x1b[32m'boolean'\x1b[0m"),
         ];
 
         for (input, expected) in case {
