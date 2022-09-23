@@ -1,6 +1,8 @@
 use std::collections::HashMap;
 
-use crate::engine::eval::object::{JSBuiltinFunction, JSObject, JSUndefined, RuntimeObject};
+use crate::engine::eval::object::{
+    JSBuiltinFunction, JSObject, JSString, JSUndefined, RuntimeObject,
+};
 
 pub struct ConsoleBuilder;
 impl Default for ConsoleBuilder {
@@ -33,7 +35,14 @@ impl ConsoleBuilder {
 
 fn log(args: Vec<RuntimeObject>) -> RuntimeObject {
     for arg in args {
-        print!("{}", arg);
+        match arg {
+            RuntimeObject::String(JSString { ref value }) => {
+                print!("{}", value);
+            }
+            _ => {
+                print!("{:?}", arg);
+            }
+        }
         print!("\x20");
     }
     println!();
