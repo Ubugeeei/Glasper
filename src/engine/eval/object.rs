@@ -117,6 +117,24 @@ impl GString {
 pub struct GBoolean {
     pub value: bool,
 }
+impl GBoolean {
+    pub fn into(o: Object) -> Object {
+        match o {
+            Object::Boolean(b) => Object::Boolean(b),
+            Object::Number(GNumber { value }) => Object::Boolean(GBoolean {
+                value: value != 0.0,
+            }),
+            Object::String(GString { value }) => Object::Boolean(GBoolean {
+                value: value != *"",
+            }),
+            Object::Null(_) | Object::Undefined(_) | Object::NaN(_) => {
+                Object::Boolean(GBoolean { value: false })
+            }
+            _ => Object::Boolean(GBoolean { value: true }),
+        }
+    }
+}
+
 // TODO: impl prototype
 impl GBoolean {
     pub fn new(value: bool) -> GBoolean {
