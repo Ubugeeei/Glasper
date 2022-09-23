@@ -1,4 +1,4 @@
-use std::io::Error;
+use std::{collections::HashMap, io::Error};
 
 use crate::engine::{
     api::Context,
@@ -6,11 +6,11 @@ use crate::engine::{
     handle_scope::{Variable, VariableKind},
     parse::ast::{
         BlockStatement, CallExpression, ConstStatement, Expression, IfStatement, LetStatement,
-        Program, Statement,
+        MemberExpression, ObjectExpression, Program, Statement,
     },
 };
 
-use super::object::{GFunction, GNaN, GString};
+use super::object::{GFunction, GNaN, GObject, GString};
 
 pub struct Evaluator<'a> {
     ctx: &'a mut Context,
@@ -59,6 +59,10 @@ impl<'a> Evaluator<'a> {
             Expression::Null => Ok(Object::Null(GNull)),
             Expression::Undefined => Ok(Object::Undefined(GUndefined)),
             Expression::NaN => Ok(Object::NaN(GNaN)),
+
+            // objects
+            Expression::Object(o) => self.eval_object_expression(o),
+            Expression::Member(m) => self.eval_member_expression(m),
 
             Expression::Identifier(name) => self.eval_identifier(name),
 
@@ -449,6 +453,38 @@ impl<'a> Evaluator<'a> {
         }
     }
 
+    fn eval_object_expression(&mut self, obj: &ObjectExpression) -> Result<Object, Error> {
+        let mut properties = HashMap::new();
+        for prop in &obj.properties {
+            let key = prop.key.clone();
+            let value = self.eval_expression(&prop.value)?;
+            properties.insert(key, value);
+        }
+        Ok(Object::Object(GObject { properties }))
+    }
+
+    fn eval_member_expression(&mut self, m: &MemberExpression) -> Result<Object, Error> {
+        let obj = self.eval_expression(&m.object)?;
+        let prop = self.eval_expression(&m.property)?;
+
+        match prop {
+            Object::String(s) => match obj {
+                Object::Object(o) => match o.properties.get(&s.value) {
+                    Some(v) => Ok(v.clone()),
+                    None => Ok(Object::Undefined(GUndefined)),
+                },
+                _ => Err(Error::new(
+                    std::io::ErrorKind::Other,
+                    "Uncaught SyntaxError: Invalid or unexpected token",
+                )),
+            },
+            _ => Err(Error::new(
+                std::io::ErrorKind::Other,
+                "Uncaught SyntaxError: Invalid or unexpected token",
+            )),
+        }
+    }
+
     fn eval_assign_expression(
         &mut self,
         left: &Expression,
@@ -484,6 +520,53 @@ impl<'a> Evaluator<'a> {
                         self.ctx.scope.assign(name, var);
                         Ok(value)
                     }
+                }
+            }
+            Expression::Member(m) => {
+                // TODO: assign to ast
+
+                let obj = self.eval_expression(&m.object)?;
+                let prop = self.eval_expression(&m.property)?;
+                let new_value = self.eval_expression(right)?;
+
+                match prop {
+                    Object::String(s) => match obj {
+                        Object::Object(mut o) => {
+                            let o_name = if let Expression::Identifier(name) = &m.object.as_ref() {
+                                name.clone()
+                            } else {
+                                return Err(Error::new(
+                                    std::io::ErrorKind::Other,
+                                    "Uncaught SyntaxError: Invalid or unexpected token",
+                                ));
+                            };
+
+                            let v = self.ctx.scope.get(&o_name);
+                            match v {
+                                Some(Variable { value, .. }) => {
+                                    if let Object::Object(mut o) = value.clone() {
+                                        o.properties.insert(s.value.clone(), new_value.clone());
+                                    }
+                                }
+                                None => {
+                                    return Err(Error::new(
+                                        std::io::ErrorKind::Other,
+                                        "Uncaught SyntaxError: Invalid or unexpected token",
+                                    ));
+                                }
+                            }
+                            o.properties.insert(s.value, new_value.clone());
+                            Ok(new_value)
+                        }
+                        _ => Err(Error::new(
+                            std::io::ErrorKind::Other,
+                            "Uncaught SyntaxError: Invalid or unexpected token",
+                        )),
+                    },
+                    _ => Err(Error::new(
+                        std::io::ErrorKind::Other,
+                        "Uncaught SyntaxError: Invalid or unexpected token",
+                    )),
                 }
             }
             _ => Err(Error::new(
@@ -1096,6 +1179,61 @@ mod tests {
                 let mut ev = Evaluator::new(&mut context);
                 assert_eq!(format!("{}", ev.eval(&program).unwrap()), expected);
             }
+        }
+    }
+
+    #[test]
+    fn tets_eval_object() {
+        let case = vec![
+            (
+                String::from(
+                    r#"
+                        let a = {
+                            b: 1,
+                            c: 2,
+                            d: 3,
+                        };
+                        a;
+                    "#,
+                ),
+                "\x1b[34m[Object]\x1b[0m",
+            ),
+            (
+                String::from(
+                    r#"
+                        let a = {
+                            b: 1,
+                            c: 2,
+                            d: 3,
+                        };
+                        a.b;
+                    "#,
+                ),
+                "\x1b[33m1\x1b[0m",
+            ),
+            (
+                String::from(
+                    r#"
+                        let a = {
+                            b: 1,
+                            c: 2,
+                            d: 3,
+                        };
+                        a.e;
+                    "#,
+                ),
+                "\x1b[30mundefined\x1b[0m",
+            ),
+        ];
+
+        for (input, expected) in case {
+            let mut l = Lexer::new(input.to_string());
+            let mut p = Parser::new(&mut l);
+            let program = p.parse_program();
+            let handle_scope = HandleScope::new();
+            let mut context = Context::new(handle_scope);
+            let mut ev = Evaluator::new(&mut context);
+            assert_eq!(format!("{}", ev.eval(&program).unwrap()), expected);
         }
     }
 }

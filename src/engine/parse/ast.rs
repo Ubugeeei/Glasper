@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 use std::fmt::Debug;
 
 #[derive(Default, Debug)]
@@ -86,6 +88,7 @@ pub enum Expression {
     Number(f64),
     Boolean(bool),
     String(String),
+    Object(ObjectExpression),
     Null,
     Undefined,
     NaN,
@@ -95,6 +98,7 @@ pub enum Expression {
     Infix(InfixExpression),
     Function(FunctionExpression),
     Call(CallExpression),
+    Member(Box<MemberExpression>),
 }
 impl Expression {}
 
@@ -175,6 +179,38 @@ impl CallExpression {
     }
 }
 
+#[derive(Debug, PartialEq, Clone)]
+pub struct ObjectExpression {
+    pub properties: Vec<ObjectProperty>,
+}
+impl ObjectExpression {
+    pub fn new(properties: Vec<ObjectProperty>) -> ObjectExpression {
+        ObjectExpression { properties }
+    }
+}
+
+#[derive(Debug, PartialEq, Clone)]
+pub struct ObjectProperty {
+    pub key: String,
+    pub value: Expression,
+}
+impl ObjectProperty {
+    pub fn new(key: String, value: Expression) -> ObjectProperty {
+        ObjectProperty { key, value }
+    }
+}
+
+#[derive(Debug, PartialEq, Clone)]
+pub struct MemberExpression {
+    pub object: Box<Expression>,
+    pub property: Box<Expression>,
+}
+impl MemberExpression {
+    pub fn new(object: Box<Expression>, property: Box<Expression>) -> MemberExpression {
+        MemberExpression { object, property }
+    }
+}
+
 #[derive(Debug, PartialEq, Eq, PartialOrd)]
 pub enum Precedence {
     Lowest,
@@ -188,5 +224,6 @@ pub enum Precedence {
     Product,           // * or /
     Exp,               // **
     Prefix,            // -X or !X
-    Call,              // myFunction(x)
+    Index,
+    Call, // myFunction(x)
 }

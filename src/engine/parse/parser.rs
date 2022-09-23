@@ -6,8 +6,9 @@ use super::{
     super::{lexer::Lexer, token::Token},
     ast::{
         BlockStatement, CallExpression, ConstStatement, Expression, FunctionExpression,
-        FunctionParameter, IfStatement, InfixExpression, LetStatement, Precedence,
-        PrefixExpression, Program, Statement, SuffixExpression,
+        FunctionParameter, IfStatement, InfixExpression, LetStatement, MemberExpression,
+        ObjectExpression, ObjectProperty, Precedence, PrefixExpression, Program, Statement,
+        SuffixExpression,
     },
 };
 
@@ -263,6 +264,9 @@ impl<'a> Parser<'a> {
             TokenType::Undefined => Expression::Undefined,
             TokenType::NaN => Expression::NaN,
 
+            // object
+            TokenType::LBrace => self.parse_object()?,
+
             TokenType::Ident => match self.peeked_token.token_type {
                 TokenType::Inc | TokenType::Dec => self.parse_suffix_expression()?,
                 _ => Expression::Identifier(self.parse_identifier()?),
@@ -331,6 +335,10 @@ impl<'a> Parser<'a> {
                     self.next_token();
                     self.parse_infix_expression(expr)?
                 }
+                TokenType::Period => {
+                    self.next_token();
+                    self.parse_member_expression(expr)?
+                }
                 _ => expr,
             }
         }
@@ -390,6 +398,60 @@ impl<'a> Parser<'a> {
         }
     }
 
+    fn parse_object(&mut self) -> Result<Expression, Error> {
+        self.next_token(); // skip '{'
+        let mut properties = Vec::new();
+        while self.cur_token.token_type != TokenType::RBrace {
+            let prop = self.parse_object_property()?;
+            properties.push(prop);
+            if self.cur_token.token_type == TokenType::Comma {
+                self.next_token();
+            }
+        }
+
+        Ok(Expression::Object(ObjectExpression::new(properties)))
+    }
+
+    fn parse_object_property(&mut self) -> Result<ObjectProperty, Error> {
+        if self.cur_token.token_type != TokenType::Ident {
+            return Err(Error::new(
+                ErrorKind::InvalidInput,
+                format!(
+                    "Uncaught SyntaxError: Unexpected token '{}'",
+                    self.cur_token.literal
+                ),
+            ));
+        }
+
+        let key = self.cur_token.literal.to_string();
+
+        if self.peeked_token.token_type != TokenType::Colon {
+            return Err(Error::new(
+                ErrorKind::InvalidInput,
+                format!(
+                    "unexpected token \"{}\" in parse_object_property.",
+                    self.peeked_token.literal
+                ),
+            ));
+        }
+
+        self.next_token();
+
+        // skip ':'
+        self.next_token();
+
+        let value = self.parse_expression(Precedence::Lowest)?;
+
+        if self.peeked_token.token_type == TokenType::Comma {
+            self.next_token();
+            self.next_token();
+        }
+        if self.cur_token.token_type == TokenType::Comma {
+            self.next_token();
+        }
+        Ok(ObjectProperty::new(key, value))
+    }
+
     fn parse_prefix_expression(&mut self) -> Result<Expression, Error> {
         let token = self.cur_token.clone();
         self.next_token();
@@ -417,6 +479,18 @@ impl<'a> Parser<'a> {
             token.literal,
             Box::new(right),
         ));
+        Ok(expr)
+    }
+
+    fn parse_member_expression(&mut self, left: Expression) -> Result<Expression, Error> {
+        self.next_token(); // skip '.'
+
+        // TODO: dynamic member expression
+        let ident = self.cur_token.literal.to_string();
+        let expr = Expression::Member(Box::new(MemberExpression::new(
+            Box::new(left),
+            Box::new(Expression::String(ident)),
+        )));
         Ok(expr)
     }
 
@@ -568,7 +642,7 @@ impl<'a> Parser<'a> {
 
 #[cfg(test)]
 pub mod tests {
-    use crate::engine::parse::ast::FunctionExpression;
+    use crate::engine::parse::ast::{FunctionExpression, ObjectExpression, ObjectProperty};
 
     use super::*;
 
@@ -1616,6 +1690,47 @@ pub mod tests {
                         Box::new(Expression::Number(5.0)),
                     )),
                 )),
+            ),
+        ];
+
+        for (source, expected) in case {
+            let mut l = Lexer::new(source);
+            let mut p = Parser::new(&mut l);
+            let program = p.parse_program();
+            assert_eq!(program.statements.len(), 1);
+            assert_eq!(program.statements[0], expected);
+        }
+    }
+
+    #[test]
+    fn test_parse_object_expression() {
+        let case = vec![
+            (
+                r#"
+                    const ob = {
+                        prop: {
+                            value: 1,
+                        },
+                    };
+                "#
+                .to_string(),
+                Statement::Const(ConstStatement::new(
+                    String::from("ob"),
+                    Expression::Object(ObjectExpression::new(vec![ObjectProperty::new(
+                        String::from("prop"),
+                        Expression::Object(ObjectExpression::new(vec![ObjectProperty::new(
+                            String::from("value"),
+                            Expression::Number(1.0),
+                        )])),
+                    )])),
+                )),
+            ),
+            (
+                r#"ob.prop;"#.to_string(),
+                Statement::Expression(Expression::Member(Box::new(MemberExpression::new(
+                    Box::new(Expression::Identifier(String::from("ob"))),
+                    Box::new(Expression::String(String::from("prop"))),
+                )))),
             ),
         ];
 
