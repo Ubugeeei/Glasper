@@ -87,6 +87,7 @@ impl<'a> Evaluator<'a> {
         match expr.operator.as_str() {
             "!" => self.eval_bang_operator_expression(right),
             "-" => self.eval_minus_prefix_operator_expression(right),
+            "~" => self.eval_bit_not_operator_expression(right),
             o => Err(Error::new(
                 std::io::ErrorKind::Other,
                 format!(
@@ -110,6 +111,19 @@ impl<'a> Evaluator<'a> {
             Err(Error::new(
                 std::io::ErrorKind::Other,
                 "Unexpected prefix operator. at eval_minus_prefix_operator_expression",
+            ))
+        }
+    }
+
+    fn eval_bit_not_operator_expression(&self, right: Object) -> Result<Object, Error> {
+        if let Object::Number(GNumber { value }) = right {
+            Ok(Object::Number(GNumber {
+                value: (!(value as i64)) as f64,
+            }))
+        } else {
+            Err(Error::new(
+                std::io::ErrorKind::Other,
+                "Unexpected prefix operator. at eval_bit_not_operator_expression",
             ))
         }
     }
@@ -530,6 +544,7 @@ mod tests {
             ("!!5", "\x1b[33mtrue\x1b[0m"),
             ("-5", "\x1b[33m-5\x1b[0m"),
             ("-10", "\x1b[33m-10\x1b[0m"),
+            ("~10", "\x1b[33m-11\x1b[0m"), // 0b0101
         ];
 
         for (input, expected) in case {
