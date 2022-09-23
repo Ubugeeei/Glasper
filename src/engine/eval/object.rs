@@ -229,4 +229,46 @@ mod test {
             assert_eq!(GNumber::into(input), expected);
         }
     }
+
+    #[test]
+    fn test_into_boolean() {
+        let case = vec![
+            (
+                Object::Number(GNumber { value: 1.0 }),
+                Object::Boolean(GBoolean { value: true }),
+            ),
+            (
+                Object::Number(GNumber { value: 0.0 }),
+                Object::Boolean(GBoolean { value: false }),
+            ),
+            (
+                Object::String(GString {
+                    value: "1".to_string(),
+                }),
+                Object::Boolean(GBoolean { value: true }),
+            ),
+            (
+                Object::String(GString {
+                    value: "".to_string(),
+                }),
+                Object::Boolean(GBoolean { value: false }),
+            ),
+            (
+                Object::Null(GNull {}),
+                Object::Boolean(GBoolean { value: false }),
+            ),
+            (
+                Object::Undefined(GUndefined {}),
+                Object::Boolean(GBoolean { value: false }),
+            ),
+            (
+                Object::NaN(GNaN {}),
+                Object::Boolean(GBoolean { value: false }),
+            ),
+        ];
+
+        for (input, expected) in case {
+            assert_eq!(GBoolean::into(input), expected);
+        }
+    }
 }
