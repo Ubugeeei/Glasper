@@ -145,7 +145,12 @@ impl Lexer {
             '!' => {
                 if self.peek_char() == '=' {
                     self.read_char();
-                    Token::new(TokenType::NotEq, "!=".to_string())
+                    if self.peek_char() == '=' {
+                        self.read_char();
+                        Token::new(TokenType::NotEqStrict, "!==".to_string())
+                    } else {
+                        Token::new(TokenType::NotEq, "!=".to_string())
+                    }
                 } else {
                     Token::new(TokenType::Bang, self.ch.to_string())
                 }
@@ -364,11 +369,12 @@ pub mod tests {
 
     #[test]
     fn test_combination_of_symbols() {
-        let source = String::from("== != === ++ -- ** || && ?? << >> >>>");
+        let source = String::from("== != === !== ++ -- ** || && ?? << >> >>>");
         let mut l = Lexer::new(source);
         assert_eq!(l.next_token().token_type, TokenType::Eq);
         assert_eq!(l.next_token().token_type, TokenType::NotEq);
         assert_eq!(l.next_token().token_type, TokenType::EqStrict);
+        assert_eq!(l.next_token().token_type, TokenType::NotEqStrict);
         assert_eq!(l.next_token().token_type, TokenType::Inc);
         assert_eq!(l.next_token().token_type, TokenType::Dec);
         assert_eq!(l.next_token().token_type, TokenType::Exp);
