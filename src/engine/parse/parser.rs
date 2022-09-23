@@ -6,8 +6,9 @@ use super::{
     super::{lexer::Lexer, token::Token},
     ast::{
         BlockStatement, CallExpression, ConstStatement, Expression, FunctionExpression,
-        FunctionParameter, IfStatement, InfixExpression, LetStatement, ObjectExpression,
-        ObjectProperty, Precedence, PrefixExpression, Program, Statement, SuffixExpression,
+        FunctionParameter, IfStatement, InfixExpression, LetStatement, MemberExpression,
+        ObjectExpression, ObjectProperty, Precedence, PrefixExpression, Program, Statement,
+        SuffixExpression,
     },
 };
 
@@ -330,10 +331,13 @@ impl<'a> Parser<'a> {
                 | TokenType::Assign
                 | TokenType::ShL
                 | TokenType::ShR
-                | TokenType::SaR
-                | TokenType::Period => {
+                | TokenType::SaR => {
                     self.next_token();
                     self.parse_infix_expression(expr)?
+                }
+                TokenType::Period => {
+                    self.next_token();
+                    self.parse_member_expression(expr)?
                 }
                 _ => expr,
             }
@@ -475,6 +479,18 @@ impl<'a> Parser<'a> {
             token.literal,
             Box::new(right),
         ));
+        Ok(expr)
+    }
+
+    fn parse_member_expression(&mut self, left: Expression) -> Result<Expression, Error> {
+        self.next_token(); // skip '.'
+
+        // TODO: dynamic member expression
+        let ident = self.cur_token.literal.to_string();
+        let expr = Expression::Member(Box::new(MemberExpression::new(
+            Box::new(left),
+            Box::new(Expression::String(ident)),
+        )));
         Ok(expr)
     }
 
@@ -1711,11 +1727,10 @@ pub mod tests {
             ),
             (
                 r#"ob.prop;"#.to_string(),
-                Statement::Expression(Expression::Infix(InfixExpression::new(
+                Statement::Expression(Expression::Member(Box::new(MemberExpression::new(
                     Box::new(Expression::Identifier(String::from("ob"))),
-                    String::from("."),
-                    Box::new(Expression::Identifier(String::from("prop"))),
-                ))),
+                    Box::new(Expression::String(String::from("prop"))),
+                )))),
             ),
         ];
 

@@ -98,6 +98,7 @@ pub enum Expression {
     Infix(InfixExpression),
     Function(FunctionExpression),
     Call(CallExpression),
+    Member(Box<MemberExpression>),
 }
 impl Expression {}
 
@@ -196,6 +197,17 @@ pub struct ObjectProperty {
 impl ObjectProperty {
     pub fn new(key: String, value: Expression) -> ObjectProperty {
         ObjectProperty { key, value }
+    }
+}
+
+#[derive(Debug, PartialEq, Clone)]
+pub struct MemberExpression {
+    object: Box<Expression>,
+    property: Box<Expression>,
+}
+impl MemberExpression {
+    pub fn new(object: Box<Expression>, property: Box<Expression>) -> MemberExpression {
+        MemberExpression { object, property }
     }
 }
 
