@@ -90,8 +90,26 @@ pub struct GString {
 }
 // TODO: impl prototype
 impl GString {
-    pub fn new(value: String) -> GString {
-        GString { value }
+    pub fn into(o: Object) -> Object {
+        match o {
+            Object::String(s) => Object::String(s),
+            Object::Number(n) => Object::String(GString {
+                value: n.value.to_string(),
+            }),
+            Object::Boolean(GBoolean { value }) => Object::String(GString {
+                value: value.to_string(),
+            }),
+            Object::Null(_) => Object::String(GString {
+                value: "null".to_string(),
+            }),
+            Object::Undefined(_) => Object::String(GString {
+                value: "undefined".to_string(),
+            }),
+            // TODO: literal
+            _ => Object::String(GString {
+                value: "".to_string(),
+            }),
+        }
     }
 }
 
