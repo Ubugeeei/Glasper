@@ -2,33 +2,35 @@ name: Rust
 
 on:
   push:
-    branches: [ "master" ]
+    branches: ["master"]
   pull_request:
-    branches: [ "master" ]
+    branches: ["master"]
 
 env:
   CARGO_TERM_COLOR: always
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v3
+      - uses: actions/checkout@v3
 
-    # NOTE: install deps for ci
-    - name: install_dependencies
-      run: echo "install deps"
+      # NOTE: install deps for ci
+      - name: install_dependencies
+        run: echo "install deps"
 
-    - name: Check Format
-      run: cargo fmt --check
+      - name: Check Tools
+        run: rustup show
 
-    - name: Lint
-      run: cargo clippy --all-targets --all-features -- -D warnings
+      - name: Check Format
+        run: cargo fmt --check
 
-    - name: Build
-      run: cargo build --release
+      - name: Lint
+        run: cargo clippy --all-targets --all-features -- -D warnings
 
-    - name: Run tests
-      run: cargo test
+      - name: Build
+        run: cargo build --release
+
+      - name: Run tests
+        run: cargo test
