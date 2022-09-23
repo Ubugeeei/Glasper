@@ -104,6 +104,7 @@
 	console_log("2 <= 2:", 2 <= 2);
 	console_log("2 >= 2:", 2 >= 2);
 	console_log("2 + 2 * 2:", 2 + 2 * 2);
+	console_log("typeof 1:", typeof 1);
 }
 
 /**
