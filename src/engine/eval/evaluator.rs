@@ -88,6 +88,7 @@ impl<'a> Evaluator<'a> {
             "!" => self.eval_bang_operator_expression(right),
             "-" => self.eval_minus_prefix_operator_expression(right),
             "~" => self.eval_bit_not_operator_expression(right),
+            "typeof" => self.eval_typeof_operator_expression(right),
             o => Err(Error::new(
                 std::io::ErrorKind::Other,
                 format!(
@@ -126,6 +127,12 @@ impl<'a> Evaluator<'a> {
                 "Unexpected prefix operator. at eval_bit_not_operator_expression",
             ))
         }
+    }
+
+    fn eval_typeof_operator_expression(&self, right: Object) -> Result<Object, Error> {
+        Ok(Object::String(GString {
+            value: right.get_type(),
+        }))
     }
 
     fn eval_infix_expression(
@@ -550,6 +557,8 @@ mod tests {
             ("-5", "\x1b[33m-5\x1b[0m"),
             ("-10", "\x1b[33m-10\x1b[0m"),
             ("~10", "\x1b[33m-11\x1b[0m"), // 0b0101
+            ("typeof 10", "\x1b[32m\"number\"\x1b[0m"),
+            ("typeof !10", "\x1b[32m\"boolean\"\x1b[0m"),
         ];
 
         for (input, expected) in case {

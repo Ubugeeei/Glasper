@@ -17,7 +17,7 @@ pub enum Object {
 }
 
 impl Object {
-    fn get_type(&self) -> String {
+    pub fn get_type(&self) -> String {
         match self {
             Self::Boolean(_) => "boolean".to_string(),
             Self::Number(_) => "number".to_string(),
