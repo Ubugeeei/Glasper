@@ -175,3 +175,58 @@ impl GBuiltinFunction {
         }
     }
 }
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    #[test]
+    fn test_into_number() {
+        let case = vec![
+            (
+                Object::Number(GNumber { value: 1.0 }),
+                Object::Number(GNumber { value: 1.0 }),
+            ),
+            (
+                Object::Boolean(GBoolean { value: true }),
+                Object::Number(GNumber { value: 1.0 }),
+            ),
+            (
+                Object::Boolean(GBoolean { value: false }),
+                Object::Number(GNumber { value: 0.0 }),
+            ),
+            (
+                Object::String(GString {
+                    value: "1".to_string(),
+                }),
+                Object::Number(GNumber { value: 1.0 }),
+            ),
+            (
+                Object::String(GString {
+                    value: "1.0".to_string(),
+                }),
+                Object::Number(GNumber { value: 1.0 }),
+            ),
+            (
+                Object::String(GString {
+                    value: "1.1".to_string(),
+                }),
+                Object::Number(GNumber { value: 1.1 }),
+            ),
+            (
+                Object::String(GString {
+                    value: "a".to_string(),
+                }),
+                Object::NaN(GNaN {}),
+            ),
+            (
+                Object::Null(GNull {}),
+                Object::Number(GNumber { value: 0.0 }),
+            ),
+            (Object::Undefined(GUndefined {}), Object::NaN(GNaN {})),
+        ];
+
+        for (input, expected) in case {
+            assert_eq!(GNumber::into(input), expected);
+        }
+    }
+}
