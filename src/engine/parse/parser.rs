@@ -568,7 +568,7 @@ impl<'a> Parser<'a> {
 
 #[cfg(test)]
 pub mod tests {
-    use crate::engine::parse::ast::FunctionExpression;
+    use crate::engine::parse::ast::{FunctionExpression, ObjectExpression, ObjectProperty};
 
     use super::*;
 
@@ -1616,6 +1616,58 @@ pub mod tests {
                         Box::new(Expression::Number(5.0)),
                     )),
                 )),
+            ),
+        ];
+
+        for (source, expected) in case {
+            let mut l = Lexer::new(source);
+            let mut p = Parser::new(&mut l);
+            let program = p.parse_program();
+            assert_eq!(program.statements.len(), 1);
+            assert_eq!(program.statements[0], expected);
+        }
+    }
+
+    #[test]
+    fn test_parse_object_expression() {
+        let case = vec![
+            (
+                "{ value: true }".to_string(),
+                Statement::Expression(Expression::Object(ObjectExpression::new(vec![
+                    ObjectProperty::new(String::from("value"), Expression::Boolean(true)),
+                ]))),
+            ),
+            (
+                "{}".to_string(),
+                Statement::Expression(Expression::Object(ObjectExpression::new(vec![]))),
+            ),
+            (
+                r#"
+                    const ob = {
+                        prop: {
+                            value: 1,
+                        }
+                    };
+                "#
+                .to_string(),
+                Statement::Const(ConstStatement::new(
+                    String::from("ob"),
+                    Expression::Object(ObjectExpression::new(vec![ObjectProperty::new(
+                        String::from("prop"),
+                        Expression::Object(ObjectExpression::new(vec![ObjectProperty::new(
+                            String::from("value"),
+                            Expression::Number(1.0),
+                        )])),
+                    )])),
+                )),
+            ),
+            (
+                r#"ob.prop;"#.to_string(),
+                Statement::Expression(Expression::Infix(InfixExpression::new(
+                    Box::new(Expression::Identifier(String::from("ob"))),
+                    String::from("."),
+                    Box::new(Expression::Identifier(String::from("prop"))),
+                ))),
             ),
         ];
 
