@@ -35,6 +35,7 @@ pub enum TokenType {
     // comp
     LT,
     GT,
+    Lte,
     // brackets
     LParen,
     RParen,
@@ -94,7 +95,7 @@ impl Token {
             TokenType::NullishCoalescing => Precedence::NullishCoalescing,
             TokenType::Or | TokenType::And => Precedence::Bool,
             TokenType::NotEq => Precedence::Equals,
-            TokenType::LT | TokenType::GT => Precedence::LessGreater,
+            TokenType::LT | TokenType::GT | TokenType::Lte => Precedence::LessGreater,
             TokenType::BitOr | TokenType::BitAnd | TokenType::BitXOr => Precedence::Sum,
             TokenType::Plus | TokenType::Minus => Precedence::Sum,
             TokenType::Exp => Precedence::Exp,
