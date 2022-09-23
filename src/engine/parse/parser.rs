@@ -318,6 +318,7 @@ impl<'a> Parser<'a> {
                 | TokenType::GT
                 | TokenType::Eq
                 | TokenType::NotEq
+                | TokenType::EqStrict
                 | TokenType::Assign
                 | TokenType::ShL
                 | TokenType::ShR
@@ -1131,6 +1132,14 @@ pub mod tests {
                     Statement::Expression(Expression::Infix(InfixExpression::new(
                         Box::new(Expression::Number(1.0)),
                         String::from("!="),
+                        Box::new(Expression::Number(2.0)),
+                    ))),
+                ),
+                (
+                    String::from("1 === 2;"),
+                    Statement::Expression(Expression::Infix(InfixExpression::new(
+                        Box::new(Expression::Number(1.0)),
+                        String::from("==="),
                         Box::new(Expression::Number(2.0)),
                     ))),
                 ),
