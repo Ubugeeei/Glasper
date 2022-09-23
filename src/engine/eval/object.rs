@@ -13,6 +13,7 @@ pub enum Object {
     BuiltinFunction(GBuiltinFunction),
     Null(GNull),
     Undefined(GUndefined),
+    NaN(GNaN),
     Return(Box<Object>),
 }
 
@@ -25,6 +26,7 @@ impl Object {
             Self::Function(_) => "function".to_string(),
             Self::Null(_) => "object".to_string(),
             Self::Undefined(_) => "undefined".to_string(),
+            Self::NaN(_) => "number".to_string(),
             Self::BuiltinFunction(_) => "function".to_string(),
             Self::Return(_) => "".to_string(),
         }
@@ -41,6 +43,7 @@ impl Display for Object {
 
             Self::Null(_) => write!(f, "null"),
             Self::Undefined(_) => write!(f, "\x1b[30mundefined\x1b[0m"),
+            Self::NaN(_) => write!(f, "\x1b[33mNaN\x1b[0m"),
 
             Self::BuiltinFunction(b) => {
                 write!(f, "\x1b[33mf\x1b[0m {}() {{ [native code] }}", b.name)
@@ -100,6 +103,9 @@ pub struct GNull;
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct GUndefined;
+
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub struct GNaN;
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct GBuiltinFunction {

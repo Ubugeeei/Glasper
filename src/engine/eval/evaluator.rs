@@ -58,6 +58,8 @@ impl<'a> Evaluator<'a> {
             ))),
             Expression::Null => Ok(Object::Null(GNull)),
             Expression::Undefined => Ok(Object::Undefined(GUndefined)),
+            Expression::NaN => Ok(Object::NaN(GNaN)),
+
             Expression::Identifier(name) => self.eval_identifier(name),
 
             // operators

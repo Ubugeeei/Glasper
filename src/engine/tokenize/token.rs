@@ -16,6 +16,7 @@ pub enum TokenType {
     Ident,
     Number,
     String,
+    NaN,
 
     /*
      * symbols
@@ -124,6 +125,7 @@ pub fn lookup_indent(ident: &str) -> TokenType {
         "null" => TokenType::Null,
         "undefined" => TokenType::Undefined,
         "typeof" => TokenType::Typeof,
+        "NaN" => TokenType::NaN,
         _ => TokenType::Ident,
     }
 }

@@ -88,6 +88,7 @@ pub enum Expression {
     String(String),
     Null,
     Undefined,
+    NaN,
     Identifier(String),
     Prefix(PrefixExpression),
     Suffix(SuffixExpression),
