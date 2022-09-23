@@ -1,22 +1,34 @@
-use crate::engine::eval::object::{GUndefined, Object};
+use std::collections::HashMap;
 
-// TODO: bind to context scope
-pub struct Console;
+use crate::engine::eval::object::{GBuiltinFunction, GObject, GUndefined, Object};
 
-impl Default for Console {
-    fn default() -> Self {
-        Console
+pub struct ConsoleBuilder;
+impl ConsoleBuilder {
+    pub fn build() -> Object {
+        let mut properties = HashMap::new();
+        properties.insert(
+            String::from("log"),
+            Object::BuiltinFunction(GBuiltinFunction::new("log", log)),
+        );
+        properties.insert(
+            String::from("debug"),
+            Object::BuiltinFunction(GBuiltinFunction::new("log", log)),
+        );
+        properties.insert(
+            String::from("warn"),
+            Object::BuiltinFunction(GBuiltinFunction::new("log", log)),
+        );
+
+        Object::Object(GObject { properties })
     }
 }
 
-impl Console {
-    #[allow(dead_code)]
-    pub fn log(&self, args: Vec<Object>) -> Object {
-        for arg in args {
-            println!("{}", arg);
-            println!("\x20");
-        }
-
-        Object::Undefined(GUndefined)
+fn log(args: Vec<Object>) -> Object {
+    for arg in args {
+        print!("{}", arg);
+        print!("\x20");
     }
+    println!();
+
+    Object::Undefined(GUndefined)
 }

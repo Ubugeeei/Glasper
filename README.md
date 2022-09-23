@@ -33,7 +33,7 @@ $ gls example/main.js
  *
  */
 {
-	console_log("Hello World!");
+	console.log("Hello World!");
 }
 
 /**
@@ -42,18 +42,18 @@ $ gls example/main.js
  *
  */
 {
-	console_log("true:", true);
-	console_log("false:", false);
-	console_log("1:", 1);
-	console_log("0x1111:", 0x1111);
-	console_log("0o1111:", 0o1111);
-	console_log("0b1111:", 0b1111);
-	console_log("1.1:", 1.1);
-	console_log("1.1e3:", 1.1e3);
-	console_log("1.1e-3:", 1.1e-3);
-	console_log("hello string");
-	console_log("undefined:", undefined);
-	console_log("null:", null); // (Object)
+	console.log("true:", true);
+	console.log("false:", false);
+	console.log("1:", 1);
+	console.log("0x1111:", 0x1111);
+	console.log("0o1111:", 0o1111);
+	console.log("0b1111:", 0b1111);
+	console.log("1.1:", 1.1);
+	console.log("1.1e3:", 1.1e3);
+	console.log("1.1e-3:", 1.1e-3);
+	console.log("hello string");
+	console.log("undefined:", undefined);
+	console.log("null:", null); // (Object)
 }
 
 /**
@@ -65,7 +65,7 @@ $ gls example/main.js
 	let o = {
 		message: "hello object",
 	};
-	console_log("o.message:", o.message);
+	console.log("o.message:", o.message);
 }
 
 /**
@@ -77,23 +77,23 @@ $ gls example/main.js
 	{
 		// var
 		a = 1;
-		console_log("variables a:", a);
+		console.log("variables a:", a);
 		a = 5;
-		console_log("variables assigned a:", a);
+		console.log("variables assigned a:", a);
 	}
 
 	{
 		let b = 2;
-		console_log("variables b:", b);
+		console.log("variables b:", b);
 		b = 6;
-		console_log("variables assigned b:", b);
+		console.log("variables assigned b:", b);
 		let b = 7;
-		console_log("variables re declared b:", b);
+		console.log("variables re declared b:", b);
 	}
 
 	{
 		const c = 3;
-		console_log("variables c:", c);
+		console.log("variables c:", c);
 		// c = 7; // error
 		// const c = 7; // error
 	}
@@ -109,10 +109,10 @@ $ gls example/main.js
 	let global = 100;
 	{
 		let v = 2;
-		console_log("child scope v:", v);
-		console_log("global in child:", global);
+		console.log("child scope v:", v);
+		console.log("global in child:", global);
 	}
-	console_log("parent scoped v:", v);
+	console.log("parent scoped v:", v);
 }
 
 /**
@@ -121,31 +121,31 @@ $ gls example/main.js
  *
  */
 {
-	console_log("2 + 2:", 2 + 2);
-	console_log("2 - 2:", 2 - 2);
-	console_log("2 * 2:", 2 * 2);
-	console_log("2 / 2:", 2 / 2);
-	console_log("2 % 2:", 2 % 2);
-	console_log("2 ** 2:", 2 ** 2);
-	console_log("2 << 2:", 2 << 2);
-	console_log("2 >> 2:", 2 >> 2);
-	console_log("2 & 2:", 2 & 2);
-	console_log("2 | 2:", 2 | 2);
-	console_log("2 ^ 2:", 2 ^ 2);
-	console_log("~-1:", ~-1);
-	console_log("2 && 2:", 2 && 2);
-	console_log("2 || 2:", 2 || 2);
-	console_log("2 ?? 2:", 2 ?? 2);
-	console_log("2 == 2:", 2 == 2);
-	console_log("2 != 2:", 2 != 2);
-	console_log("2 === 2:", 2 === 2);
-	console_log("2 !== 2:", 2 !== 2);
-	console_log("2 > 2:", 2 > 2);
-	console_log("2 < 2:", 2 < 2);
-	console_log("2 <= 2:", 2 <= 2);
-	console_log("2 >= 2:", 2 >= 2);
-	console_log("2 + 2 * 2:", 2 + 2 * 2);
-	console_log("typeof 1:", typeof 1);
+	console.log("2 + 2:", 2 + 2);
+	console.log("2 - 2:", 2 - 2);
+	console.log("2 * 2:", 2 * 2);
+	console.log("2 / 2:", 2 / 2);
+	console.log("2 % 2:", 2 % 2);
+	console.log("2 ** 2:", 2 ** 2);
+	console.log("2 << 2:", 2 << 2);
+	console.log("2 >> 2:", 2 >> 2);
+	console.log("2 & 2:", 2 & 2);
+	console.log("2 | 2:", 2 | 2);
+	console.log("2 ^ 2:", 2 ^ 2);
+	console.log("~-1:", ~-1);
+	console.log("2 && 2:", 2 && 2);
+	console.log("2 || 2:", 2 || 2);
+	console.log("2 ?? 2:", 2 ?? 2);
+	console.log("2 == 2:", 2 == 2);
+	console.log("2 != 2:", 2 != 2);
+	console.log("2 === 2:", 2 === 2);
+	console.log("2 !== 2:", 2 !== 2);
+	console.log("2 > 2:", 2 > 2);
+	console.log("2 < 2:", 2 < 2);
+	console.log("2 <= 2:", 2 <= 2);
+	console.log("2 >= 2:", 2 >= 2);
+	console.log("2 + 2 * 2:", 2 + 2 * 2);
+	console.log("typeof 1:", typeof 1);
 }
 
 /**
@@ -156,9 +156,9 @@ $ gls example/main.js
 {
 	let num = 2;
 	if (num % 2 == 0) {
-		console_log("even!");
+		console.log("even!");
 	} else {
-		console_log("odd!");
+		console.log("odd!");
 	}
 }
 
@@ -172,7 +172,7 @@ $ gls example/main.js
 		return a + b;
 	};
 
-	console_log("add(1, 2):", add(1, 2));
+	console.log("add(1, 2):", add(1, 2));
 }
 
 /**
@@ -188,7 +188,7 @@ $ gls example/main.js
 			return num * factorial(num - 1);
 		}
 	};
-	console_log("factorial(5):", factorial(5));
+	console.log("factorial(5):", factorial(5));
 }
 
 /**
@@ -202,20 +202,20 @@ $ gls example/main.js
 		if (!num) return 0;
 
 		if (num % 15 == 0) {
-			console_log("FizzBuzz");
+			console.log("FizzBuzz");
 		} else if (num % 5 == 0) {
-			console_log("Buzz");
+			console.log("Buzz");
 		} else if (num % 3 == 0) {
-			console_log("Fizz");
+			console.log("Fizz");
 		} else {
-			console_log(num);
+			console.log(num);
 		}
 
 		fizzBuzz(num - 1);
 	};
-	console_log("=== fizzBuzz(20) start ===");
+	console.log("=== fizzBuzz(20) start ===");
 	fizzBuzz(20);
-	console_log("=== fizzBuzz(20) end ===");
+	console.log("=== fizzBuzz(20) end ===");
 }
 ```
 

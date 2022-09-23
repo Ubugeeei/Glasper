@@ -2,11 +2,11 @@ use std::io::Error;
 
 use crate::engine::{
     api::{Context, Isolate, Script},
-    eval::object::{GBuiltinFunction, Object},
+    eval::object::Object,
     handle_scope::HandleScope,
 };
 
-use super::binding::logger::console_log;
+use super::binding::console::ConsoleBuilder;
 
 pub struct JavaScriptRuntime {
     isolate: Isolate,
@@ -23,8 +23,8 @@ impl JavaScriptRuntime {
         let mut context = Context::new(handle_scope);
 
         let global = context.global();
-        let logger = Object::BuiltinFunction(GBuiltinFunction::new("console_log", console_log));
-        global.set("console_log", logger);
+        let console = ConsoleBuilder::build();
+        global.set("console", console);
 
         Self {
             isolate: Isolate::new(context),
