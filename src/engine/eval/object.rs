@@ -35,7 +35,7 @@ impl Display for Object {
         match self {
             Self::Boolean(b) => write!(f, "\x1b[33m{}\x1b[0m", b.value),
             Self::Number(n) => write!(f, "\x1b[33m{}\x1b[0m", n.value),
-            Self::String(s) => write!(f, "\x1b[32m\"{}\"\x1b[0m", s.value),
+            Self::String(s) => write!(f, "\x1b[32m'{}'\x1b[0m", s.value),
 
             Self::Function(_) => write!(f, "[Function]"),
 
