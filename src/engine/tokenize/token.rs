@@ -43,14 +43,14 @@ pub enum TokenType {
     RParen,
     LBrace,
     RBrace,
-    // others
-    Comma,
-    SemiColon,
     // bool
     Or,
     And,
     Conditional, // ?
-    // BackQuote, // TODO: implement
+    // others
+    Comma,
+    SemiColon,
+    Period,
 
     /*
      * combination of symbols
@@ -107,6 +107,7 @@ impl Token {
             TokenType::ShL | TokenType::ShR | TokenType::SaR => Precedence::Shift,
             TokenType::Slash | TokenType::Asterisk | TokenType::Percent => Precedence::Product,
             TokenType::LParen => Precedence::Call,
+            TokenType::Period => Precedence::Index,
             _ => Precedence::Lowest,
         }
     }

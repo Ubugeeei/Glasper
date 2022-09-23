@@ -188,5 +188,6 @@ pub enum Precedence {
     Product,           // * or /
     Exp,               // **
     Prefix,            // -X or !X
-    Call,              // myFunction(x)
+    Index,
+    Call, // myFunction(x)
 }
