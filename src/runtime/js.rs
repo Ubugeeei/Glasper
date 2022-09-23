@@ -23,7 +23,8 @@ impl JavaScriptRuntime {
         let mut context = Context::new(handle_scope);
 
         let global = context.global();
-        let console = ConsoleBuilder::build();
+        let console_builder = ConsoleBuilder::new();
+        let console = console_builder.build();
         global.set("console", console);
 
         Self {

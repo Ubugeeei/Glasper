@@ -3,8 +3,16 @@ use std::collections::HashMap;
 use crate::engine::eval::object::{GBuiltinFunction, GObject, GUndefined, Object};
 
 pub struct ConsoleBuilder;
+impl Default for ConsoleBuilder {
+    fn default() -> Self {
+        Self::new()
+    }
+}
 impl ConsoleBuilder {
-    pub fn build() -> Object {
+    pub fn new() -> Self {
+        Self
+    }
+    pub fn build(self) -> Object {
         let mut properties = HashMap::new();
         properties.insert(
             String::from("log"),
