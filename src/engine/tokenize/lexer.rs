@@ -375,7 +375,7 @@ pub mod tests {
 
     #[test]
     fn test_combination_of_symbols() {
-        let source = String::from("== != === !== <= >= ++ -- ** || && ?? << >> >>>");
+        let source = String::from("== != === !== <= >= ++ -- ** || && ?? << >> >>> typeof");
         let mut l = Lexer::new(source);
         assert_eq!(l.next_token().token_type, TokenType::Eq);
         assert_eq!(l.next_token().token_type, TokenType::NotEq);
@@ -392,6 +392,7 @@ pub mod tests {
         assert_eq!(l.next_token().token_type, TokenType::ShL);
         assert_eq!(l.next_token().token_type, TokenType::ShR);
         assert_eq!(l.next_token().token_type, TokenType::SaR);
+        assert_eq!(l.next_token().token_type, TokenType::Typeof);
     }
 
     #[test]

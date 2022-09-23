@@ -65,6 +65,7 @@ pub enum TokenType {
     ShL,
     ShR,
     SaR,
+    Typeof,
 
     /*
      * keywords
@@ -122,6 +123,7 @@ pub fn lookup_indent(ident: &str) -> TokenType {
         "return" => TokenType::Return,
         "null" => TokenType::Null,
         "undefined" => TokenType::Undefined,
+        "typeof" => TokenType::Typeof,
         _ => TokenType::Ident,
     }
 }
