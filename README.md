@@ -238,9 +238,11 @@ $ gls --help
 
 ## Use as library (JavaScript engine)
 
-use engine api (src/engine/api.rs)
+### Basic Execution
 
 ```rs
+use glasper::engine::*;
+
 let handle_scope = HandleScope::new();
 let mut context = Context::new(handle_scope);
 let mut isolate = Isolate::new(context);
@@ -248,20 +250,68 @@ let mut script = Script::compile(String::from("let a = 1;"),  &mut isolate.conte
 script.run()
 ```
 
-binding builtin objects
+### Binding Objects
 
 ```rs
+use glasper::engine::*;
+
 let handle_scope = HandleScope::new();
 let mut context = Context::new(handle_scope);
 
-// bind to global scope
 let global = context.global();
-// make function object (my_logger)
-let log = Object::BuiltinFunction(GBuiltinFunction::new("log", my_logger));
-// set
-global.set("log", log);
+let console_builder = ConsoleBuilder::new();
+let console = console_builder.build();
+global.set("console", console);
 
 let mut isolate = Isolate::new(context);
 let mut script = Script::compile(String::from("log(1, 2, 3);"),  &mut isolate.context);
 script.run()
 ```
+
+<details>
+<summary>builtin console sample</summary>
+
+```rs
+use glasper::engine::*;
+
+pub struct ConsoleBuilder;
+impl Default for ConsoleBuilder {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+impl ConsoleBuilder {
+    pub fn new() -> Self {
+        Self
+    }
+    pub fn build(self) -> Object {
+        let mut properties = HashMap::new();
+        properties.insert(
+            String::from("log"),
+            Object::BuiltinFunction(GBuiltinFunction::new("log", log)),
+        );
+        properties.insert(
+            String::from("debug"),
+            Object::BuiltinFunction(GBuiltinFunction::new("log", log)),
+        );
+        properties.insert(
+            String::from("warn"),
+            Object::BuiltinFunction(GBuiltinFunction::new("log", log)),
+        );
+
+        Object::Object(GObject { properties })
+    }
+}
+
+fn log(args: Vec<Object>) -> Object {
+    for arg in args {
+        print!("{}", arg);
+        print!("\x20");
+    }
+    println!();
+
+    Object::Undefined(GUndefined)
+}
+```
+
+</details>
