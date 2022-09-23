@@ -110,8 +110,12 @@ impl Lexer {
                 }
                 _ => Token::new(TokenType::Lt, self.ch.to_string()),
             },
-            '>' => {
-                if self.peek_char() == '>' {
+            '>' => match self.peek_char() {
+                '=' => {
+                    self.read_char();
+                    Token::new(TokenType::Gte, ">=".to_string())
+                }
+                '>' => {
                     self.read_char();
                     if self.peek_char() == '>' {
                         self.read_char();
@@ -119,10 +123,9 @@ impl Lexer {
                     } else {
                         Token::new(TokenType::ShR, ">>".to_string())
                     }
-                } else {
-                    Token::new(TokenType::Gt, self.ch.to_string())
                 }
-            }
+                _ => Token::new(TokenType::Gt, self.ch.to_string()),
+            },
             '~' => Token::new(TokenType::BitNot, self.ch.to_string()),
             ';' => Token::new(TokenType::SemiColon, self.ch.to_string()),
             ',' => Token::new(TokenType::Comma, self.ch.to_string()),
@@ -372,13 +375,14 @@ pub mod tests {
 
     #[test]
     fn test_combination_of_symbols() {
-        let source = String::from("== != === !== <= ++ -- ** || && ?? << >> >>>");
+        let source = String::from("== != === !== <= >= ++ -- ** || && ?? << >> >>>");
         let mut l = Lexer::new(source);
         assert_eq!(l.next_token().token_type, TokenType::Eq);
         assert_eq!(l.next_token().token_type, TokenType::NotEq);
         assert_eq!(l.next_token().token_type, TokenType::EqStrict);
         assert_eq!(l.next_token().token_type, TokenType::NotEqStrict);
         assert_eq!(l.next_token().token_type, TokenType::Lte);
+        assert_eq!(l.next_token().token_type, TokenType::Gte);
         assert_eq!(l.next_token().token_type, TokenType::Inc);
         assert_eq!(l.next_token().token_type, TokenType::Dec);
         assert_eq!(l.next_token().token_type, TokenType::Exp);

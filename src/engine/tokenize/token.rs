@@ -36,6 +36,7 @@ pub enum TokenType {
     Lt,
     Gt,
     Lte,
+    Gte,
     // brackets
     LParen,
     RParen,
