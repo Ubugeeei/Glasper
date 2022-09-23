@@ -27,7 +27,7 @@ jobs:
         run: rustup component add rustfmt --toolchain 1.64.0-x86_64-apple-darwin && cargo fmt --check
 
       - name: Lint
-        run: cargo clippy --all-targets --all-features -- -D warnings
+        run: rustup component add clippy --toolchain 1.64.0-x86_64-apple-darwin && cargo clippy --all-targets --all-features -- -D warnings
 
       - name: Build
         run: cargo build --release
