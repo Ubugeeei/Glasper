@@ -149,6 +149,7 @@ impl<'a> Evaluator<'a> {
                     ">" => Ok(Object::Boolean(GBoolean::new(l > r))),
                     "==" => Ok(Object::Boolean(GBoolean::new(l == r))),
                     "!=" => Ok(Object::Boolean(GBoolean::new(l != r))),
+                    "===" => Ok(Object::Boolean(GBoolean::new(l == r))),
                     "**" => Ok(Object::Number(GNumber::new(l.powf(r)))),
                     "??" => Ok(Object::Number(GNumber::new(l))),
                     "||" => {
@@ -184,6 +185,7 @@ impl<'a> Evaluator<'a> {
                 match operator.as_str() {
                     "==" => Ok(Object::Boolean(GBoolean::new(l == r))),
                     "!=" => Ok(Object::Boolean(GBoolean::new(l != r))),
+                    "===" => Ok(Object::Boolean(GBoolean::new(l != r))),
                     "??" => Ok(Object::Boolean(GBoolean::new(l))),
                     "||" => {
                         if l {
