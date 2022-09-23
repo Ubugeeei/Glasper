@@ -54,6 +54,7 @@ pub enum TokenType {
      */
     Eq,
     NotEq,
+    EqStrict,
     Inc,
     Dec,
     Exp,
@@ -88,7 +89,7 @@ impl Token {
     pub fn get_precedence(&mut self) -> Precedence {
         match self.token_type {
             TokenType::Assign => Precedence::Assign,
-            TokenType::Eq => Precedence::Equals,
+            TokenType::Eq | TokenType::EqStrict => Precedence::Equals,
             TokenType::NullishCoalescing => Precedence::NullishCoalescing,
             TokenType::Or | TokenType::And => Precedence::Bool,
             TokenType::NotEq => Precedence::Equals,
