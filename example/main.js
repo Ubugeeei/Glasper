@@ -29,6 +29,18 @@
 
 /**
  *
+ * objects
+ *
+ */
+{
+	let o = {
+		message: "hello object",
+	};
+	console_log("o.message:", o.message);
+}
+
+/**
+ *
  * variables
  *
  */
