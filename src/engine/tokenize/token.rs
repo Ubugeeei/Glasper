@@ -33,8 +33,8 @@ pub enum TokenType {
     BitXOr,
     BitNot,
     // comp
-    LT,
-    GT,
+    Lt,
+    Gt,
     Lte,
     // brackets
     LParen,
@@ -95,7 +95,7 @@ impl Token {
             TokenType::NullishCoalescing => Precedence::NullishCoalescing,
             TokenType::Or | TokenType::And => Precedence::Bool,
             TokenType::NotEq => Precedence::Equals,
-            TokenType::LT | TokenType::GT | TokenType::Lte => Precedence::LessGreater,
+            TokenType::Lt | TokenType::Gt | TokenType::Lte => Precedence::LessGreater,
             TokenType::BitOr | TokenType::BitAnd | TokenType::BitXOr => Precedence::Sum,
             TokenType::Plus | TokenType::Minus => Precedence::Sum,
             TokenType::Exp => Precedence::Exp,

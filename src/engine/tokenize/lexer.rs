@@ -108,7 +108,7 @@ impl Lexer {
                     self.read_char();
                     Token::new(TokenType::Lte, "<=".to_string())
                 }
-                _ => Token::new(TokenType::LT, self.ch.to_string()),
+                _ => Token::new(TokenType::Lt, self.ch.to_string()),
             },
             '>' => {
                 if self.peek_char() == '>' {
@@ -120,7 +120,7 @@ impl Lexer {
                         Token::new(TokenType::ShR, ">>".to_string())
                     }
                 } else {
-                    Token::new(TokenType::GT, self.ch.to_string())
+                    Token::new(TokenType::Gt, self.ch.to_string())
                 }
             }
             '~' => Token::new(TokenType::BitNot, self.ch.to_string()),
@@ -355,8 +355,8 @@ pub mod tests {
         assert_eq!(l.next_token().token_type, TokenType::Slash);
         assert_eq!(l.next_token().token_type, TokenType::Percent);
         assert_eq!(l.next_token().token_type, TokenType::Bang);
-        assert_eq!(l.next_token().token_type, TokenType::LT);
-        assert_eq!(l.next_token().token_type, TokenType::GT);
+        assert_eq!(l.next_token().token_type, TokenType::Lt);
+        assert_eq!(l.next_token().token_type, TokenType::Gt);
         assert_eq!(l.next_token().token_type, TokenType::LParen);
         assert_eq!(l.next_token().token_type, TokenType::RParen);
         assert_eq!(l.next_token().token_type, TokenType::LBrace);

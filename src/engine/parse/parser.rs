@@ -314,8 +314,8 @@ impl<'a> Parser<'a> {
                 | TokenType::BitAnd
                 | TokenType::BitOr
                 | TokenType::BitXOr
-                | TokenType::LT
-                | TokenType::GT
+                | TokenType::Lt
+                | TokenType::Gt
                 | TokenType::Eq
                 | TokenType::NotEq
                 | TokenType::EqStrict
