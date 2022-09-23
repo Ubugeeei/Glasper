@@ -146,13 +146,19 @@ impl<'a> Evaluator<'a> {
         match operator.as_str() {
             "+" => match (left.clone(), right.clone()) {
                 (Object::String(GString { value }), _) => {
-                    let r = GString::into(right);
+                    let r = match GString::into(right) {
+                        Object::String(GString { value: r }) => r,
+                        _ => "".to_string(),
+                    };
                     Ok(Object::String(GString {
                         value: format!("{}{}", value, r),
                     }))
                 }
                 (_, Object::String(GString { value })) => {
-                    let l = GString::into(left);
+                    let l = match GString::into(left) {
+                        Object::String(GString { value: l }) => l,
+                        _ => "".to_string(),
+                    };
                     Ok(Object::String(GString {
                         value: format!("{}{}", l, value),
                     }))
