@@ -120,6 +120,7 @@ $ gls example/main.js
 	console_log("2 & 2:", 2 & 2);
 	console_log("2 | 2:", 2 | 2);
 	console_log("2 ^ 2:", 2 ^ 2);
+	console_log("~-1:", ~-1);
 	console_log("2 && 2:", 2 && 2);
 	console_log("2 || 2:", 2 || 2);
 	console_log("2 ?? 2:", 2 ?? 2);
