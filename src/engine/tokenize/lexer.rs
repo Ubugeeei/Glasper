@@ -135,6 +135,8 @@ impl Lexer {
             ')' => Token::new(TokenType::RParen, self.ch.to_string()),
             '{' => Token::new(TokenType::LBrace, self.ch.to_string()),
             '}' => Token::new(TokenType::RBrace, self.ch.to_string()),
+            '[' => Token::new(TokenType::LBracket, self.ch.to_string()),
+            ']' => Token::new(TokenType::RBracket, self.ch.to_string()),
 
             '=' => {
                 if self.peek_char() == '=' {
@@ -351,7 +353,7 @@ pub mod tests {
 
     #[test]
     fn test_symbol_token() {
-        let source = String::from("=+-*/%!<>(){},.:;?|&^~");
+        let source = String::from("=+-*/%!<>(){}[],.:;?|&^~");
         let mut l = Lexer::new(source);
         assert_eq!(l.next_token().token_type, TokenType::Assign);
         assert_eq!(l.next_token().token_type, TokenType::Plus);
@@ -366,6 +368,8 @@ pub mod tests {
         assert_eq!(l.next_token().token_type, TokenType::RParen);
         assert_eq!(l.next_token().token_type, TokenType::LBrace);
         assert_eq!(l.next_token().token_type, TokenType::RBrace);
+        assert_eq!(l.next_token().token_type, TokenType::LBracket);
+        assert_eq!(l.next_token().token_type, TokenType::RBracket);
         assert_eq!(l.next_token().token_type, TokenType::Comma);
         assert_eq!(l.next_token().token_type, TokenType::Period);
         assert_eq!(l.next_token().token_type, TokenType::Colon);
