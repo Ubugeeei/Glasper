@@ -5,12 +5,12 @@ use crate::engine::{
     eval::object::{JSBoolean, JSNull, JSNumber, JSUndefined, RuntimeObject},
     handle_scope::{Variable, VariableKind},
     parse::ast::{
-        BlockStatement, CallExpression, ConstStatement, Expression, IfStatement, LetStatement,
-        MemberExpression, ObjectExpression, Program, Statement,
+        ArrayExpression, BlockStatement, CallExpression, ConstStatement, Expression, IfStatement,
+        LetStatement, MemberExpression, ObjectExpression, Program, Statement,
     },
 };
 
-use super::object::{JSFunction, JSNaN, JSObject, JSString};
+use super::object::{JSArray, JSFunction, JSNaN, JSObject, JSString};
 
 pub struct Evaluator<'a> {
     ctx: &'a mut Context,
@@ -63,6 +63,8 @@ impl<'a> Evaluator<'a> {
             // objects
             Expression::Object(o) => self.eval_object_expression(o),
             Expression::Member(m) => self.eval_member_expression(m),
+
+            Expression::Array(a) => self.eval_array_expression(a),
 
             Expression::Identifier(name) => self.eval_identifier(name),
 
@@ -526,6 +528,15 @@ impl<'a> Evaluator<'a> {
                 "Uncaught SyntaxError: Invalid or unexpected token",
             )),
         }
+    }
+
+    fn eval_array_expression(&mut self, arr: &ArrayExpression) -> Result<RuntimeObject, Error> {
+        let mut elements = Vec::new();
+        for e in &arr.elements {
+            let element = self.eval_expression(e)?;
+            elements.push(element);
+        }
+        Ok(RuntimeObject::Array(JSArray { elements }))
     }
 
     fn eval_assign_expression(
@@ -1241,7 +1252,7 @@ mod tests {
                         a;
                     "#,
                 ),
-                "\x1b[34m[RuntimeObject]\x1b[0m",
+                "\x1b[34m[Object]\x1b[0m",
             ),
             (
                 String::from(
