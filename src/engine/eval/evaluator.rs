@@ -1292,4 +1292,47 @@ mod tests {
             assert_eq!(format!("{}", ev.eval(&program).unwrap()), expected);
         }
     }
+
+    #[test]
+    fn test_eval_array() {
+        let case = vec![
+            (
+                String::from(
+                    r#"
+                        let a = [1, 2, 3];
+                        a;
+                    "#,
+                ),
+                "[\x1b[33m1\x1b[0m, \x1b[33m2\x1b[0m, \x1b[33m3\x1b[0m]",
+            ),
+            // (
+            //     String::from(
+            //         r#"
+            //             let a = [1, 2, 3];
+            //             a[0];
+            //         "#,
+            //     ),
+            //     "\x1b[33m1\x1b[0m",
+            // ),
+            // (
+            //     String::from(
+            //         r#"
+            //             let a = [1, 2, 3];
+            //             a[3];
+            //         "#,
+            //     ),
+            //     "\x1b[30mundefined\x1b[0m",
+            // ),
+        ];
+
+        for (input, expected) in case {
+            let mut l = Lexer::new(input.to_string());
+            let mut p = Parser::new(&mut l);
+            let program = p.parse_program();
+            let handle_scope = HandleScope::new();
+            let mut context = Context::new(handle_scope);
+            let mut ev = Evaluator::new(&mut context);
+            assert_eq!(format!("{}", ev.eval(&program).unwrap()), expected);
+        }
+    }
 }
