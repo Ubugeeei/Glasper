@@ -444,11 +444,8 @@ impl<'a> Parser<'a> {
         self.next_token();
 
         let value = self.parse_expression(Precedence::Lowest)?;
+        self.next_token();
 
-        if self.peeked_token.token_type == TokenType::Comma {
-            self.next_token();
-            self.next_token();
-        }
         if self.cur_token.token_type == TokenType::Comma {
             self.next_token();
         }
