@@ -9,7 +9,8 @@ pub enum RuntimeObject {
     Boolean(JSBoolean),
     Number(JSNumber),
     String(JSString),
-    RuntimeObject(JSObject),
+    Object(JSObject),
+    Array(JSArray),
     Function(JSFunction),
     BuiltinFunction(JSBuiltinFunction),
     Null(JSNull),
@@ -24,7 +25,8 @@ impl RuntimeObject {
             Self::Boolean(_) => "boolean".to_string(),
             Self::Number(_) => "number".to_string(),
             Self::String(_) => "string".to_string(),
-            Self::RuntimeObject(_) => "object".to_string(),
+            Self::Object(_) => "object".to_string(),
+            Self::Array(_) => "object".to_string(),
             Self::Function(_) => "function".to_string(),
             Self::Null(_) => "object".to_string(),
             Self::Undefined(_) => "undefined".to_string(),
@@ -41,7 +43,16 @@ impl Display for RuntimeObject {
             Self::Number(n) => write!(f, "\x1b[33m{}\x1b[0m", n.value),
             Self::String(s) => write!(f, "\x1b[32m'{}'\x1b[0m", s.value),
 
-            Self::RuntimeObject(_) => write!(f, "\x1b[34m[RuntimeObject]\x1b[0m"),
+            Self::Object(_) => write!(f, "\x1b[34m[Object]\x1b[0m"),
+            Self::Array(a) => write!(
+                f,
+                "[{}]",
+                a.elements
+                    .iter()
+                    .map(|e| e.to_string())
+                    .collect::<Vec<String>>()
+                    .join(", ")
+            ),
 
             Self::Function(_) => write!(f, "[Function]"),
 
@@ -149,6 +160,11 @@ impl JSBoolean {
 #[derive(Debug, PartialEq, Clone)]
 pub struct JSObject {
     pub properties: HashMap<String, RuntimeObject>,
+}
+
+#[derive(Debug, PartialEq, Clone)]
+pub struct JSArray {
+    pub elements: Vec<RuntimeObject>,
 }
 
 #[derive(Debug, PartialEq, Clone)]

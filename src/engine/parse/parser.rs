@@ -5,10 +5,10 @@ use crate::engine::tokenize::token::TokenType;
 use super::{
     super::{lexer::Lexer, token::Token},
     ast::{
-        BlockStatement, CallExpression, ConstStatement, Expression, FunctionExpression,
-        FunctionParameter, IfStatement, InfixExpression, LetStatement, MemberExpression,
-        ObjectExpression, ObjectProperty, Precedence, PrefixExpression, Program, Statement,
-        SuffixExpression,
+        ArrayExpression, BlockStatement, CallExpression, ConstStatement, Expression,
+        FunctionExpression, FunctionParameter, IfStatement, InfixExpression, LetStatement,
+        MemberExpression, ObjectExpression, ObjectProperty, Precedence, PrefixExpression, Program,
+        Statement, SuffixExpression,
     },
 };
 
@@ -267,6 +267,9 @@ impl<'a> Parser<'a> {
             // object
             TokenType::LBrace => self.parse_object()?,
 
+            // array
+            TokenType::LBracket => self.parse_array()?,
+
             TokenType::Ident => match self.peeked_token.token_type {
                 TokenType::Inc | TokenType::Dec => self.parse_suffix_expression()?,
                 _ => Expression::Identifier(self.parse_identifier()?),
@@ -339,6 +342,10 @@ impl<'a> Parser<'a> {
                     self.next_token();
                     self.parse_member_expression(expr)?
                 }
+                TokenType::LBracket => {
+                    self.next_token();
+                    self.parse_dynamic_member_expression(expr)?
+                }
                 _ => expr,
             }
         }
@@ -409,7 +416,7 @@ impl<'a> Parser<'a> {
             }
         }
 
-        Ok(Expression::RuntimeObject(ObjectExpression::new(properties)))
+        Ok(Expression::Object(ObjectExpression::new(properties)))
     }
 
     fn parse_object_property(&mut self) -> Result<ObjectProperty, Error> {
@@ -441,15 +448,26 @@ impl<'a> Parser<'a> {
         self.next_token();
 
         let value = self.parse_expression(Precedence::Lowest)?;
+        self.next_token();
 
-        if self.peeked_token.token_type == TokenType::Comma {
-            self.next_token();
-            self.next_token();
-        }
         if self.cur_token.token_type == TokenType::Comma {
             self.next_token();
         }
         Ok(ObjectProperty::new(key, value))
+    }
+
+    fn parse_array(&mut self) -> Result<Expression, Error> {
+        self.next_token(); // skip '['
+        let mut elements = Vec::new();
+        while self.cur_token.token_type != TokenType::RBracket {
+            let element = self.parse_expression(Precedence::Lowest)?;
+            elements.push(element);
+            self.next_token();
+            if self.cur_token.token_type == TokenType::Comma {
+                self.next_token();
+            }
+        }
+        Ok(Expression::Array(ArrayExpression::new(elements)))
     }
 
     fn parse_prefix_expression(&mut self) -> Result<Expression, Error> {
@@ -494,6 +512,16 @@ impl<'a> Parser<'a> {
         Ok(expr)
     }
 
+    fn parse_dynamic_member_expression(&mut self, left: Expression) -> Result<Expression, Error> {
+        self.next_token(); // skip '['
+        let right = self.parse_expression(Precedence::Lowest)?;
+        self.next_token();
+        let expr = Expression::Member(Box::new(MemberExpression::new(
+            Box::new(left),
+            Box::new(right),
+        )));
+        Ok(expr)
+    }
     fn parse_grouped_expression(&mut self) -> Result<Expression, Error> {
         self.next_token();
         let expr = self.parse_expression(Precedence::Lowest)?;
@@ -642,8 +670,6 @@ impl<'a> Parser<'a> {
 
 #[cfg(test)]
 pub mod tests {
-    use crate::engine::parse::ast::{FunctionExpression, ObjectExpression, ObjectProperty};
-
     use super::*;
 
     #[test]
@@ -1716,11 +1742,12 @@ pub mod tests {
                 .to_string(),
                 Statement::Const(ConstStatement::new(
                     String::from("ob"),
-                    Expression::RuntimeObject(ObjectExpression::new(vec![ObjectProperty::new(
+                    Expression::Object(ObjectExpression::new(vec![ObjectProperty::new(
                         String::from("prop"),
-                        Expression::RuntimeObject(ObjectExpression::new(vec![
-                            ObjectProperty::new(String::from("value"), Expression::Number(1.0)),
-                        ])),
+                        Expression::Object(ObjectExpression::new(vec![ObjectProperty::new(
+                            String::from("value"),
+                            Expression::Number(1.0),
+                        )])),
                     )])),
                 )),
             ),
@@ -1731,6 +1758,73 @@ pub mod tests {
                     Box::new(Expression::String(String::from("prop"))),
                 )))),
             ),
+        ];
+
+        for (source, expected) in case {
+            let mut l = Lexer::new(source);
+            let mut p = Parser::new(&mut l);
+            let program = p.parse_program();
+            assert_eq!(program.statements.len(), 1);
+            assert_eq!(program.statements[0], expected);
+        }
+    }
+
+    #[test]
+    fn test_parse_dynamic_member_expression() {
+        let case = vec![
+            (
+                r#"ob["prop"];"#.to_string(),
+                Statement::Expression(Expression::Member(Box::new(MemberExpression::new(
+                    Box::new(Expression::Identifier(String::from("ob"))),
+                    Box::new(Expression::String(String::from("prop"))),
+                )))),
+            ),
+            (
+                r#"ob[1 + 2];"#.to_string(),
+                Statement::Expression(Expression::Member(Box::new(MemberExpression::new(
+                    Box::new(Expression::Identifier(String::from("ob"))),
+                    Box::new(Expression::Infix(InfixExpression::new(
+                        Box::new(Expression::Number(1.0)),
+                        String::from("+"),
+                        Box::new(Expression::Number(2.0)),
+                    ))),
+                )))),
+            ),
+        ];
+
+        for (source, expected) in case {
+            let mut l = Lexer::new(source);
+            let mut p = Parser::new(&mut l);
+            let program = p.parse_program();
+            assert_eq!(program.statements.len(), 1);
+            assert_eq!(program.statements[0], expected);
+        }
+    }
+
+    #[test]
+    fn test_parse_array_expression() {
+        let case = vec![
+            (
+                r#"
+                    const arr = [1, 2, 3];
+                "#
+                .to_string(),
+                Statement::Const(ConstStatement::new(
+                    String::from("arr"),
+                    Expression::Array(ArrayExpression::new(vec![
+                        Expression::Number(1.0),
+                        Expression::Number(2.0),
+                        Expression::Number(3.0),
+                    ])),
+                )),
+            ),
+            // (
+            //     r#"arr[1];"#.to_string(),
+            //     Statement::Expression(Expression::Index(Box::new(IndexExpression::new(
+            //         Box::new(Expression::Identifier(String::from("arr"))),
+            //         Box::new(Expression::Number(1.0)),
+            //     )))),
+            // ),
         ];
 
         for (source, expected) in case {

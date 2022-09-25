@@ -5,12 +5,12 @@ use crate::engine::{
     eval::object::{JSBoolean, JSNull, JSNumber, JSUndefined, RuntimeObject},
     handle_scope::{Variable, VariableKind},
     parse::ast::{
-        BlockStatement, CallExpression, ConstStatement, Expression, IfStatement, LetStatement,
-        MemberExpression, ObjectExpression, Program, Statement,
+        ArrayExpression, BlockStatement, CallExpression, ConstStatement, Expression, IfStatement,
+        LetStatement, MemberExpression, ObjectExpression, Program, Statement,
     },
 };
 
-use super::object::{JSFunction, JSNaN, JSObject, JSString};
+use super::object::{JSArray, JSFunction, JSNaN, JSObject, JSString};
 
 pub struct Evaluator<'a> {
     ctx: &'a mut Context,
@@ -61,8 +61,10 @@ impl<'a> Evaluator<'a> {
             Expression::NaN => Ok(RuntimeObject::NaN(JSNaN)),
 
             // objects
-            Expression::RuntimeObject(o) => self.eval_object_expression(o),
+            Expression::Object(o) => self.eval_object_expression(o),
             Expression::Member(m) => self.eval_member_expression(m),
+
+            Expression::Array(a) => self.eval_array_expression(a),
 
             Expression::Identifier(name) => self.eval_identifier(name),
 
@@ -503,7 +505,7 @@ impl<'a> Evaluator<'a> {
             let value = self.eval_expression(&prop.value)?;
             properties.insert(key, value);
         }
-        Ok(RuntimeObject::RuntimeObject(JSObject { properties }))
+        Ok(RuntimeObject::Object(JSObject { properties }))
     }
 
     fn eval_member_expression(&mut self, m: &MemberExpression) -> Result<RuntimeObject, Error> {
@@ -512,7 +514,7 @@ impl<'a> Evaluator<'a> {
 
         match prop {
             RuntimeObject::String(s) => match obj {
-                RuntimeObject::RuntimeObject(o) => match o.properties.get(&s.value) {
+                RuntimeObject::Object(o) => match o.properties.get(&s.value) {
                     Some(v) => Ok(v.clone()),
                     None => Ok(RuntimeObject::Undefined(JSUndefined)),
                 },
@@ -526,6 +528,15 @@ impl<'a> Evaluator<'a> {
                 "Uncaught SyntaxError: Invalid or unexpected token",
             )),
         }
+    }
+
+    fn eval_array_expression(&mut self, arr: &ArrayExpression) -> Result<RuntimeObject, Error> {
+        let mut elements = Vec::new();
+        for e in &arr.elements {
+            let element = self.eval_expression(e)?;
+            elements.push(element);
+        }
+        Ok(RuntimeObject::Array(JSArray { elements }))
     }
 
     fn eval_assign_expression(
@@ -574,7 +585,7 @@ impl<'a> Evaluator<'a> {
 
                 match prop {
                     RuntimeObject::String(s) => match obj {
-                        RuntimeObject::RuntimeObject(mut o) => {
+                        RuntimeObject::Object(mut o) => {
                             let o_name = if let Expression::Identifier(name) = &m.object.as_ref() {
                                 name.clone()
                             } else {
@@ -587,7 +598,7 @@ impl<'a> Evaluator<'a> {
                             let v = self.ctx.scope.get(&o_name);
                             match v {
                                 Some(Variable { value, .. }) => {
-                                    if let RuntimeObject::RuntimeObject(mut o) = value.clone() {
+                                    if let RuntimeObject::Object(mut o) = value.clone() {
                                         o.properties.insert(s.value.clone(), new_value.clone());
                                     }
                                 }
@@ -1241,7 +1252,7 @@ mod tests {
                         a;
                     "#,
                 ),
-                "\x1b[34m[RuntimeObject]\x1b[0m",
+                "\x1b[34m[Object]\x1b[0m",
             ),
             (
                 String::from(
@@ -1269,6 +1280,49 @@ mod tests {
                 ),
                 "\x1b[30mundefined\x1b[0m",
             ),
+        ];
+
+        for (input, expected) in case {
+            let mut l = Lexer::new(input.to_string());
+            let mut p = Parser::new(&mut l);
+            let program = p.parse_program();
+            let handle_scope = HandleScope::new();
+            let mut context = Context::new(handle_scope);
+            let mut ev = Evaluator::new(&mut context);
+            assert_eq!(format!("{}", ev.eval(&program).unwrap()), expected);
+        }
+    }
+
+    #[test]
+    fn test_eval_array() {
+        let case = vec![
+            (
+                String::from(
+                    r#"
+                        let a = [1, 2, 3];
+                        a;
+                    "#,
+                ),
+                "[\x1b[33m1\x1b[0m, \x1b[33m2\x1b[0m, \x1b[33m3\x1b[0m]",
+            ),
+            // (
+            //     String::from(
+            //         r#"
+            //             let a = [1, 2, 3];
+            //             a[0];
+            //         "#,
+            //     ),
+            //     "\x1b[33m1\x1b[0m",
+            // ),
+            // (
+            //     String::from(
+            //         r#"
+            //             let a = [1, 2, 3];
+            //             a[3];
+            //         "#,
+            //     ),
+            //     "\x1b[30mundefined\x1b[0m",
+            // ),
         ];
 
         for (input, expected) in case {

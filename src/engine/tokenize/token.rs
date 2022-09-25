@@ -43,6 +43,8 @@ pub enum TokenType {
     RParen,
     LBrace,
     RBrace,
+    LBracket,
+    RBracket,
     // bool
     Or,
     And,
@@ -108,6 +110,7 @@ impl Token {
             TokenType::ShL | TokenType::ShR | TokenType::SaR => Precedence::Shift,
             TokenType::Slash | TokenType::Asterisk | TokenType::Percent => Precedence::Product,
             TokenType::LParen => Precedence::Call,
+            TokenType::LBracket => Precedence::Index,
             TokenType::Period => Precedence::Index,
             _ => Precedence::Lowest,
         }
