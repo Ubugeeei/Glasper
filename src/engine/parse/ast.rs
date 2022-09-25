@@ -89,6 +89,7 @@ pub enum Expression {
     Boolean(bool),
     String(String),
     RuntimeObject(ObjectExpression),
+    Array(ArrayExpression),
     Null,
     Undefined,
     NaN,
@@ -209,6 +210,11 @@ impl MemberExpression {
     pub fn new(object: Box<Expression>, property: Box<Expression>) -> MemberExpression {
         MemberExpression { object, property }
     }
+}
+
+#[derive(Debug, PartialEq, Clone)]
+pub struct ArrayExpression {
+    pub elements: Vec<Expression>,
 }
 
 #[derive(Debug, PartialEq, Eq, PartialOrd)]
