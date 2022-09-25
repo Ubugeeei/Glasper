@@ -29,7 +29,7 @@ impl ConsoleBuilder {
             RuntimeObject::BuiltinFunction(JSBuiltinFunction::new("log", log)),
         );
 
-        RuntimeObject::RuntimeObject(JSObject { properties })
+        RuntimeObject::Object(JSObject { properties })
     }
 }
 

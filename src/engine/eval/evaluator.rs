@@ -61,7 +61,7 @@ impl<'a> Evaluator<'a> {
             Expression::NaN => Ok(RuntimeObject::NaN(JSNaN)),
 
             // objects
-            Expression::RuntimeObject(o) => self.eval_object_expression(o),
+            Expression::Object(o) => self.eval_object_expression(o),
             Expression::Member(m) => self.eval_member_expression(m),
 
             Expression::Identifier(name) => self.eval_identifier(name),
@@ -503,7 +503,7 @@ impl<'a> Evaluator<'a> {
             let value = self.eval_expression(&prop.value)?;
             properties.insert(key, value);
         }
-        Ok(RuntimeObject::RuntimeObject(JSObject { properties }))
+        Ok(RuntimeObject::Object(JSObject { properties }))
     }
 
     fn eval_member_expression(&mut self, m: &MemberExpression) -> Result<RuntimeObject, Error> {
@@ -512,7 +512,7 @@ impl<'a> Evaluator<'a> {
 
         match prop {
             RuntimeObject::String(s) => match obj {
-                RuntimeObject::RuntimeObject(o) => match o.properties.get(&s.value) {
+                RuntimeObject::Object(o) => match o.properties.get(&s.value) {
                     Some(v) => Ok(v.clone()),
                     None => Ok(RuntimeObject::Undefined(JSUndefined)),
                 },
@@ -574,7 +574,7 @@ impl<'a> Evaluator<'a> {
 
                 match prop {
                     RuntimeObject::String(s) => match obj {
-                        RuntimeObject::RuntimeObject(mut o) => {
+                        RuntimeObject::Object(mut o) => {
                             let o_name = if let Expression::Identifier(name) = &m.object.as_ref() {
                                 name.clone()
                             } else {
@@ -587,7 +587,7 @@ impl<'a> Evaluator<'a> {
                             let v = self.ctx.scope.get(&o_name);
                             match v {
                                 Some(Variable { value, .. }) => {
-                                    if let RuntimeObject::RuntimeObject(mut o) = value.clone() {
+                                    if let RuntimeObject::Object(mut o) = value.clone() {
                                         o.properties.insert(s.value.clone(), new_value.clone());
                                     }
                                 }

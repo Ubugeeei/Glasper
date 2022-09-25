@@ -88,7 +88,7 @@ pub enum Expression {
     Number(f64),
     Boolean(bool),
     String(String),
-    RuntimeObject(ObjectExpression),
+    Object(ObjectExpression),
     Array(ArrayExpression),
     Null,
     Undefined,
