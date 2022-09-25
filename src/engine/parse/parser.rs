@@ -342,6 +342,10 @@ impl<'a> Parser<'a> {
                     self.next_token();
                     self.parse_member_expression(expr)?
                 }
+                TokenType::LBracket => {
+                    self.next_token();
+                    self.parse_dynamic_member_expression(expr)?
+                }
                 _ => expr,
             }
         }
@@ -508,6 +512,16 @@ impl<'a> Parser<'a> {
         Ok(expr)
     }
 
+    fn parse_dynamic_member_expression(&mut self, left: Expression) -> Result<Expression, Error> {
+        self.next_token(); // skip '['
+        let right = self.parse_expression(Precedence::Lowest)?;
+        self.next_token();
+        let expr = Expression::Member(Box::new(MemberExpression::new(
+            Box::new(left),
+            Box::new(right),
+        )));
+        Ok(expr)
+    }
     fn parse_grouped_expression(&mut self) -> Result<Expression, Error> {
         self.next_token();
         let expr = self.parse_expression(Precedence::Lowest)?;
@@ -1742,6 +1756,38 @@ pub mod tests {
                 Statement::Expression(Expression::Member(Box::new(MemberExpression::new(
                     Box::new(Expression::Identifier(String::from("ob"))),
                     Box::new(Expression::String(String::from("prop"))),
+                )))),
+            ),
+        ];
+
+        for (source, expected) in case {
+            let mut l = Lexer::new(source);
+            let mut p = Parser::new(&mut l);
+            let program = p.parse_program();
+            assert_eq!(program.statements.len(), 1);
+            assert_eq!(program.statements[0], expected);
+        }
+    }
+
+    #[test]
+    fn test_parse_dynamic_member_expression() {
+        let case = vec![
+            (
+                r#"ob["prop"];"#.to_string(),
+                Statement::Expression(Expression::Member(Box::new(MemberExpression::new(
+                    Box::new(Expression::Identifier(String::from("ob"))),
+                    Box::new(Expression::String(String::from("prop"))),
+                )))),
+            ),
+            (
+                r#"ob[1 + 2];"#.to_string(),
+                Statement::Expression(Expression::Member(Box::new(MemberExpression::new(
+                    Box::new(Expression::Identifier(String::from("ob"))),
+                    Box::new(Expression::Infix(InfixExpression::new(
+                        Box::new(Expression::Number(1.0)),
+                        String::from("+"),
+                        Box::new(Expression::Number(2.0)),
+                    ))),
                 )))),
             ),
         ];
