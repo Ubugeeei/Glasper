@@ -216,6 +216,11 @@ impl MemberExpression {
 pub struct ArrayExpression {
     pub elements: Vec<Expression>,
 }
+impl ArrayExpression {
+    pub fn new(elements: Vec<Expression>) -> ArrayExpression {
+        ArrayExpression { elements }
+    }
+}
 
 #[derive(Debug, PartialEq, Eq, PartialOrd)]
 pub enum Precedence {
