@@ -65,18 +65,18 @@ impl ConstStatement {
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct IfStatement {
-    pub condition: Expression,
+    pub test: Expression,
     pub consequence: Box<Statement>,
     pub alternative: Box<Option<Statement>>,
 }
 impl IfStatement {
     pub fn new(
-        condition: Expression,
+        test: Expression,
         consequence: Box<Statement>,
         alternative: Box<Option<Statement>>,
     ) -> IfStatement {
         IfStatement {
-            condition,
+            test,
             consequence,
             alternative,
         }

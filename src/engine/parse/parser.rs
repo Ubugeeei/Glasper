@@ -168,9 +168,9 @@ impl<'a> Parser<'a> {
         }
         self.next_token(); // skip '('
 
-        // parse condition
+        // parse test
         self.next_token();
-        let condition = self.parse_expression(Precedence::Lowest)?;
+        let test = self.parse_expression(Precedence::Lowest)?;
 
         // guard
         if self.peeked_token.token_type != TokenType::RParen {
@@ -201,7 +201,7 @@ impl<'a> Parser<'a> {
         };
 
         Ok(Statement::If(IfStatement::new(
-            condition,
+            test,
             consequence,
             alternative,
         )))
@@ -217,7 +217,7 @@ impl<'a> Parser<'a> {
         }
         self.next_token(); // skip '('
 
-        // parse condition
+        // parse test
         self.next_token();
         let discriminant = self.parse_expression(Precedence::Lowest)?;
 

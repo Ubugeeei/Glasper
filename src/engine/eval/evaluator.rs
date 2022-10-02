@@ -640,8 +640,8 @@ impl<'a> Evaluator<'a> {
         statement: &IfStatement,
         scope_type: ScopeType,
     ) -> Result<RuntimeObject, Error> {
-        let condition = self.eval_expression(&statement.condition)?;
-        if self.is_truthy(condition) {
+        let test = self.eval_expression(&statement.test)?;
+        if self.is_truthy(test) {
             self.eval_statement(&statement.consequence, scope_type)
         } else {
             let un_boxed = statement.alternative.as_ref();
