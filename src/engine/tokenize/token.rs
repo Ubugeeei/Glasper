@@ -88,6 +88,7 @@ pub enum TokenType {
     Break,
     Null,
     Undefined,
+    This,
 }
 
 impl Token {
@@ -139,6 +140,7 @@ pub fn lookup_indent(ident: &str) -> TokenType {
         "undefined" => TokenType::Undefined,
         "typeof" => TokenType::Typeof,
         "NaN" => TokenType::NaN,
+        "this" => TokenType::This,
         _ => TokenType::Ident,
     }
 }
