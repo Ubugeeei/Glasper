@@ -1835,4 +1835,50 @@ pub mod tests {
             assert_eq!(program.statements[0], expected);
         }
     }
+
+    #[test]
+    fn test_parse_switch_statement() {
+        let case = vec![(
+            r#"
+                const f = function(a) {
+                    switch (a) {
+                        case 1:
+                            return 1;
+                        case 2:
+                            return 2;
+                        default:
+                            return 3;
+                    }
+                };
+            "#
+            .to_string(),
+            Statement::Const(ConstStatement::new(
+                String::from("f"),
+                Expression::Function(FunctionExpression::new(
+                    vec![FunctionParameter::new(String::from("a"), None)],
+                    BlockStatement::new(vec![Statement::Switch(SwitchStatement::new(
+                        Expression::Identifier(String::from("a")),
+                        vec![
+                            SwitchCase::new(
+                                Some(Expression::Number(1.0)),
+                                vec![Statement::Return(Expression::Number(1.0))],
+                            ),
+                            SwitchCase::new(
+                                Some(Expression::Number(2.0)),
+                                vec![Statement::Return(Expression::Number(2.0))],
+                            ),
+                            SwitchCase::new(None, vec![Statement::Return(Expression::Number(3.0))]),
+                        ],
+                    ))]),
+                )),
+            )),
+        )];
+
+        for (source, expected) in case {
+            let mut l = Lexer::new(source);
+            let mut p = Parser::new(&mut l);
+            let program = p.parse_program();
+            assert_eq!(program.statements[0], expected);
+        }
+    }
 }
