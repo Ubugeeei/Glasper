@@ -10,7 +10,7 @@ use crate::engine::{
     },
 };
 
-use super::object::{JSArray, JSFunction, JSNaN, JSObject, JSString};
+use super::object::{JSFunction, JSNaN, JSObject, JSString};
 
 pub struct Evaluator<'a> {
     ctx: &'a mut Context,
@@ -540,6 +540,21 @@ impl<'a> Evaluator<'a> {
                     "Uncaught SyntaxError: Invalid or unexpected token",
                 )),
             },
+
+            RuntimeObject::Number(n) => match obj {
+                RuntimeObject::Object(o) => match o.borrow().properties.get(&n.value.to_string()) {
+                    Some(v) => {
+                        self.exec_ctx_this = o.clone();
+                        Ok(v.clone())
+                    }
+                    None => Ok(RuntimeObject::Undefined(JSUndefined)),
+                },
+                _ => Err(Error::new(
+                    std::io::ErrorKind::Other,
+                    "Uncaught SyntaxError: Invalid or unexpected token",
+                )),
+            },
+
             _ => Err(Error::new(
                 std::io::ErrorKind::Other,
                 "Uncaught SyntaxError: Invalid or unexpected token",
@@ -548,12 +563,23 @@ impl<'a> Evaluator<'a> {
     }
 
     fn eval_array_expression(&mut self, arr: &ArrayExpression) -> Result<RuntimeObject, Error> {
-        let mut elements = Vec::new();
-        for e in &arr.elements {
+        let mut properties = HashMap::new();
+        for (i, e) in arr.elements.iter().enumerate() {
             let element = self.eval_expression(e)?;
-            elements.push(element);
+            properties.insert(i.to_string(), element);
         }
-        Ok(RuntimeObject::Array(JSArray { elements }))
+
+        // set length
+        properties.insert(
+            "length".to_string(),
+            RuntimeObject::Number(JSNumber {
+                value: arr.elements.len() as f64,
+            }),
+        );
+
+        Ok(RuntimeObject::Object(Rc::new(RefCell::new(JSObject {
+            properties,
+        }))))
     }
 
     fn eval_assign_expression(
@@ -594,8 +620,6 @@ impl<'a> Evaluator<'a> {
                 }
             }
             Expression::Member(m) => {
-                // TODO: assign to ast
-
                 let obj = self.eval_expression(&m.object)?;
                 let prop = self.eval_expression(&m.property)?;
                 let new_value = self.eval_expression(right)?;
@@ -1360,29 +1384,29 @@ mod tests {
                 String::from(
                     r#"
                         let a = [1, 2, 3];
-                        a;
+                        a.length;
                     "#,
                 ),
-                "[\x1b[33m1\x1b[0m, \x1b[33m2\x1b[0m, \x1b[33m3\x1b[0m]",
+                "\x1b[33m3\x1b[0m",
             ),
-            // (
-            //     String::from(
-            //         r#"
-            //             let a = [1, 2, 3];
-            //             a[0];
-            //         "#,
-            //     ),
-            //     "\x1b[33m1\x1b[0m",
-            // ),
-            // (
-            //     String::from(
-            //         r#"
-            //             let a = [1, 2, 3];
-            //             a[3];
-            //         "#,
-            //     ),
-            //     "\x1b[30mundefined\x1b[0m",
-            // ),
+            (
+                String::from(
+                    r#"
+                        let a = [1, 2, 3];
+                        a[0];
+                    "#,
+                ),
+                "\x1b[33m1\x1b[0m",
+            ),
+            (
+                String::from(
+                    r#"
+                        let a = [1, 2, 3];
+                        a[3];
+                    "#,
+                ),
+                "\x1b[30mundefined\x1b[0m",
+            ),
         ];
 
         for (input, expected) in case {
