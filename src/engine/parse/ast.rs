@@ -22,8 +22,8 @@ pub enum Statement {
     Expression(Expression),
     If(IfStatement),
     Block(BlockStatement),
+    Switch(SwitchStatement),
     // TODO: impl
-    // switch
     // for
     // while
     // break
@@ -80,6 +80,31 @@ impl IfStatement {
             consequence,
             alternative,
         }
+    }
+}
+
+#[derive(Debug, PartialEq, Clone)]
+pub struct SwitchStatement {
+    pub discriminant: Expression,
+    pub cases: Vec<SwitchCase>,
+}
+impl SwitchStatement {
+    pub fn new(discriminant: Expression, cases: Vec<SwitchCase>) -> SwitchStatement {
+        SwitchStatement {
+            discriminant,
+            cases,
+        }
+    }
+}
+
+#[derive(Debug, PartialEq, Clone)]
+pub struct SwitchCase {
+    pub test: Option<Expression>,
+    pub consequent: Vec<Statement>,
+}
+impl SwitchCase {
+    pub fn new(test: Option<Expression>, consequent: Vec<Statement>) -> SwitchCase {
+        SwitchCase { test, consequent }
     }
 }
 

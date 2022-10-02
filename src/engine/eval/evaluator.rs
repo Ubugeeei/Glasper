@@ -6,7 +6,7 @@ use crate::engine::{
     handle_scope::{Variable, VariableKind},
     parse::ast::{
         ArrayExpression, BlockStatement, CallExpression, ConstStatement, Expression, IfStatement,
-        LetStatement, MemberExpression, ObjectExpression, Program, Statement,
+        LetStatement, MemberExpression, ObjectExpression, Program, Statement, SwitchStatement,
     },
 };
 
@@ -41,6 +41,7 @@ impl<'a> Evaluator<'a> {
             Statement::Let(stmt) => self.eval_let_statement(stmt),
             Statement::Const(stmt) => self.eval_const_statement(stmt),
             Statement::If(stmt) => self.eval_if_statement(stmt, scope_type),
+            Statement::Switch(stmt) => self.eval_switch_statement(stmt, scope_type),
             Statement::Block(stmt) => self.eval_block_statement(stmt, scope_type),
             Statement::Return(expr) => self.eval_return_statement(expr, scope_type),
         }
@@ -645,6 +646,37 @@ impl<'a> Evaluator<'a> {
                 None => Ok(RuntimeObject::Undefined(JSUndefined)),
             }
         }
+    }
+
+    fn eval_switch_statement(
+        &mut self,
+        statement: &SwitchStatement,
+        scope_type: ScopeType,
+    ) -> Result<RuntimeObject, Error> {
+        let discriminant = self.eval_expression(&statement.discriminant)?;
+
+        for case in &statement.cases {
+            if let Some(ref test) = case.test {
+                let test = self.eval_expression(test)?;
+                if discriminant == test {
+                    for s in &case.consequent {
+                        let ro = self.eval_statement(s, scope_type)?;
+                        if let RuntimeObject::Return(_) = ro {
+                            return Ok(ro);
+                        }
+                    }
+                }
+            } else {
+                for s in &case.consequent {
+                    let ro = self.eval_statement(s, scope_type)?;
+                    if let RuntimeObject::Return(_) = ro {
+                        return Ok(ro);
+                    }
+                }
+            }
+        }
+
+        Ok(RuntimeObject::Undefined(JSUndefined))
     }
 
     fn eval_block_statement(
@@ -1324,6 +1356,38 @@ mod tests {
             //     "\x1b[30mundefined\x1b[0m",
             // ),
         ];
+
+        for (input, expected) in case {
+            let mut l = Lexer::new(input.to_string());
+            let mut p = Parser::new(&mut l);
+            let program = p.parse_program();
+            let handle_scope = HandleScope::new();
+            let mut context = Context::new(handle_scope);
+            let mut ev = Evaluator::new(&mut context);
+            assert_eq!(format!("{}", ev.eval(&program).unwrap()), expected);
+        }
+    }
+
+    #[test]
+    fn eval_switch_statement() {
+        let case = vec![(
+            r#"
+                const f = function(a) {
+                    switch (a) {
+                        case 1:
+                            return 1;
+                        case 2:
+                            return 2;
+                        default:
+                            return 3;
+                    }
+                };
+
+                f(2);
+            "#
+            .to_string(),
+            "\x1b[33m2\x1b[0m",
+        )];
 
         for (input, expected) in case {
             let mut l = Lexer::new(input.to_string());
