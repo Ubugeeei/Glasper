@@ -62,6 +62,7 @@ impl<'a> Parser<'a> {
             TokenType::Switch => self.parse_switch_statement(),
             TokenType::Return => self.parse_return_statement(),
             TokenType::LBrace => self.parse_block_statement(),
+            TokenType::Break => self.parse_break_statement(),
             _ => self.parse_expression_statement(),
         }
     }
@@ -245,6 +246,14 @@ impl<'a> Parser<'a> {
         self.next_token(); // skip '}'
 
         Ok(Statement::Switch(SwitchStatement::new(discriminant, cases)))
+    }
+
+    fn parse_break_statement(&mut self) -> Result<Statement, Error> {
+        self.next_token();
+        if self.peeked_token.token_type == TokenType::SemiColon {
+            self.next_token();
+        }
+        Ok(Statement::Break)
     }
 
     fn parse_switch_case_statement(&mut self) -> Result<SwitchCase, Error> {
@@ -1955,41 +1964,81 @@ pub mod tests {
 
     #[test]
     fn test_parse_switch_statement() {
-        let case = vec![(
-            r#"
-                const f = function(a) {
-                    switch (a) {
-                        case 1:
-                            return 1;
-                        case 2:
-                            return 2;
-                        default:
-                            return 3;
-                    }
-                };
-            "#
-            .to_string(),
-            Statement::Const(ConstStatement::new(
-                String::from("f"),
-                Expression::Function(FunctionExpression::new(
-                    vec![FunctionParameter::new(String::from("a"), None)],
-                    BlockStatement::new(vec![Statement::Switch(SwitchStatement::new(
-                        Expression::Identifier(String::from("a")),
-                        vec![
-                            SwitchCase::new(
-                                Some(Expression::Number(1.0)),
-                                vec![Statement::Return(Expression::Number(1.0))],
-                            ),
-                            SwitchCase::new(
-                                Some(Expression::Number(2.0)),
-                                vec![Statement::Return(Expression::Number(2.0))],
-                            ),
-                            SwitchCase::new(None, vec![Statement::Return(Expression::Number(3.0))]),
-                        ],
-                    ))]),
+        let case = vec![
+            (
+                r#"
+                    const f = function(a) {
+                        switch (a) {
+                            case 1:
+                                return 1;
+                            case 2:
+                                return 2;
+                            default:
+                                return 3;
+                        }
+                    };
+                "#
+                .to_string(),
+                Statement::Const(ConstStatement::new(
+                    String::from("f"),
+                    Expression::Function(FunctionExpression::new(
+                        vec![FunctionParameter::new(String::from("a"), None)],
+                        BlockStatement::new(vec![Statement::Switch(SwitchStatement::new(
+                            Expression::Identifier(String::from("a")),
+                            vec![
+                                SwitchCase::new(
+                                    Some(Expression::Number(1.0)),
+                                    vec![Statement::Return(Expression::Number(1.0))],
+                                ),
+                                SwitchCase::new(
+                                    Some(Expression::Number(2.0)),
+                                    vec![Statement::Return(Expression::Number(2.0))],
+                                ),
+                                SwitchCase::new(
+                                    None,
+                                    vec![Statement::Return(Expression::Number(3.0))],
+                                ),
+                            ],
+                        ))]),
+                    )),
                 )),
-            )),
-        )];
+            ),
+            (
+                r#"
+                    const f = function(a) {
+                        switch (a) {
+                            case 1:
+                                break;
+                            case 2:
+                                break;
+                            default:
+                                break;
+                        }
+                    };
+                "#
+                .to_string(),
+                Statement::Const(ConstStatement::new(
+                    String::from("f"),
+                    Expression::Function(FunctionExpression::new(
+                        vec![FunctionParameter::new(String::from("a"), None)],
+                        BlockStatement::new(vec![Statement::Switch(SwitchStatement::new(
+                            Expression::Identifier(String::from("a")),
+                            vec![
+                                SwitchCase::new(
+                                    Some(Expression::Number(1.0)),
+                                    vec![Statement::Break],
+                                ),
+                                SwitchCase::new(
+                                    Some(Expression::Number(2.0)),
+                                    vec![Statement::Break],
+                                ),
+                                SwitchCase::new(None, vec![Statement::Break]),
+                            ],
+                        ))]),
+                    )),
+                )),
+            ),
+        ];
 
         for (source, expected) in case {
             let mut l = Lexer::new(source);

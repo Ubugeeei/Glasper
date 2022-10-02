@@ -53,6 +53,7 @@ impl<'a> Evaluator<'a> {
             Statement::Switch(stmt) => self.eval_switch_statement(stmt, scope_type),
             Statement::Block(stmt) => self.eval_block_statement(stmt, scope_type),
             Statement::Return(expr) => self.eval_return_statement(expr, scope_type),
+            Statement::Break => Ok(RuntimeObject::Break),
         }
     }
 
@@ -678,16 +679,26 @@ impl<'a> Evaluator<'a> {
                 if discriminant == test {
                     for s in &case.consequent {
                         let ro = self.eval_statement(s, scope_type)?;
+
                         if let RuntimeObject::Return(_) = ro {
                             return Ok(ro);
+                        }
+
+                        if let RuntimeObject::Break = ro {
+                            return Ok(RuntimeObject::Undefined(JSUndefined));
                         }
                     }
                 }
             } else {
                 for s in &case.consequent {
                     let ro = self.eval_statement(s, scope_type)?;
+
                     if let RuntimeObject::Return(_) = ro {
                         return Ok(ro);
+                    }
+
+                    if let RuntimeObject::Break = ro {
+                        return Ok(RuntimeObject::Undefined(JSUndefined));
                     }
                 }
             }
