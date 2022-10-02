@@ -1997,4 +1997,22 @@ pub mod tests {
             assert_eq!(program.statements[0], expected);
         }
     }
+
+    #[test]
+    fn parse_this() {
+        let case = vec![(
+            r#"
+                this;
+            "#
+            .to_string(),
+            Statement::Expression(Expression::This),
+        )];
+
+        for (source, expected) in case {
+            let mut l = Lexer::new(source);
+            let mut p = Parser::new(&mut l);
+            let program = p.parse_program();
+            assert_eq!(program.statements[0], expected);
+        }
+    }
 }
