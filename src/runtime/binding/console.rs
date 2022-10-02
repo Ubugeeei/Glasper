@@ -40,7 +40,7 @@ fn log(args: Vec<RuntimeObject>) -> RuntimeObject {
                 print!("{}", value);
             }
             _ => {
-                print!("{:?}", arg);
+                print!("{}", arg);
             }
         }
         print!("\x20");
