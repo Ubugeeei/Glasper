@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::{cell::RefCell, collections::HashMap, rc::Rc};
 
 use crate::engine::eval::object::{
     JSBuiltinFunction, JSObject, JSString, JSUndefined, RuntimeObject,
@@ -29,7 +29,7 @@ impl ConsoleBuilder {
             RuntimeObject::BuiltinFunction(JSBuiltinFunction::new("log", log)),
         );
 
-        RuntimeObject::Object(JSObject { properties })
+        RuntimeObject::Object(Rc::new(RefCell::new(JSObject { properties })))
     }
 }
 

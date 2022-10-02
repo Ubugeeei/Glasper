@@ -1,6 +1,6 @@
 #![allow(dead_code)]
 
-use std::{collections::HashMap, fmt::Display};
+use std::{cell::RefCell, collections::HashMap, fmt::Display, rc::Rc};
 
 use crate::engine::parse::ast::{BlockStatement, FunctionParameter};
 
@@ -9,7 +9,7 @@ pub enum RuntimeObject {
     Boolean(JSBoolean),
     Number(JSNumber),
     String(JSString),
-    Object(JSObject),
+    Object(Rc<RefCell<JSObject>>),
     Array(JSArray),
     Function(JSFunction),
     BuiltinFunction(JSBuiltinFunction),
