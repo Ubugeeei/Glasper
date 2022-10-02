@@ -133,6 +133,24 @@
 
 /**
  *
+ * switch statement branch
+ *
+ */
+{
+	let num = 2;
+	// TODO: break
+	switch (num) {
+		case 1:
+			console.log("one");
+		case 2:
+			console.log("two");
+		default:
+			console.log("other");
+	}
+}
+
+/**
+ *
  * function
  *
  */
