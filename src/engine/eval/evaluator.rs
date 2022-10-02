@@ -14,10 +14,19 @@ use super::object::{JSArray, JSFunction, JSNaN, JSObject, JSString};
 
 pub struct Evaluator<'a> {
     ctx: &'a mut Context,
+    exec_ctx_this: Rc<RefCell<JSObject>>,
 }
 impl<'a> Evaluator<'a> {
     pub fn new(ctx: &'a mut Context) -> Self {
-        Evaluator { ctx }
+        // TODO: bind global object
+        let global_obj = Rc::new(RefCell::new(JSObject {
+            properties: HashMap::new(),
+        }));
+
+        Evaluator {
+            ctx,
+            exec_ctx_this: global_obj,
+        }
     }
 
     pub fn eval(&mut self, program: &Program) -> Result<RuntimeObject, Error> {
@@ -60,6 +69,7 @@ impl<'a> Evaluator<'a> {
             Expression::Null => Ok(RuntimeObject::Null(JSNull)),
             Expression::Undefined => Ok(RuntimeObject::Undefined(JSUndefined)),
             Expression::NaN => Ok(RuntimeObject::NaN(JSNaN)),
+            Expression::This => Ok(RuntimeObject::Object(self.exec_ctx_this.clone())),
 
             // objects
             Expression::Object(o) => self.eval_object_expression(o),
@@ -518,7 +528,10 @@ impl<'a> Evaluator<'a> {
         match prop {
             RuntimeObject::String(s) => match obj {
                 RuntimeObject::Object(o) => match o.borrow().properties.get(&s.value) {
-                    Some(v) => Ok(v.clone()),
+                    Some(v) => {
+                        self.exec_ctx_this = o.clone();
+                        Ok(v.clone())
+                    }
                     None => Ok(RuntimeObject::Undefined(JSUndefined)),
                 },
                 _ => Err(Error::new(
@@ -1391,6 +1404,34 @@ mod tests {
             "#
             .to_string(),
             "\x1b[33m2\x1b[0m",
+        )];
+
+        for (input, expected) in case {
+            let mut l = Lexer::new(input.to_string());
+            let mut p = Parser::new(&mut l);
+            let program = p.parse_program();
+            let handle_scope = HandleScope::new();
+            let mut context = Context::new(handle_scope);
+            let mut ev = Evaluator::new(&mut context);
+            assert_eq!(format!("{}", ev.eval(&program).unwrap()), expected);
+        }
+    }
+
+    #[test]
+    fn eval_function_this() {
+        let case = vec![(
+            r#"
+                const a = {
+                    b: 1,
+                    c: function() {
+                        return this.b;
+                    }
+                };
+
+                a.c();
+            "#
+            .to_string(),
+            "\x1b[33m1\x1b[0m",
         )];
 
         for (input, expected) in case {
