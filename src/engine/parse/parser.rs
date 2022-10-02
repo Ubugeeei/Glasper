@@ -7,8 +7,8 @@ use super::{
     ast::{
         ArrayExpression, BinaryExpression, BlockStatement, CallExpression, ConstStatement,
         Expression, FunctionExpression, FunctionParameter, IfStatement, LetStatement,
-        MemberExpression, ObjectExpression, ObjectProperty, Precedence, PrefixExpression, Program,
-        Statement, SuffixExpression, SwitchCase, SwitchStatement,
+        MemberExpression, ObjectExpression, ObjectProperty, Precedence, Program, Statement,
+        SuffixExpression, SwitchCase, SwitchStatement, UnaryExpression,
     },
 };
 
@@ -391,11 +391,11 @@ impl<'a> Parser<'a> {
                 _ => Expression::Identifier(self.parse_identifier()?),
             },
 
-            // prefix_expression
-            TokenType::Bang => self.parse_prefix_expression()?,
-            TokenType::Minus => self.parse_prefix_expression()?,
-            TokenType::BitNot => self.parse_prefix_expression()?,
-            TokenType::Typeof => self.parse_prefix_expression()?,
+            // unary_expression
+            TokenType::Bang => self.parse_unary_expression()?,
+            TokenType::Minus => self.parse_unary_expression()?,
+            TokenType::BitNot => self.parse_unary_expression()?,
+            TokenType::Typeof => self.parse_unary_expression()?,
 
             // grouped
             TokenType::LParen => self.parse_grouped_expression()?,
@@ -491,10 +491,10 @@ impl<'a> Parser<'a> {
                         return Ok(i64::from_str_radix(oct, 8).unwrap() as f64);
                     }
                     _ => {
-                        let unknown_prefix = &self.cur_token.literal[..2].to_string();
+                        let unknown_unary = &self.cur_token.literal[..2].to_string();
                         return Err(Error::new(
                             ErrorKind::InvalidInput,
-                            format!("unexpected token '{}' in parse_expression.", unknown_prefix),
+                            format!("unexpected token '{}' in parse_expression.", unknown_unary),
                         ));
                     }
                 }
@@ -586,12 +586,12 @@ impl<'a> Parser<'a> {
         Ok(Expression::Array(ArrayExpression::new(elements)))
     }
 
-    fn parse_prefix_expression(&mut self) -> Result<Expression, Error> {
+    fn parse_unary_expression(&mut self) -> Result<Expression, Error> {
         let token = self.cur_token.clone();
         self.next_token();
 
-        let right = self.parse_expression(Precedence::Prefix)?;
-        let expr = Expression::Prefix(PrefixExpression::new(token.literal, Box::new(right)));
+        let right = self.parse_expression(Precedence::Unary)?;
+        let expr = Expression::Unary(UnaryExpression::new(token.literal, Box::new(right)));
         Ok(expr)
     }
 
@@ -1144,7 +1144,7 @@ pub mod tests {
                 ),
                 (
                     String::from("!false;"),
-                    Statement::Expression(Expression::Prefix(PrefixExpression::new(
+                    Statement::Expression(Expression::Unary(UnaryExpression::new(
                         String::from("!"),
                         Box::new(Expression::Boolean(false)),
                     ))),
@@ -1201,7 +1201,7 @@ pub mod tests {
             assert_eq!(program.statements.len(), 1);
             assert_eq!(
                 program.statements[0],
-                Statement::Expression(Expression::Prefix(PrefixExpression::new(
+                Statement::Expression(Expression::Unary(UnaryExpression::new(
                     String::from("-"),
                     Box::new(Expression::Number(5.0))
                 )))
@@ -1216,7 +1216,7 @@ pub mod tests {
             assert_eq!(program.statements.len(), 1);
             assert_eq!(
                 program.statements[0],
-                Statement::Expression(Expression::Prefix(PrefixExpression::new(
+                Statement::Expression(Expression::Unary(UnaryExpression::new(
                     String::from("!"),
                     Box::new(Expression::Identifier(String::from("flag")))
                 )))
@@ -1231,7 +1231,7 @@ pub mod tests {
             assert_eq!(program.statements.len(), 1);
             assert_eq!(
                 program.statements[0],
-                Statement::Expression(Expression::Prefix(PrefixExpression::new(
+                Statement::Expression(Expression::Unary(UnaryExpression::new(
                     String::from("~"),
                     Box::new(Expression::Identifier(String::from("flag")))
                 )))
@@ -1246,7 +1246,7 @@ pub mod tests {
             assert_eq!(program.statements.len(), 1);
             assert_eq!(
                 program.statements[0],
-                Statement::Expression(Expression::Prefix(PrefixExpression::new(
+                Statement::Expression(Expression::Unary(UnaryExpression::new(
                     String::from("typeof"),
                     Box::new(Expression::Identifier(String::from("flag")))
                 )))

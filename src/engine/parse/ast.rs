@@ -119,7 +119,7 @@ pub enum Expression {
     Undefined,
     NaN,
     Identifier(String),
-    Prefix(PrefixExpression),
+    Unary(UnaryExpression),
     Suffix(SuffixExpression),
     Binary(BinaryExpression),
     Function(FunctionExpression),
@@ -129,13 +129,13 @@ pub enum Expression {
 impl Expression {}
 
 #[derive(Debug, PartialEq, Clone)]
-pub struct PrefixExpression {
+pub struct UnaryExpression {
     pub operator: String,
     pub right: Box<Expression>,
 }
-impl PrefixExpression {
-    pub fn new(operator: String, right: Box<Expression>) -> PrefixExpression {
-        PrefixExpression { operator, right }
+impl UnaryExpression {
+    pub fn new(operator: String, right: Box<Expression>) -> UnaryExpression {
+        UnaryExpression { operator, right }
     }
 }
 
@@ -263,7 +263,7 @@ pub enum Precedence {
     Sum,               // + or -
     Product,           // * or /
     Exp,               // **
-    Prefix,            // -X or !X
+    Unary,             // -X or !X
     Index,
     Call, // myFunction(x)
 }

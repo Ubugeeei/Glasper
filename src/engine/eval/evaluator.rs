@@ -70,7 +70,7 @@ impl<'a> Evaluator<'a> {
             Expression::Identifier(name) => self.eval_identifier(name),
 
             // operators
-            Expression::Prefix(expr) => self.eval_prefix_expression(expr),
+            Expression::Unary(expr) => self.eval_unary_expression(expr),
             Expression::Binary(expr) => {
                 if expr.operator == "=" {
                     self.eval_assign_expression(&expr.left, &expr.right)
@@ -88,20 +88,20 @@ impl<'a> Evaluator<'a> {
         }
     }
 
-    fn eval_prefix_expression(
+    fn eval_unary_expression(
         &mut self,
-        expr: &crate::engine::parse::ast::PrefixExpression,
+        expr: &crate::engine::parse::ast::UnaryExpression,
     ) -> Result<RuntimeObject, Error> {
         let right = self.eval_expression(&expr.right)?;
         match expr.operator.as_str() {
             "!" => self.eval_bang_operator_expression(right),
-            "-" => self.eval_minus_prefix_operator_expression(right),
+            "-" => self.eval_minus_unary_operator_expression(right),
             "~" => self.eval_bit_not_operator_expression(right),
             "typeof" => self.eval_typeof_operator_expression(right),
             o => Err(Error::new(
                 std::io::ErrorKind::Other,
                 format!(
-                    "Unexpected prefix operator '{}'. at eval_prefix_expression",
+                    "Unexpected unary operator '{}'. at eval_unary_expression",
                     o
                 ),
             )),
@@ -114,7 +114,7 @@ impl<'a> Evaluator<'a> {
         }))
     }
 
-    fn eval_minus_prefix_operator_expression(
+    fn eval_minus_unary_operator_expression(
         &self,
         right: RuntimeObject,
     ) -> Result<RuntimeObject, Error> {
@@ -123,7 +123,7 @@ impl<'a> Evaluator<'a> {
         } else {
             Err(Error::new(
                 std::io::ErrorKind::Other,
-                "Unexpected prefix operator. at eval_minus_prefix_operator_expression",
+                "Unexpected unary operator. at eval_minus_unary_operator_expression",
             ))
         }
     }
@@ -139,7 +139,7 @@ impl<'a> Evaluator<'a> {
         } else {
             Err(Error::new(
                 std::io::ErrorKind::Other,
-                "Unexpected prefix operator. at eval_bit_not_operator_expression",
+                "Unexpected unary operator. at eval_bit_not_operator_expression",
             ))
         }
     }
@@ -861,7 +861,7 @@ mod tests {
     }
 
     #[test]
-    fn test_eval_prefix_expression() {
+    fn test_eval_unary_expression() {
         let case = vec![
             ("!true", "\x1b[33mfalse\x1b[0m"),
             ("!false", "\x1b[33mtrue\x1b[0m"),
