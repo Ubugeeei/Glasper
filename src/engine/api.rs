@@ -4,7 +4,9 @@ use crate::engine::{
     parse::{ast::Program, parser::Parser},
     tokenize::lexer::Lexer,
 };
-use std::{collections::HashMap, io::Error};
+use std::{cell::RefCell, collections::HashMap, io::Error, rc::Rc};
+
+use super::eval::object::JSObject;
 
 pub struct Isolate {
     pub context: Context,
@@ -42,9 +44,22 @@ impl Default for Global {
 }
 impl Global {
     pub fn new() -> Self {
-        Global {
-            scope: HashMap::new(),
-        }
+        let mut scope = HashMap::new();
+
+        // install array object
+        let mut array_prototype = HashMap::new();
+        array_prototype.insert(
+            "prototype".to_string(),
+            RuntimeObject::Object(Rc::new(RefCell::new(JSObject {
+                properties: HashMap::new(),
+            }))),
+        );
+        let array = RuntimeObject::Object(Rc::new(RefCell::new(JSObject {
+            properties: array_prototype,
+        })));
+        scope.insert("Array".to_string(), array);
+
+        Global { scope }
     }
 
     pub fn get(&self, key: &str) -> Option<&RuntimeObject> {
