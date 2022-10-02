@@ -121,7 +121,7 @@ pub enum Expression {
     Identifier(String),
     Prefix(PrefixExpression),
     Suffix(SuffixExpression),
-    Infix(InfixExpression),
+    Binary(BinaryExpression),
     Function(FunctionExpression),
     Call(CallExpression),
     Member(Box<MemberExpression>),
@@ -154,14 +154,18 @@ impl SuffixExpression {
 }
 
 #[derive(Debug, PartialEq, Clone)]
-pub struct InfixExpression {
+pub struct BinaryExpression {
     pub left: Box<Expression>,
     pub operator: String,
     pub right: Box<Expression>,
 }
-impl InfixExpression {
-    pub fn new(left: Box<Expression>, operator: String, right: Box<Expression>) -> InfixExpression {
-        InfixExpression {
+impl BinaryExpression {
+    pub fn new(
+        left: Box<Expression>,
+        operator: String,
+        right: Box<Expression>,
+    ) -> BinaryExpression {
+        BinaryExpression {
             left,
             operator,
             right,

@@ -71,13 +71,13 @@ impl<'a> Evaluator<'a> {
 
             // operators
             Expression::Prefix(expr) => self.eval_prefix_expression(expr),
-            Expression::Infix(expr) => {
+            Expression::Binary(expr) => {
                 if expr.operator == "=" {
                     self.eval_assign_expression(&expr.left, &expr.right)
                 } else {
                     let left = self.eval_expression(&expr.left)?;
                     let right = self.eval_expression(&expr.right)?;
-                    self.eval_infix_expression(expr.operator.clone(), left, right)
+                    self.eval_binary_expression(expr.operator.clone(), left, right)
                 }
             }
 
@@ -153,7 +153,7 @@ impl<'a> Evaluator<'a> {
         }))
     }
 
-    fn eval_infix_expression(
+    fn eval_binary_expression(
         &self,
         operator: String,
         left: RuntimeObject,
@@ -428,7 +428,7 @@ impl<'a> Evaluator<'a> {
 
             _ => Err(Error::new(
                 std::io::ErrorKind::Other,
-                "Unexpected infix operator. at eval_infix_expression",
+                "Unexpected binary operator. at eval_binary_expression",
             )),
         }
     }
@@ -890,7 +890,7 @@ mod tests {
     }
 
     #[test]
-    fn test_eval_infix_expression() {
+    fn test_eval_binary_expression() {
         let case = vec![
             ("1 + 1", "\x1b[33m2\x1b[0m"),
             ("1 - 1", "\x1b[33m0\x1b[0m"),

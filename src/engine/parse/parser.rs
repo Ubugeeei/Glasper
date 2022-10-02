@@ -5,8 +5,8 @@ use crate::engine::tokenize::token::TokenType;
 use super::{
     super::{lexer::Lexer, token::Token},
     ast::{
-        ArrayExpression, BlockStatement, CallExpression, ConstStatement, Expression,
-        FunctionExpression, FunctionParameter, IfStatement, InfixExpression, LetStatement,
+        ArrayExpression, BinaryExpression, BlockStatement, CallExpression, ConstStatement,
+        Expression, FunctionExpression, FunctionParameter, IfStatement, LetStatement,
         MemberExpression, ObjectExpression, ObjectProperty, Precedence, PrefixExpression, Program,
         Statement, SuffixExpression, SwitchCase, SwitchStatement,
     },
@@ -452,7 +452,7 @@ impl<'a> Parser<'a> {
                 | TokenType::ShR
                 | TokenType::SaR => {
                     self.next_token();
-                    self.parse_infix_expression(expr)?
+                    self.parse_binary_expression(expr)?
                 }
                 TokenType::Period => {
                     self.next_token();
@@ -603,12 +603,12 @@ impl<'a> Parser<'a> {
         Ok(expr)
     }
 
-    fn parse_infix_expression(&mut self, left: Expression) -> Result<Expression, Error> {
+    fn parse_binary_expression(&mut self, left: Expression) -> Result<Expression, Error> {
         let token = self.cur_token.clone();
         let precedence = self.current_precedence();
         self.next_token();
         let right = self.parse_expression(precedence)?;
-        let expr = Expression::Infix(InfixExpression::new(
+        let expr = Expression::Binary(BinaryExpression::new(
             Box::new(left),
             token.literal,
             Box::new(right),
@@ -970,7 +970,7 @@ pub mod tests {
                     "#,
                 ),
                 vec![Statement::If(IfStatement::new(
-                    Expression::Infix(InfixExpression::new(
+                    Expression::Binary(BinaryExpression::new(
                         Box::new(Expression::Identifier(String::from("x"))),
                         String::from("<"),
                         Box::new(Expression::Identifier(String::from("y"))),
@@ -995,7 +995,7 @@ pub mod tests {
                     "#,
                 ),
                 vec![Statement::If(IfStatement::new(
-                    Expression::Infix(InfixExpression::new(
+                    Expression::Binary(BinaryExpression::new(
                         Box::new(Expression::Identifier(String::from("x"))),
                         String::from("<"),
                         Box::new(Expression::Identifier(String::from("y"))),
@@ -1013,7 +1013,7 @@ pub mod tests {
                     "#,
                 ),
                 vec![Statement::If(IfStatement::new(
-                    Expression::Infix(InfixExpression::new(
+                    Expression::Binary(BinaryExpression::new(
                         Box::new(Expression::Identifier(String::from("x"))),
                         String::from("<"),
                         Box::new(Expression::Identifier(String::from("y"))),
@@ -1136,7 +1136,7 @@ pub mod tests {
                 ),
                 (
                     String::from("false != true;"),
-                    Statement::Expression(Expression::Infix(InfixExpression::new(
+                    Statement::Expression(Expression::Binary(BinaryExpression::new(
                         Box::new(Expression::Boolean(false)),
                         String::from("!="),
                         Box::new(Expression::Boolean(true)),
@@ -1288,12 +1288,12 @@ pub mod tests {
     }
 
     #[test]
-    fn test_parse_infix_ops_expression() {
+    fn test_parse_binary_ops_expression() {
         {
             let test_case = vec![
                 (
                     String::from("1 + 2;"),
-                    Statement::Expression(Expression::Infix(InfixExpression::new(
+                    Statement::Expression(Expression::Binary(BinaryExpression::new(
                         Box::new(Expression::Number(1.0)),
                         String::from("+"),
                         Box::new(Expression::Number(2.0)),
@@ -1301,7 +1301,7 @@ pub mod tests {
                 ),
                 (
                     String::from("1 - 2;"),
-                    Statement::Expression(Expression::Infix(InfixExpression::new(
+                    Statement::Expression(Expression::Binary(BinaryExpression::new(
                         Box::new(Expression::Number(1.0)),
                         String::from("-"),
                         Box::new(Expression::Number(2.0)),
@@ -1309,7 +1309,7 @@ pub mod tests {
                 ),
                 (
                     String::from("1 * 2;"),
-                    Statement::Expression(Expression::Infix(InfixExpression::new(
+                    Statement::Expression(Expression::Binary(BinaryExpression::new(
                         Box::new(Expression::Number(1.0)),
                         String::from("*"),
                         Box::new(Expression::Number(2.0)),
@@ -1317,7 +1317,7 @@ pub mod tests {
                 ),
                 (
                     String::from("1 ** 2;"),
-                    Statement::Expression(Expression::Infix(InfixExpression::new(
+                    Statement::Expression(Expression::Binary(BinaryExpression::new(
                         Box::new(Expression::Number(1.0)),
                         String::from("**"),
                         Box::new(Expression::Number(2.0)),
@@ -1325,7 +1325,7 @@ pub mod tests {
                 ),
                 (
                     String::from("1 / 2;"),
-                    Statement::Expression(Expression::Infix(InfixExpression::new(
+                    Statement::Expression(Expression::Binary(BinaryExpression::new(
                         Box::new(Expression::Number(1.0)),
                         String::from("/"),
                         Box::new(Expression::Number(2.0)),
@@ -1333,7 +1333,7 @@ pub mod tests {
                 ),
                 (
                     String::from("1 % 2;"),
-                    Statement::Expression(Expression::Infix(InfixExpression::new(
+                    Statement::Expression(Expression::Binary(BinaryExpression::new(
                         Box::new(Expression::Number(1.0)),
                         String::from("%"),
                         Box::new(Expression::Number(2.0)),
@@ -1341,7 +1341,7 @@ pub mod tests {
                 ),
                 (
                     String::from("1 < 2;"),
-                    Statement::Expression(Expression::Infix(InfixExpression::new(
+                    Statement::Expression(Expression::Binary(BinaryExpression::new(
                         Box::new(Expression::Number(1.0)),
                         String::from("<"),
                         Box::new(Expression::Number(2.0)),
@@ -1349,7 +1349,7 @@ pub mod tests {
                 ),
                 (
                     String::from("1 > 2;"),
-                    Statement::Expression(Expression::Infix(InfixExpression::new(
+                    Statement::Expression(Expression::Binary(BinaryExpression::new(
                         Box::new(Expression::Number(1.0)),
                         String::from(">"),
                         Box::new(Expression::Number(2.0)),
@@ -1357,7 +1357,7 @@ pub mod tests {
                 ),
                 (
                     String::from("1 <= 2;"),
-                    Statement::Expression(Expression::Infix(InfixExpression::new(
+                    Statement::Expression(Expression::Binary(BinaryExpression::new(
                         Box::new(Expression::Number(1.0)),
                         String::from("<="),
                         Box::new(Expression::Number(2.0)),
@@ -1365,7 +1365,7 @@ pub mod tests {
                 ),
                 (
                     String::from("1 >= 2;"),
-                    Statement::Expression(Expression::Infix(InfixExpression::new(
+                    Statement::Expression(Expression::Binary(BinaryExpression::new(
                         Box::new(Expression::Number(1.0)),
                         String::from(">="),
                         Box::new(Expression::Number(2.0)),
@@ -1373,7 +1373,7 @@ pub mod tests {
                 ),
                 (
                     String::from("1 == 2;"),
-                    Statement::Expression(Expression::Infix(InfixExpression::new(
+                    Statement::Expression(Expression::Binary(BinaryExpression::new(
                         Box::new(Expression::Number(1.0)),
                         String::from("=="),
                         Box::new(Expression::Number(2.0)),
@@ -1381,7 +1381,7 @@ pub mod tests {
                 ),
                 (
                     String::from("1 != 2;"),
-                    Statement::Expression(Expression::Infix(InfixExpression::new(
+                    Statement::Expression(Expression::Binary(BinaryExpression::new(
                         Box::new(Expression::Number(1.0)),
                         String::from("!="),
                         Box::new(Expression::Number(2.0)),
@@ -1389,7 +1389,7 @@ pub mod tests {
                 ),
                 (
                     String::from("1 === 2;"),
-                    Statement::Expression(Expression::Infix(InfixExpression::new(
+                    Statement::Expression(Expression::Binary(BinaryExpression::new(
                         Box::new(Expression::Number(1.0)),
                         String::from("==="),
                         Box::new(Expression::Number(2.0)),
@@ -1397,7 +1397,7 @@ pub mod tests {
                 ),
                 (
                     String::from("1 !== 2;"),
-                    Statement::Expression(Expression::Infix(InfixExpression::new(
+                    Statement::Expression(Expression::Binary(BinaryExpression::new(
                         Box::new(Expression::Number(1.0)),
                         String::from("!=="),
                         Box::new(Expression::Number(2.0)),
@@ -1405,7 +1405,7 @@ pub mod tests {
                 ),
                 (
                     String::from("null ?? 1;"),
-                    Statement::Expression(Expression::Infix(InfixExpression::new(
+                    Statement::Expression(Expression::Binary(BinaryExpression::new(
                         Box::new(Expression::Null),
                         String::from("??"),
                         Box::new(Expression::Number(1.0)),
@@ -1413,7 +1413,7 @@ pub mod tests {
                 ),
                 (
                     String::from("1 | 1;"),
-                    Statement::Expression(Expression::Infix(InfixExpression::new(
+                    Statement::Expression(Expression::Binary(BinaryExpression::new(
                         Box::new(Expression::Number(1.0)),
                         String::from("|"),
                         Box::new(Expression::Number(1.0)),
@@ -1421,7 +1421,7 @@ pub mod tests {
                 ),
                 (
                     String::from("1 || 1;"),
-                    Statement::Expression(Expression::Infix(InfixExpression::new(
+                    Statement::Expression(Expression::Binary(BinaryExpression::new(
                         Box::new(Expression::Number(1.0)),
                         String::from("||"),
                         Box::new(Expression::Number(1.0)),
@@ -1429,7 +1429,7 @@ pub mod tests {
                 ),
                 (
                     String::from("1 & 1;"),
-                    Statement::Expression(Expression::Infix(InfixExpression::new(
+                    Statement::Expression(Expression::Binary(BinaryExpression::new(
                         Box::new(Expression::Number(1.0)),
                         String::from("&"),
                         Box::new(Expression::Number(1.0)),
@@ -1437,7 +1437,7 @@ pub mod tests {
                 ),
                 (
                     String::from("1 && 1;"),
-                    Statement::Expression(Expression::Infix(InfixExpression::new(
+                    Statement::Expression(Expression::Binary(BinaryExpression::new(
                         Box::new(Expression::Number(1.0)),
                         String::from("&&"),
                         Box::new(Expression::Number(1.0)),
@@ -1445,7 +1445,7 @@ pub mod tests {
                 ),
                 (
                     String::from("1 >> 1;"),
-                    Statement::Expression(Expression::Infix(InfixExpression::new(
+                    Statement::Expression(Expression::Binary(BinaryExpression::new(
                         Box::new(Expression::Number(1.0)),
                         String::from(">>"),
                         Box::new(Expression::Number(1.0)),
@@ -1453,7 +1453,7 @@ pub mod tests {
                 ),
                 (
                     String::from("1 >>> 1;"),
-                    Statement::Expression(Expression::Infix(InfixExpression::new(
+                    Statement::Expression(Expression::Binary(BinaryExpression::new(
                         Box::new(Expression::Number(1.0)),
                         String::from(">>>"),
                         Box::new(Expression::Number(1.0)),
@@ -1461,7 +1461,7 @@ pub mod tests {
                 ),
                 (
                     String::from("1 << 1;"),
-                    Statement::Expression(Expression::Infix(InfixExpression::new(
+                    Statement::Expression(Expression::Binary(BinaryExpression::new(
                         Box::new(Expression::Number(1.0)),
                         String::from("<<"),
                         Box::new(Expression::Number(1.0)),
@@ -1486,10 +1486,10 @@ pub mod tests {
             assert_eq!(program.statements.len(), 1);
             assert_eq!(
                 program.statements[0],
-                Statement::Expression(Expression::Infix(InfixExpression::new(
+                Statement::Expression(Expression::Binary(BinaryExpression::new(
                     Box::new(Expression::Number(1.0)),
                     String::from("+"),
-                    Box::new(Expression::Infix(InfixExpression::new(
+                    Box::new(Expression::Binary(BinaryExpression::new(
                         Box::new(Expression::Number(2.0)),
                         String::from("*"),
                         Box::new(Expression::Number(3.0)),
@@ -1506,8 +1506,8 @@ pub mod tests {
             assert_eq!(program.statements.len(), 1);
             assert_eq!(
                 program.statements[0],
-                Statement::Expression(Expression::Infix(InfixExpression::new(
-                    Box::new(Expression::Infix(InfixExpression::new(
+                Statement::Expression(Expression::Binary(BinaryExpression::new(
+                    Box::new(Expression::Binary(BinaryExpression::new(
                         Box::new(Expression::Number(1.0)),
                         String::from("*"),
                         Box::new(Expression::Number(2.0)),
@@ -1526,9 +1526,9 @@ pub mod tests {
             assert_eq!(program.statements.len(), 1);
             assert_eq!(
                 program.statements[0],
-                Statement::Expression(Expression::Infix(InfixExpression::new(
-                    Box::new(Expression::Infix(InfixExpression::new(
-                        Box::new(Expression::Infix(InfixExpression::new(
+                Statement::Expression(Expression::Binary(BinaryExpression::new(
+                    Box::new(Expression::Binary(BinaryExpression::new(
+                        Box::new(Expression::Binary(BinaryExpression::new(
                             Box::new(Expression::Identifier(String::from("a"))),
                             String::from("*"),
                             Box::new(Expression::Number(2.0)),
@@ -1548,9 +1548,9 @@ pub mod tests {
         let case = vec![
             (
                 String::from("(1 + 2) + 3 + 4;"),
-                Statement::Expression(Expression::Infix(InfixExpression::new(
-                    Box::new(Expression::Infix(InfixExpression::new(
-                        Box::new(Expression::Infix(InfixExpression::new(
+                Statement::Expression(Expression::Binary(BinaryExpression::new(
+                    Box::new(Expression::Binary(BinaryExpression::new(
+                        Box::new(Expression::Binary(BinaryExpression::new(
                             Box::new(Expression::Number(1.0)),
                             String::from("+"),
                             Box::new(Expression::Number(2.0)),
@@ -1564,11 +1564,11 @@ pub mod tests {
             ),
             (
                 String::from("1 + (2 + 3) + 4;"),
-                Statement::Expression(Expression::Infix(InfixExpression::new(
-                    Box::new(Expression::Infix(InfixExpression::new(
+                Statement::Expression(Expression::Binary(BinaryExpression::new(
+                    Box::new(Expression::Binary(BinaryExpression::new(
                         Box::new(Expression::Number(1.0)),
                         String::from("+"),
-                        Box::new(Expression::Infix(InfixExpression::new(
+                        Box::new(Expression::Binary(BinaryExpression::new(
                             Box::new(Expression::Number(2.0)),
                             String::from("+"),
                             Box::new(Expression::Number(3.0)),
@@ -1580,14 +1580,14 @@ pub mod tests {
             ),
             (
                 String::from("1 + 2 + (3 + 4);"),
-                Statement::Expression(Expression::Infix(InfixExpression::new(
-                    Box::new(Expression::Infix(InfixExpression::new(
+                Statement::Expression(Expression::Binary(BinaryExpression::new(
+                    Box::new(Expression::Binary(BinaryExpression::new(
                         Box::new(Expression::Number(1.0)),
                         String::from("+"),
                         Box::new(Expression::Number(2.0)),
                     ))),
                     String::from("+"),
-                    Box::new(Expression::Infix(InfixExpression::new(
+                    Box::new(Expression::Binary(BinaryExpression::new(
                         Box::new(Expression::Number(3.0)),
                         String::from("+"),
                         Box::new(Expression::Number(4.0)),
@@ -1596,17 +1596,17 @@ pub mod tests {
             ),
             (
                 String::from("0 + ((1 + 2) + (3 + 4));"),
-                Statement::Expression(Expression::Infix(InfixExpression::new(
+                Statement::Expression(Expression::Binary(BinaryExpression::new(
                     Box::new(Expression::Number(0.0)),
                     String::from("+"),
-                    Box::new(Expression::Infix(InfixExpression::new(
-                        Box::new(Expression::Infix(InfixExpression::new(
+                    Box::new(Expression::Binary(BinaryExpression::new(
+                        Box::new(Expression::Binary(BinaryExpression::new(
                             Box::new(Expression::Number(1.0)),
                             String::from("+"),
                             Box::new(Expression::Number(2.0)),
                         ))),
                         String::from("+"),
-                        Box::new(Expression::Infix(InfixExpression::new(
+                        Box::new(Expression::Binary(BinaryExpression::new(
                             Box::new(Expression::Number(3.0)),
                             String::from("+"),
                             Box::new(Expression::Number(4.0)),
@@ -1643,8 +1643,8 @@ pub mod tests {
                             FunctionParameter::new(String::from("x"), None),
                             FunctionParameter::new(String::from("y"), None),
                         ],
-                        BlockStatement::new(vec![Statement::Return(Expression::Infix(
-                            InfixExpression::new(
+                        BlockStatement::new(vec![Statement::Return(Expression::Binary(
+                            BinaryExpression::new(
                                 Box::new(Expression::Identifier(String::from("x"))),
                                 String::from("+"),
                                 Box::new(Expression::Identifier(String::from("y"))),
@@ -1671,15 +1671,15 @@ pub mod tests {
                             ),
                             FunctionParameter::new(
                                 String::from("y"),
-                                Some(Expression::Infix(InfixExpression::new(
+                                Some(Expression::Binary(BinaryExpression::new(
                                     Box::new(Expression::Number(0.0)),
                                     String::from("*"),
                                     Box::new(Expression::Number(0.0)),
                                 ))),
                             ),
                         ],
-                        BlockStatement::new(vec![Statement::Return(Expression::Infix(
-                            InfixExpression::new(
+                        BlockStatement::new(vec![Statement::Return(Expression::Binary(
+                            BinaryExpression::new(
                                 Box::new(Expression::Identifier(String::from("x"))),
                                 String::from("+"),
                                 Box::new(Expression::Identifier(String::from("y"))),
@@ -1718,11 +1718,11 @@ pub mod tests {
                             ),
                             FunctionParameter::new(
                                 String::from("y"),
-                                Some(Expression::Infix(InfixExpression::new(
-                                    Box::new(Expression::Infix(InfixExpression::new(
+                                Some(Expression::Binary(BinaryExpression::new(
+                                    Box::new(Expression::Binary(BinaryExpression::new(
                                         Box::new(Expression::Number(1.0)),
                                         String::from("+"),
-                                        Box::new(Expression::Infix(InfixExpression::new(
+                                        Box::new(Expression::Binary(BinaryExpression::new(
                                             Box::new(Expression::Number(2.0)),
                                             String::from("*"),
                                             Box::new(Expression::Number(3.0)),
@@ -1742,10 +1742,10 @@ pub mod tests {
                                 String::from("b"),
                                 Expression::Number(0.0),
                             )),
-                            Statement::Return(Expression::Infix(InfixExpression::new(
+                            Statement::Return(Expression::Binary(BinaryExpression::new(
                                 Box::new(Expression::Identifier(String::from("x"))),
                                 String::from("+"),
-                                Box::new(Expression::Infix(InfixExpression::new(
+                                Box::new(Expression::Binary(BinaryExpression::new(
                                     Box::new(Expression::Identifier(String::from("y"))),
                                     String::from("*"),
                                     Box::new(Expression::Identifier(String::from("a"))),
@@ -1775,12 +1775,12 @@ pub mod tests {
                     Box::new(Expression::Identifier(String::from("add"))),
                     vec![
                         Expression::Number(1.0),
-                        Expression::Infix(InfixExpression::new(
+                        Expression::Binary(BinaryExpression::new(
                             Box::new(Expression::Number(2.0)),
                             String::from("*"),
                             Box::new(Expression::Number(3.0)),
                         )),
-                        Expression::Infix(InfixExpression::new(
+                        Expression::Binary(BinaryExpression::new(
                             Box::new(Expression::Number(4.0)),
                             String::from("+"),
                             Box::new(Expression::Number(5.0)),
@@ -1802,12 +1802,12 @@ pub mod tests {
             //         ))),
             //         vec![
             //             Expression::Number(1.0),
-            //             Expression::Infix(InfixExpression::new(
+            //             Expression::Binary(BinaryExpression::new(
             //                 Box::new(Expression::Number(2.0)),
             //                 String::from("*"),
             //                 Box::new(Expression::Number(3.0)),
             //             )),
-            //             Expression::Infix(InfixExpression::new(
+            //             Expression::Binary(BinaryExpression::new(
             //                 Box::new(Expression::Number(4.0)),
             //                 String::from("+"),
             //                 Box::new(Expression::Number(5.0)),
@@ -1819,8 +1819,8 @@ pub mod tests {
                 String::from("let result = (1 + add(2, 3)) * 5;"),
                 Statement::Let(LetStatement::new(
                     String::from("result"),
-                    Expression::Infix(InfixExpression::new(
-                        Box::new(Expression::Infix(InfixExpression::new(
+                    Expression::Binary(BinaryExpression::new(
+                        Box::new(Expression::Binary(BinaryExpression::new(
                             Box::new(Expression::Number(1.0)),
                             String::from("+"),
                             Box::new(Expression::Call(CallExpression::new(
@@ -1899,7 +1899,7 @@ pub mod tests {
                 r#"ob[1 + 2];"#.to_string(),
                 Statement::Expression(Expression::Member(Box::new(MemberExpression::new(
                     Box::new(Expression::Identifier(String::from("ob"))),
-                    Box::new(Expression::Infix(InfixExpression::new(
+                    Box::new(Expression::Binary(BinaryExpression::new(
                         Box::new(Expression::Number(1.0)),
                         String::from("+"),
                         Box::new(Expression::Number(2.0)),
