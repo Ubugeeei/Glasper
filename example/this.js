@@ -15,5 +15,3 @@ const oo = {
 };
 console.log("oo.f() -> ", oo.f());
 console.log("this.value", this.value);
-
-

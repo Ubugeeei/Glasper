@@ -1,5 +1,5 @@
 let o = {
-  message: "hello object",
+	message: "hello object",
 };
 console.log("o.message:", o.message);
 
