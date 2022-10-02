@@ -1,0 +1,12 @@
+console.log("true:", true);
+console.log("false:", false);
+console.log("1:", 1);
+console.log("0x1111:", 0x1111);
+console.log("0o1111:", 0o1111);
+console.log("0b1111:", 0b1111);
+console.log("1.1:", 1.1);
+console.log("1.1e3:", 1.1e3);
+console.log("1.1e-3:", 1.1e-3);
+console.log("hello string");
+console.log("undefined:", undefined);
+console.log("null:", null);
