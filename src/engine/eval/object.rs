@@ -17,6 +17,7 @@ pub enum RuntimeObject {
     Undefined(JSUndefined),
     NaN(JSNaN),
     Return(Box<RuntimeObject>),
+    Break,
 }
 
 impl RuntimeObject {
@@ -33,6 +34,7 @@ impl RuntimeObject {
             Self::NaN(_) => "number".to_string(),
             Self::BuiltinFunction(_) => "function".to_string(),
             Self::Return(_) => "".to_string(),
+            Self::Break => "".to_string(),
         }
     }
 }
@@ -65,6 +67,7 @@ impl Display for RuntimeObject {
             }
 
             Self::Return(o) => write!(f, "{}", o),
+            Self::Break => write!(f, ""),
         }
     }
 }

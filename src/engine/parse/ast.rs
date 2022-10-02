@@ -23,12 +23,12 @@ pub enum Statement {
     If(IfStatement),
     Block(BlockStatement),
     Switch(SwitchStatement),
+    // TODO: label
+    Break,
     // TODO: impl
     // for
     // while
-    // break
     // continue
-    // block
 }
 
 #[derive(Debug, PartialEq, Clone)]
