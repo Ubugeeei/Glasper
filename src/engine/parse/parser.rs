@@ -379,6 +379,8 @@ impl<'a> Parser<'a> {
             TokenType::Null => Expression::Null,
             TokenType::Undefined => Expression::Undefined,
             TokenType::NaN => Expression::NaN,
+            TokenType::This => Expression::This,
+
 
             // object
             TokenType::LBrace => self.parse_object()?,
