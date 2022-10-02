@@ -644,7 +644,7 @@ impl<'a> Evaluator<'a> {
         if self.is_truthy(test) {
             self.eval_statement(&statement.consequence, scope_type)
         } else {
-            let un_boxed = statement.alternative.as_ref();
+            let un_boxed = statement.alternate.as_ref();
             match un_boxed {
                 Some(ref alt) => self.eval_statement(alt, scope_type),
                 None => Ok(RuntimeObject::Undefined(JSUndefined)),

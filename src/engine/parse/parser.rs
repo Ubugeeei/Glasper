@@ -189,8 +189,8 @@ impl<'a> Parser<'a> {
         // parse consequence
         let consequence = Box::new(self.parse_statement()?);
 
-        // parse alternative
-        let alternative = match self.peeked_token.token_type {
+        // parse alternate
+        let alternate = match self.peeked_token.token_type {
             TokenType::Else => {
                 self.next_token();
                 // skip 'else'
@@ -203,7 +203,7 @@ impl<'a> Parser<'a> {
         Ok(Statement::If(IfStatement::new(
             test,
             consequence,
-            alternative,
+            alternate,
         )))
     }
 
