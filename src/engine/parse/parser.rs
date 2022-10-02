@@ -8,7 +8,7 @@ use super::{
         ArrayExpression, BlockStatement, CallExpression, ConstStatement, Expression,
         FunctionExpression, FunctionParameter, IfStatement, InfixExpression, LetStatement,
         MemberExpression, ObjectExpression, ObjectProperty, Precedence, PrefixExpression, Program,
-        Statement, SuffixExpression,
+        Statement, SuffixExpression, SwitchCase, SwitchStatement,
     },
 };
 
@@ -59,6 +59,7 @@ impl<'a> Parser<'a> {
             TokenType::Let => self.parse_let_statement(),
             TokenType::Const => self.parse_const_statement(),
             TokenType::If => self.parse_if_statement(),
+            TokenType::Switch => self.parse_switch_statement(),
             TokenType::Return => self.parse_return_statement(),
             TokenType::LBrace => self.parse_block_statement(),
             _ => self.parse_expression_statement(),
@@ -204,6 +205,119 @@ impl<'a> Parser<'a> {
             consequence,
             alternative,
         )))
+    }
+
+    fn parse_switch_statement(&mut self) -> Result<Statement, Error> {
+        // guard
+        if self.peeked_token.token_type != TokenType::LParen {
+            return Err(Error::new(
+                ErrorKind::InvalidInput,
+                format!("expected token '(' but found {}", self.peeked_token.literal),
+            ));
+        }
+        self.next_token(); // skip '('
+
+        // parse condition
+        self.next_token();
+        let discriminant = self.parse_expression(Precedence::Lowest)?;
+
+        // guard
+        if self.peeked_token.token_type != TokenType::RParen {
+            return Err(Error::new(
+                ErrorKind::InvalidInput,
+                format!(
+                    "expected token ')' but found '{}' (at parse_switch_statement)",
+                    self.peeked_token.literal
+                ),
+            ));
+        }
+
+        self.next_token();
+        self.next_token(); // skip ')'
+
+        // parse cases
+        let mut cases = Vec::new();
+        while self.peeked_token.token_type != TokenType::RBrace {
+            let case = self.parse_switch_case_statement()?;
+            cases.push(case);
+        }
+
+        Ok(Statement::Switch(SwitchStatement::new(discriminant, cases)))
+    }
+
+    fn parse_switch_case_statement(&mut self) -> Result<SwitchCase, Error> {
+        // guard
+        if self.peeked_token.token_type != TokenType::Case
+            && self.peeked_token.token_type != TokenType::Default
+        {
+            return Err(Error::new(
+                ErrorKind::InvalidInput,
+                format!(
+                    "expected token 'case' or 'default' but found '{}' (at parse_switch_case_statement)",
+                    self.peeked_token.literal
+                ),
+            ));
+        }
+        self.next_token(); // skip 'case'
+
+        match self.cur_token.token_type {
+            TokenType::Case => {
+                self.next_token(); // skip 'case'
+                let test = self.parse_expression(Precedence::Lowest)?;
+                // guard
+                if self.peeked_token.token_type != TokenType::Colon {
+                    return Err(Error::new(
+                        ErrorKind::InvalidInput,
+                        format!(
+                            "expected token ':' but found '{}' (at parse_switch_case_statement)",
+                            self.peeked_token.literal
+                        ),
+                    ));
+                }
+                self.next_token();
+                self.next_token(); // skip ':'
+
+                // parse consequent
+                let mut consequent = Vec::new();
+                while self.peeked_token.token_type != TokenType::Case
+                    && self.peeked_token.token_type != TokenType::Default
+                    && self.peeked_token.token_type != TokenType::RBrace
+                {
+                    let statement = self.parse_statement()?;
+                    consequent.push(statement);
+                }
+
+                Ok(SwitchCase::new(Some(test), consequent))
+            }
+
+            TokenType::Default => {
+                // guard
+                if self.peeked_token.token_type != TokenType::Colon {
+                    return Err(Error::new(
+                        ErrorKind::InvalidInput,
+                        format!(
+                            "expected token ':' but found '{}' (at parse_switch_case_statement)",
+                            self.peeked_token.literal
+                        ),
+                    ));
+                }
+                self.next_token();
+                self.next_token(); // skip ':'
+
+                // parse consequent
+                let mut consequent = Vec::new();
+                while self.peeked_token.token_type != TokenType::Case
+                    && self.peeked_token.token_type != TokenType::Default
+                    && self.peeked_token.token_type != TokenType::RBrace
+                {
+                    let statement = self.parse_statement()?;
+                    consequent.push(statement);
+                }
+
+                Ok(SwitchCase::new(None, consequent))
+            }
+            _ => unreachable!(),
+        }
     }
 
     fn parse_block_statement(&mut self) -> Result<Statement, Error> {
