@@ -381,7 +381,6 @@ impl<'a> Parser<'a> {
             TokenType::NaN => Expression::NaN,
             TokenType::This => Expression::This,
 
-
             // object
             TokenType::LBrace => self.parse_object()?,
 
