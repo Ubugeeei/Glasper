@@ -1,4 +1,4 @@
-use std::{collections::HashMap, io::Error};
+use std::{cell::RefCell, collections::HashMap, io::Error, rc::Rc};
 
 use crate::engine::{
     api::Context,
@@ -506,7 +506,9 @@ impl<'a> Evaluator<'a> {
             let value = self.eval_expression(&prop.value)?;
             properties.insert(key, value);
         }
-        Ok(RuntimeObject::Object(JSObject { properties }))
+        Ok(RuntimeObject::Object(Rc::new(RefCell::new(JSObject {
+            properties,
+        }))))
     }
 
     fn eval_member_expression(&mut self, m: &MemberExpression) -> Result<RuntimeObject, Error> {
@@ -515,7 +517,7 @@ impl<'a> Evaluator<'a> {
 
         match prop {
             RuntimeObject::String(s) => match obj {
-                RuntimeObject::Object(o) => match o.properties.get(&s.value) {
+                RuntimeObject::Object(o) => match o.borrow().properties.get(&s.value) {
                     Some(v) => Ok(v.clone()),
                     None => Ok(RuntimeObject::Undefined(JSUndefined)),
                 },
@@ -586,7 +588,7 @@ impl<'a> Evaluator<'a> {
 
                 match prop {
                     RuntimeObject::String(s) => match obj {
-                        RuntimeObject::Object(mut o) => {
+                        RuntimeObject::Object(o) => {
                             let o_name = if let Expression::Identifier(name) = &m.object.as_ref() {
                                 name.clone()
                             } else {
@@ -599,8 +601,10 @@ impl<'a> Evaluator<'a> {
                             let v = self.ctx.scope.get(&o_name);
                             match v {
                                 Some(Variable { value, .. }) => {
-                                    if let RuntimeObject::Object(mut o) = value.clone() {
-                                        o.properties.insert(s.value.clone(), new_value.clone());
+                                    if let RuntimeObject::Object(o) = value.clone() {
+                                        o.borrow_mut()
+                                            .properties
+                                            .insert(s.value.clone(), new_value.clone());
                                     }
                                 }
                                 None => {
@@ -610,7 +614,7 @@ impl<'a> Evaluator<'a> {
                                     ));
                                 }
                             }
-                            o.properties.insert(s.value, new_value.clone());
+                            o.borrow_mut().properties.insert(s.value, new_value.clone());
                             Ok(new_value)
                         }
                         _ => Err(Error::new(
