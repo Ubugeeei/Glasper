@@ -242,6 +242,8 @@ impl<'a> Parser<'a> {
             cases.push(case);
         }
 
+        self.next_token(); // skip '}'
+
         Ok(Statement::Switch(SwitchStatement::new(discriminant, cases)))
     }
 
