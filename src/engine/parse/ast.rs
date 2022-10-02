@@ -118,6 +118,7 @@ pub enum Expression {
     Null,
     Undefined,
     NaN,
+    This,
     Identifier(String),
     Unary(UnaryExpression),
     Update(UpdateExpression),
