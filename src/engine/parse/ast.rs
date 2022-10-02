@@ -120,7 +120,7 @@ pub enum Expression {
     NaN,
     Identifier(String),
     Unary(UnaryExpression),
-    Suffix(SuffixExpression),
+    Update(UpdateExpression),
     Binary(BinaryExpression),
     Function(FunctionExpression),
     Call(CallExpression),
@@ -140,13 +140,13 @@ impl UnaryExpression {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
-pub struct SuffixExpression {
+pub struct UpdateExpression {
     pub operator: String,
     pub target_var_name: String,
 }
-impl SuffixExpression {
-    pub fn new(operator: String, target_var_name: String) -> SuffixExpression {
-        SuffixExpression {
+impl UpdateExpression {
+    pub fn new(operator: String, target_var_name: String) -> UpdateExpression {
+        UpdateExpression {
             operator,
             target_var_name,
         }

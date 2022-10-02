@@ -8,7 +8,7 @@ use super::{
         ArrayExpression, BinaryExpression, BlockStatement, CallExpression, ConstStatement,
         Expression, FunctionExpression, FunctionParameter, IfStatement, LetStatement,
         MemberExpression, ObjectExpression, ObjectProperty, Precedence, Program, Statement,
-        SuffixExpression, SwitchCase, SwitchStatement, UnaryExpression,
+        SwitchCase, SwitchStatement, UnaryExpression, UpdateExpression,
     },
 };
 
@@ -387,7 +387,7 @@ impl<'a> Parser<'a> {
             TokenType::LBracket => self.parse_array()?,
 
             TokenType::Ident => match self.peeked_token.token_type {
-                TokenType::Inc | TokenType::Dec => self.parse_suffix_expression()?,
+                TokenType::Inc | TokenType::Dec => self.parse_update_expression()?,
                 _ => Expression::Identifier(self.parse_identifier()?),
             },
 
@@ -595,11 +595,11 @@ impl<'a> Parser<'a> {
         Ok(expr)
     }
 
-    fn parse_suffix_expression(&mut self) -> Result<Expression, Error> {
+    fn parse_update_expression(&mut self) -> Result<Expression, Error> {
         let ident = self.cur_token.literal.to_string();
         self.next_token();
-        let suffix_token = self.cur_token.clone();
-        let expr = Expression::Suffix(SuffixExpression::new(suffix_token.literal, ident));
+        let update_token = self.cur_token.clone();
+        let expr = Expression::Update(UpdateExpression::new(update_token.literal, ident));
         Ok(expr)
     }
 
@@ -1264,7 +1264,7 @@ pub mod tests {
             assert_eq!(program.statements.len(), 1);
             assert_eq!(
                 program.statements[0],
-                Statement::Expression(Expression::Suffix(SuffixExpression::new(
+                Statement::Expression(Expression::Update(UpdateExpression::new(
                     String::from("++"),
                     String::from("a"),
                 )))
@@ -1279,7 +1279,7 @@ pub mod tests {
             assert_eq!(program.statements.len(), 1);
             assert_eq!(
                 program.statements[0],
-                Statement::Expression(Expression::Suffix(SuffixExpression::new(
+                Statement::Expression(Expression::Update(UpdateExpression::new(
                     String::from("--"),
                     String::from("a"),
                 )))
