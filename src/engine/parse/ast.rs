@@ -197,15 +197,12 @@ impl FunctionParameter {
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct CallExpression {
-    pub function: Box<Expression>,
+    pub callee: Box<Expression>,
     pub arguments: Vec<Expression>,
 }
 impl CallExpression {
-    pub fn new(function: Box<Expression>, arguments: Vec<Expression>) -> CallExpression {
-        CallExpression {
-            function,
-            arguments,
-        }
+    pub fn new(callee: Box<Expression>, arguments: Vec<Expression>) -> CallExpression {
+        CallExpression { callee, arguments }
     }
 }
 

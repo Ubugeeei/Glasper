@@ -707,7 +707,7 @@ impl<'a> Evaluator<'a> {
     }
 
     fn eval_call_expression(&mut self, expr: &CallExpression) -> Result<RuntimeObject, Error> {
-        let function = self.eval_expression(&expr.function)?;
+        let function = self.eval_expression(&expr.callee)?;
         let mut args = Vec::new();
         for arg in &expr.arguments {
             args.push(self.eval_expression(arg)?);
