@@ -10,7 +10,7 @@ use crate::engine::{
     },
 };
 
-use super::object::{JSArray, JSFunction, JSNaN, JSObject, JSString};
+use super::object::{JSFunction, JSNaN, JSObject, JSString};
 
 pub struct Evaluator<'a> {
     ctx: &'a mut Context,
@@ -528,7 +528,18 @@ impl<'a> Evaluator<'a> {
 
         match prop {
             RuntimeObject::String(s) => match obj {
-                RuntimeObject::Object(o) => match o.borrow().properties.get(&s.value) {
+                RuntimeObject::Object(o) => {
+                    self.exec_ctx_this = o.clone();
+                    self.eval_property(o, s.value.as_ref())
+                }
+                _ => Err(Error::new(
+                    std::io::ErrorKind::Other,
+                    "Uncaught SyntaxError: Invalid or unexpected token",
+                )),
+            },
+
+            RuntimeObject::Number(n) => match obj {
+                RuntimeObject::Object(o) => match o.borrow().properties.get(&n.value.to_string()) {
                     Some(v) => {
                         self.exec_ctx_this = o.clone();
                         Ok(v.clone())
@@ -540,6 +551,7 @@ impl<'a> Evaluator<'a> {
                     "Uncaught SyntaxError: Invalid or unexpected token",
                 )),
             },
+
             _ => Err(Error::new(
                 std::io::ErrorKind::Other,
                 "Uncaught SyntaxError: Invalid or unexpected token",
@@ -547,13 +559,50 @@ impl<'a> Evaluator<'a> {
         }
     }
 
-    fn eval_array_expression(&mut self, arr: &ArrayExpression) -> Result<RuntimeObject, Error> {
-        let mut elements = Vec::new();
-        for e in &arr.elements {
-            let element = self.eval_expression(e)?;
-            elements.push(element);
+    fn eval_property(
+        &self,
+        target_obj: Rc<RefCell<JSObject>>,
+        key: &str,
+    ) -> Result<RuntimeObject, Error> {
+        let binding = target_obj.borrow();
+        let p = binding.properties.get(key);
+        match p {
+            Some(v) => Ok(v.clone()),
+            None => match target_obj.borrow().properties.get("__proto__") {
+                Some(v) => match v {
+                    RuntimeObject::Object(o) => self.eval_property(o.clone(), key),
+                    _ => unreachable!("unreachable"),
+                },
+                None => Ok(RuntimeObject::Undefined(JSUndefined)),
+            },
         }
-        Ok(RuntimeObject::Array(JSArray { elements }))
+    }
+
+    fn eval_array_expression(&mut self, arr: &ArrayExpression) -> Result<RuntimeObject, Error> {
+        let mut properties = HashMap::new();
+        for (i, e) in arr.elements.iter().enumerate() {
+            let element = self.eval_expression(e)?;
+            properties.insert(i.to_string(), element);
+        }
+
+        // set length
+        properties.insert(
+            "length".to_string(),
+            RuntimeObject::Number(JSNumber {
+                value: arr.elements.len() as f64,
+            }),
+        );
+
+        // set prototype
+        let prototype = match self.ctx.global().get("Array").unwrap() {
+            RuntimeObject::Object(o) => o.borrow().properties.get("prototype").unwrap().clone(),
+            _ => unreachable!("unreachable"),
+        };
+        properties.insert("__proto__".to_string(), prototype);
+
+        Ok(RuntimeObject::Object(Rc::new(RefCell::new(JSObject {
+            properties,
+        }))))
     }
 
     fn eval_assign_expression(
@@ -594,8 +643,6 @@ impl<'a> Evaluator<'a> {
                 }
             }
             Expression::Member(m) => {
-                // TODO: assign to ast
-
                 let obj = self.eval_expression(&m.object)?;
                 let prop = self.eval_expression(&m.property)?;
                 let new_value = self.eval_expression(right)?;
@@ -622,10 +669,12 @@ impl<'a> Evaluator<'a> {
                                     }
                                 }
                                 None => {
-                                    return Err(Error::new(
-                                        std::io::ErrorKind::Other,
-                                        "Uncaught SyntaxError: Invalid or unexpected token",
-                                    ));
+                                    let v = self.ctx.global().get(&o_name);
+                                    if let Some(RuntimeObject::Object(o)) = v {
+                                        o.borrow_mut()
+                                            .properties
+                                            .insert(s.value.clone(), new_value.clone());
+                                    }
                                 }
                             }
                             o.borrow_mut().properties.insert(s.value, new_value.clone());
@@ -1360,29 +1409,29 @@ mod tests {
                 String::from(
                     r#"
                         let a = [1, 2, 3];
-                        a;
+                        a.length;
                     "#,
                 ),
-                "[\x1b[33m1\x1b[0m, \x1b[33m2\x1b[0m, \x1b[33m3\x1b[0m]",
+                "\x1b[33m3\x1b[0m",
             ),
-            // (
-            //     String::from(
-            //         r#"
-            //             let a = [1, 2, 3];
-            //             a[0];
-            //         "#,
-            //     ),
-            //     "\x1b[33m1\x1b[0m",
-            // ),
-            // (
-            //     String::from(
-            //         r#"
-            //             let a = [1, 2, 3];
-            //             a[3];
-            //         "#,
-            //     ),
-            //     "\x1b[30mundefined\x1b[0m",
-            // ),
+            (
+                String::from(
+                    r#"
+                        let a = [1, 2, 3];
+                        a[0];
+                    "#,
+                ),
+                "\x1b[33m1\x1b[0m",
+            ),
+            (
+                String::from(
+                    r#"
+                        let a = [1, 2, 3];
+                        a[3];
+                    "#,
+                ),
+                "\x1b[30mundefined\x1b[0m",
+            ),
         ];
 
         for (input, expected) in case {

@@ -4,7 +4,9 @@ use crate::engine::{
     parse::{ast::Program, parser::Parser},
     tokenize::lexer::Lexer,
 };
-use std::{collections::HashMap, io::Error};
+use std::{cell::RefCell, collections::HashMap, io::Error, rc::Rc};
+
+use super::eval::object::JSObject;
 
 pub struct Isolate {
     pub context: Context,
@@ -12,6 +14,25 @@ pub struct Isolate {
 impl Isolate {
     pub fn new(context: Context) -> Self {
         Isolate { context }
+    }
+
+    pub fn install_functions(&mut self, paths: Vec<&str>) {
+        for path in paths {
+            match std::fs::read_to_string(path) {
+                Ok(source) => {
+                    let mut script = Script::compile(source, &mut self.context);
+                    let _ = script.run();
+                }
+                Err(_) => {
+                    let crr_dir = std::env::current_dir().unwrap();
+                    println!(
+                        "\x1b[31merror\x1b[0m: Module not found \"file://{}/{}\".",
+                        crr_dir.display(),
+                        path
+                    );
+                }
+            };
+        }
     }
 }
 
@@ -42,9 +63,22 @@ impl Default for Global {
 }
 impl Global {
     pub fn new() -> Self {
-        Global {
-            scope: HashMap::new(),
-        }
+        let mut scope = HashMap::new();
+
+        // install array object
+        let mut array_prototype = HashMap::new();
+        array_prototype.insert(
+            "prototype".to_string(),
+            RuntimeObject::Object(Rc::new(RefCell::new(JSObject {
+                properties: HashMap::new(),
+            }))),
+        );
+        let array = RuntimeObject::Object(Rc::new(RefCell::new(JSObject {
+            properties: array_prototype,
+        })));
+        scope.insert("Array".to_string(), array);
+
+        Global { scope }
     }
 
     pub fn get(&self, key: &str) -> Option<&RuntimeObject> {
