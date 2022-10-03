@@ -5,8 +5,9 @@ use crate::engine::{
     eval::object::{JSBoolean, JSNull, JSNumber, JSUndefined, RuntimeObject},
     handle_scope::{Variable, VariableKind},
     parse::ast::{
-        ArrayExpression, BlockStatement, CallExpression, ConstStatement, Expression, IfStatement,
-        LetStatement, MemberExpression, ObjectExpression, Program, Statement, SwitchStatement,
+        ArrayExpression, BlockStatement, CallExpression, ConstStatement, Expression, ForInit,
+        ForStatement, IfStatement, LetStatement, MemberExpression, ObjectExpression, Program,
+        Statement, SwitchStatement,
     },
 };
 
@@ -49,11 +50,13 @@ impl<'a> Evaluator<'a> {
             Statement::Expression(expr) => self.eval_expression(expr),
             Statement::Let(stmt) => self.eval_let_statement(stmt),
             Statement::Const(stmt) => self.eval_const_statement(stmt),
+            Statement::Block(stmt) => self.eval_block_statement(stmt, scope_type),
             Statement::If(stmt) => self.eval_if_statement(stmt, scope_type),
             Statement::Switch(stmt) => self.eval_switch_statement(stmt, scope_type),
-            Statement::Block(stmt) => self.eval_block_statement(stmt, scope_type),
+            Statement::For(stmt) => self.eval_for_statement(stmt, scope_type),
             Statement::Return(expr) => self.eval_return_statement(expr, scope_type),
             Statement::Break => Ok(RuntimeObject::Break),
+            Statement::Continue => Ok(RuntimeObject::Continue),
         }
     }
 
@@ -750,6 +753,50 @@ impl<'a> Evaluator<'a> {
                         return Ok(RuntimeObject::Undefined(JSUndefined));
                     }
                 }
+            }
+        }
+
+        Ok(RuntimeObject::Undefined(JSUndefined))
+    }
+
+    fn eval_for_statement(
+        &mut self,
+        statement: &ForStatement,
+        scope_type: ScopeType,
+    ) -> Result<RuntimeObject, Error> {
+        self.ctx.scope.scope_in();
+
+        if let Some(ref init) = statement.init {
+            match init {
+                ForInit::Expression(e) => {
+                    self.eval_expression(e)?;
+                }
+                ForInit::Statement(s) => {
+                    self.eval_statement(s, scope_type)?;
+                }
+            };
+        }
+
+        loop {
+            if let Some(ref test) = statement.test {
+                let test = self.eval_expression(test)?;
+                if !self.is_truthy(test) {
+                    break;
+                }
+            }
+
+            let ro = self.eval_statement(&statement.body, scope_type)?;
+
+            if let RuntimeObject::Return(_) = ro {
+                return Ok(ro);
+            }
+
+            if let RuntimeObject::Break = ro {
+                break;
+            }
+
+            if let Some(ref update) = statement.update {
+                self.eval_expression(update)?;
             }
         }
 
@@ -1492,6 +1539,31 @@ mod tests {
             "#
             .to_string(),
             "\x1b[33m1\x1b[0m",
+        )];
+
+        for (input, expected) in case {
+            let mut l = Lexer::new(input.to_string());
+            let mut p = Parser::new(&mut l);
+            let program = p.parse_program();
+            let handle_scope = HandleScope::new();
+            let mut context = Context::new(handle_scope);
+            let mut ev = Evaluator::new(&mut context);
+            assert_eq!(format!("{}", ev.eval(&program).unwrap()), expected);
+        }
+    }
+
+    #[test]
+    fn eval_for_statement() {
+        let case = vec![(
+            r#"
+                let a = 0;
+                for (let i = 0; i < 10; i = i + 1) {
+                    a = a + 1;
+                }
+                a;
+            "#
+            .to_string(),
+            "\x1b[33m10\x1b[0m",
         )];
 
         for (input, expected) in case {
