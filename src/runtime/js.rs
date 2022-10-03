@@ -21,15 +21,17 @@ impl JavaScriptRuntime {
     pub fn new() -> Self {
         let handle_scope = HandleScope::new();
         let mut context = Context::new(handle_scope);
-
         let global = context.global();
+
+        // binding
         let console_builder = ConsoleBuilder::new();
         let console = console_builder.build();
         global.set("console", console);
 
-        Self {
-            isolate: Isolate::new(context),
-        }
+        let mut isolate = Isolate::new(context);
+        isolate.install_functions(vec!["src/runtime/array.js"]);
+
+        JavaScriptRuntime { isolate }
     }
 
     pub fn execute(&mut self, source: String) -> Result<RuntimeObject, Error> {

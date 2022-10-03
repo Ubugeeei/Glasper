@@ -4,7 +4,7 @@ Array.prototype = {
 
 		// TODO: impl for statement
 		const loop = function (i) {
-			if (i > this.length) return;
+			if (i === this.length) return;
 			if (s !== "") {
 				s = s + sep;
 			}
