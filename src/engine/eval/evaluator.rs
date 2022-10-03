@@ -7,7 +7,7 @@ use crate::engine::{
     parse::ast::{
         ArrayExpression, BlockStatement, CallExpression, ConstStatement, Expression, ForInit,
         ForStatement, IfStatement, LetStatement, MemberExpression, ObjectExpression, Program,
-        Statement, SwitchStatement,
+        Statement, SwitchStatement, UpdateExpression,
     },
 };
 
@@ -97,8 +97,7 @@ impl<'a> Evaluator<'a> {
 
             // others
             Expression::Call(expr) => self.eval_call_expression(expr),
-
-            _ => Ok(RuntimeObject::Undefined(JSUndefined)),
+            Expression::Update(expr) => self.eval_update_expression(expr),
         }
     }
 
@@ -877,6 +876,49 @@ impl<'a> Evaluator<'a> {
         }
     }
 
+    fn eval_update_expression(&mut self, expr: &UpdateExpression) -> Result<RuntimeObject, Error> {
+        let left = self.eval_expression(&Expression::Identifier(expr.target_var_name.clone()))?;
+
+        let right = match &*expr.operator {
+            "++" => RuntimeObject::Number(JSNumber::new(1.0)),
+            "--" => RuntimeObject::Number(JSNumber::new(-1.0)),
+            _ => {
+                return Err(Error::new(
+                    std::io::ErrorKind::Other,
+                    "Uncaught SyntaxError: Unexpected token",
+                ))
+            }
+        };
+
+        let result = self.eval_binary_expression("+".to_string(), left, right)?;
+
+        let v = self.ctx.scope.get(&expr.target_var_name);
+        match v {
+            Some(v) => match v.kind {
+                VariableKind::Const => {
+                    return Err(Error::new(
+                        std::io::ErrorKind::Other,
+                        "Uncaught TypeError: Assignment to constant variable.",
+                    ))
+                }
+                _ => {
+                    self.ctx.scope.set(
+                        &expr.target_var_name,
+                        Variable::new(VariableKind::Var, result.clone()),
+                    );
+                }
+            },
+            None => {
+                return Err(Error::new(
+                    std::io::ErrorKind::Other,
+                    "Uncaught ReferenceError: Cannot access 'a' before initialization",
+                ))
+            }
+        }
+
+        Ok(result)
+    }
+
     fn eval_return_statement(
         &mut self,
         stmt: &Expression,
@@ -1564,6 +1606,30 @@ mod tests {
             "#
             .to_string(),
             "\x1b[33m10\x1b[0m",
+        )];
+
+        for (input, expected) in case {
+            let mut l = Lexer::new(input.to_string());
+            let mut p = Parser::new(&mut l);
+            let program = p.parse_program();
+            let handle_scope = HandleScope::new();
+            let mut context = Context::new(handle_scope);
+            let mut ev = Evaluator::new(&mut context);
+            assert_eq!(format!("{}", ev.eval(&program).unwrap()), expected);
+        }
+    }
+
+    #[test]
+    fn eval_update_ops() {
+        let case = vec![(
+            r#"
+                let i = 0;
+                i++;
+                i++;
+                i--;
+            "#
+            .to_string(),
+            "\x1b[33m1\x1b[0m",
         )];
 
         for (input, expected) in case {
