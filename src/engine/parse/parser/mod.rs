@@ -8,9 +8,9 @@ use crate::engine::tokenize::token::TokenType;
 use super::{
     super::{lexer::Lexer, token::Token},
     ast::{
-        ArrayExpression, BinaryExpression, BlockStatement, CallExpression, Expression,
-        FunctionExpression, FunctionParameter, MemberExpression, ObjectExpression, ObjectProperty,
-        Precedence, Program, Statement, UnaryExpression, UpdateExpression,
+        ArrayExpression, BinaryExpression, CallExpression, Expression, FunctionExpression,
+        FunctionParameter, MemberExpression, ObjectExpression, ObjectProperty, Precedence, Program,
+        Statement, UnaryExpression, UpdateExpression,
     },
 };
 
@@ -77,32 +77,6 @@ impl<'a> Parser<'a> {
             self.next_token();
         }
         Ok(Statement::Break)
-    }
-
-    fn parse_block_statement(&mut self) -> Result<Statement, Error> {
-        // guard
-        if self.cur_token.token_type != TokenType::LBrace {
-            return Err(Error::new(
-                ErrorKind::InvalidInput,
-                format!(
-                    "expected token '{{' but found {}",
-                    self.peeked_token.literal
-                ),
-            ));
-        }
-
-        self.next_token(); // skip '{'
-
-        let mut statements = vec![];
-        while self.cur_token.token_type != TokenType::RBrace
-            && self.cur_token.token_type != TokenType::Eof
-        {
-            let stmt = self.parse_statement()?;
-            statements.push(stmt);
-            self.next_token();
-        }
-
-        Ok(Statement::Block(BlockStatement::new(statements)))
     }
 
     fn parse_return_statement(&mut self) -> Result<Statement, Error> {
@@ -544,7 +518,7 @@ impl<'a> Parser<'a> {
 
 #[cfg(test)]
 pub mod tests {
-    use crate::engine::parse::ast::{ConstStatement, LetStatement};
+    use crate::engine::parse::ast::{BlockStatement, ConstStatement, LetStatement};
 
     use super::*;
 
