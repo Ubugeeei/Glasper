@@ -11,4 +11,15 @@ Array.prototype = {
 
 		return s;
 	},
+
+	// TODO:
+	// map: function (callback) {
+	// 	const a = [];
+
+	// 	for (let i = 0; i < this.length; i++) {
+	// 		a[i] = callback(this[i], i);
+	// 	}
+
+	// 	return a;
+	// }
 };
