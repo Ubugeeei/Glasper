@@ -5,8 +5,9 @@ use crate::engine::{
     eval::object::{JSBoolean, JSNull, JSNumber, JSUndefined, RuntimeObject},
     handle_scope::{Variable, VariableKind},
     parse::ast::{
-        ArrayExpression, BlockStatement, CallExpression, ConstStatement, Expression, IfStatement,
-        LetStatement, MemberExpression, ObjectExpression, Program, Statement, SwitchStatement,
+        ArrayExpression, BlockStatement, CallExpression, ConstStatement, Expression, ForInit,
+        ForStatement, IfStatement, LetStatement, MemberExpression, ObjectExpression, Program,
+        Statement, SwitchStatement, UpdateExpression,
     },
 };
 
@@ -49,11 +50,13 @@ impl<'a> Evaluator<'a> {
             Statement::Expression(expr) => self.eval_expression(expr),
             Statement::Let(stmt) => self.eval_let_statement(stmt),
             Statement::Const(stmt) => self.eval_const_statement(stmt),
+            Statement::Block(stmt) => self.eval_block_statement(stmt, scope_type),
             Statement::If(stmt) => self.eval_if_statement(stmt, scope_type),
             Statement::Switch(stmt) => self.eval_switch_statement(stmt, scope_type),
-            Statement::Block(stmt) => self.eval_block_statement(stmt, scope_type),
+            Statement::For(stmt) => self.eval_for_statement(stmt, scope_type),
             Statement::Return(expr) => self.eval_return_statement(expr, scope_type),
             Statement::Break => Ok(RuntimeObject::Break),
+            Statement::Continue => Ok(RuntimeObject::Continue),
         }
     }
 
@@ -94,8 +97,7 @@ impl<'a> Evaluator<'a> {
 
             // others
             Expression::Call(expr) => self.eval_call_expression(expr),
-
-            _ => Ok(RuntimeObject::Undefined(JSUndefined)),
+            Expression::Update(expr) => self.eval_update_expression(expr),
         }
     }
 
@@ -756,6 +758,50 @@ impl<'a> Evaluator<'a> {
         Ok(RuntimeObject::Undefined(JSUndefined))
     }
 
+    fn eval_for_statement(
+        &mut self,
+        statement: &ForStatement,
+        scope_type: ScopeType,
+    ) -> Result<RuntimeObject, Error> {
+        self.ctx.scope.scope_in();
+
+        if let Some(ref init) = statement.init {
+            match init {
+                ForInit::Expression(e) => {
+                    self.eval_expression(e)?;
+                }
+                ForInit::Statement(s) => {
+                    self.eval_statement(s, scope_type)?;
+                }
+            };
+        }
+
+        loop {
+            if let Some(ref test) = statement.test {
+                let test = self.eval_expression(test)?;
+                if !self.is_truthy(test) {
+                    break;
+                }
+            }
+
+            let ro = self.eval_statement(&statement.body, scope_type)?;
+
+            if let RuntimeObject::Return(_) = ro {
+                return Ok(ro);
+            }
+
+            if let RuntimeObject::Break = ro {
+                break;
+            }
+
+            if let Some(ref update) = statement.update {
+                self.eval_expression(update)?;
+            }
+        }
+
+        Ok(RuntimeObject::Undefined(JSUndefined))
+    }
+
     fn eval_block_statement(
         &mut self,
         block: &BlockStatement,
@@ -828,6 +874,49 @@ impl<'a> Evaluator<'a> {
                 "Uncaught TypeError: not a function",
             )),
         }
+    }
+
+    fn eval_update_expression(&mut self, expr: &UpdateExpression) -> Result<RuntimeObject, Error> {
+        let left = self.eval_expression(&Expression::Identifier(expr.target_var_name.clone()))?;
+
+        let right = match &*expr.operator {
+            "++" => RuntimeObject::Number(JSNumber::new(1.0)),
+            "--" => RuntimeObject::Number(JSNumber::new(-1.0)),
+            _ => {
+                return Err(Error::new(
+                    std::io::ErrorKind::Other,
+                    "Uncaught SyntaxError: Unexpected token",
+                ))
+            }
+        };
+
+        let result = self.eval_binary_expression("+".to_string(), left, right)?;
+
+        let v = self.ctx.scope.get(&expr.target_var_name);
+        match v {
+            Some(v) => match v.kind {
+                VariableKind::Const => {
+                    return Err(Error::new(
+                        std::io::ErrorKind::Other,
+                        "Uncaught TypeError: Assignment to constant variable.",
+                    ))
+                }
+                _ => {
+                    self.ctx.scope.set(
+                        &expr.target_var_name,
+                        Variable::new(VariableKind::Var, result.clone()),
+                    );
+                }
+            },
+            None => {
+                return Err(Error::new(
+                    std::io::ErrorKind::Other,
+                    "Uncaught ReferenceError: Cannot access 'a' before initialization",
+                ))
+            }
+        }
+
+        Ok(result)
     }
 
     fn eval_return_statement(
@@ -1489,6 +1578,55 @@ mod tests {
                 };
 
                 a.c();
+            "#
+            .to_string(),
+            "\x1b[33m1\x1b[0m",
+        )];
+
+        for (input, expected) in case {
+            let mut l = Lexer::new(input.to_string());
+            let mut p = Parser::new(&mut l);
+            let program = p.parse_program();
+            let handle_scope = HandleScope::new();
+            let mut context = Context::new(handle_scope);
+            let mut ev = Evaluator::new(&mut context);
+            assert_eq!(format!("{}", ev.eval(&program).unwrap()), expected);
+        }
+    }
+
+    #[test]
+    fn eval_for_statement() {
+        let case = vec![(
+            r#"
+                let a = 0;
+                for (let i = 0; i < 10; i = i + 1) {
+                    a = a + 1;
+                }
+                a;
+            "#
+            .to_string(),
+            "\x1b[33m10\x1b[0m",
+        )];
+
+        for (input, expected) in case {
+            let mut l = Lexer::new(input.to_string());
+            let mut p = Parser::new(&mut l);
+            let program = p.parse_program();
+            let handle_scope = HandleScope::new();
+            let mut context = Context::new(handle_scope);
+            let mut ev = Evaluator::new(&mut context);
+            assert_eq!(format!("{}", ev.eval(&program).unwrap()), expected);
+        }
+    }
+
+    #[test]
+    fn eval_update_ops() {
+        let case = vec![(
+            r#"
+                let i = 0;
+                i++;
+                i++;
+                i--;
             "#
             .to_string(),
             "\x1b[33m1\x1b[0m",

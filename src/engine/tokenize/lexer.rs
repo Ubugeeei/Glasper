@@ -406,7 +406,7 @@ pub mod tests {
     #[test]
     fn test_keywords() {
         let source =
-            String::from("function let const true false if else switch break case default return null undefined NaN this");
+            String::from("function let const true false if else switch break case default for continue return null undefined NaN this");
         let mut l = Lexer::new(source);
         assert_eq!(l.next_token().token_type, TokenType::Function);
         assert_eq!(l.next_token().token_type, TokenType::Let);
@@ -419,6 +419,8 @@ pub mod tests {
         assert_eq!(l.next_token().token_type, TokenType::Break);
         assert_eq!(l.next_token().token_type, TokenType::Case);
         assert_eq!(l.next_token().token_type, TokenType::Default);
+        assert_eq!(l.next_token().token_type, TokenType::For);
+        assert_eq!(l.next_token().token_type, TokenType::Continue);
         assert_eq!(l.next_token().token_type, TokenType::Return);
         assert_eq!(l.next_token().token_type, TokenType::Null);
         assert_eq!(l.next_token().token_type, TokenType::Undefined);

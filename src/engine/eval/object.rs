@@ -18,6 +18,7 @@ pub enum RuntimeObject {
     NaN(JSNaN),
     Return(Box<RuntimeObject>),
     Break,
+    Continue,
 }
 
 impl RuntimeObject {
@@ -35,6 +36,7 @@ impl RuntimeObject {
             Self::BuiltinFunction(_) => "function".to_string(),
             Self::Return(_) => "".to_string(),
             Self::Break => "".to_string(),
+            Self::Continue => "".to_string(),
         }
     }
 }
@@ -68,6 +70,7 @@ impl Display for RuntimeObject {
 
             Self::Return(o) => write!(f, "{}", o),
             Self::Break => write!(f, ""),
+            Self::Continue => write!(f, ""),
         }
     }
 }

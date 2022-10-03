@@ -23,12 +23,11 @@ pub enum Statement {
     If(IfStatement),
     Block(BlockStatement),
     Switch(SwitchStatement),
+    For(ForStatement),
+    Continue,
     // TODO: label
     Break,
-    // TODO: impl
-    // for
     // while
-    // continue
 }
 
 #[derive(Debug, PartialEq, Clone)]
@@ -106,6 +105,35 @@ impl SwitchCase {
     pub fn new(test: Option<Expression>, consequent: Vec<Statement>) -> SwitchCase {
         SwitchCase { test, consequent }
     }
+}
+
+#[derive(Debug, PartialEq, Clone)]
+pub struct ForStatement {
+    pub init: Option<ForInit>,
+    pub test: Option<Expression>,
+    pub update: Option<Expression>,
+    pub body: Box<Statement>,
+}
+impl ForStatement {
+    pub fn new(
+        init: Option<ForInit>,
+        test: Option<Expression>,
+        update: Option<Expression>,
+        body: Box<Statement>,
+    ) -> ForStatement {
+        ForStatement {
+            init,
+            test,
+            update,
+            body,
+        }
+    }
+}
+
+#[derive(Debug, PartialEq, Clone)]
+pub enum ForInit {
+    Statement(Box<Statement>), // variable declaration // TODO: struct Declaration
+    Expression(Expression),
 }
 
 #[derive(Debug, PartialEq, Clone)]
