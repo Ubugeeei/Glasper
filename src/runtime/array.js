@@ -1,4 +1,11 @@
 Array.prototype = {
+	at: function (index) {
+		if (index < 0) {
+			index = index + this.length;
+		}
+		return this[index];
+	},
+
 	join: function (sep) {
 		let s = "";
 
@@ -27,11 +34,5 @@ Array.prototype = {
 			}
 		}
 		return undefined;
-	}
-
-	// forEach: function (callback) {
-	// 	for (let i = 0; i < this.length; i++) {
-	// 		callback(this[i], i);
-	// 	}
-	// },
+	},
 };
