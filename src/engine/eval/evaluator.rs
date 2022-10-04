@@ -644,6 +644,8 @@ impl<'a> Evaluator<'a> {
                     }
                 }
             }
+
+            // object
             Expression::Member(m) => {
                 let obj = self.eval_expression(&m.object)?;
                 let prop = self.eval_expression(&m.property)?;
@@ -680,6 +682,45 @@ impl<'a> Evaluator<'a> {
                                 }
                             }
                             o.borrow_mut().properties.insert(s.value, new_value.clone());
+                            Ok(new_value)
+                        }
+                        _ => Err(Error::new(
+                            std::io::ErrorKind::Other,
+                            "Uncaught SyntaxError: Invalid or unexpected token",
+                        )),
+                    },
+                    RuntimeObject::Number(n) => match obj {
+                        RuntimeObject::Object(o) => {
+                            let o_name = if let Expression::Identifier(name) = &m.object.as_ref() {
+                                name.clone()
+                            } else {
+                                return Err(Error::new(
+                                    std::io::ErrorKind::Other,
+                                    "Uncaught SyntaxError: Invalid or unexpected token",
+                                ));
+                            };
+
+                            let v = self.ctx.scope.get(&o_name);
+                            match v {
+                                Some(Variable { value, .. }) => {
+                                    if let RuntimeObject::Object(o) = value.clone() {
+                                        o.borrow_mut()
+                                            .properties
+                                            .insert(n.value.clone().to_string(), new_value.clone());
+                                    }
+                                }
+                                None => {
+                                    let v = self.ctx.global().get(&o_name);
+                                    if let Some(RuntimeObject::Object(o)) = v {
+                                        o.borrow_mut()
+                                            .properties
+                                            .insert(n.value.clone().to_string(), new_value.clone());
+                                    }
+                                }
+                            }
+                            o.borrow_mut()
+                                .properties
+                                .insert(n.value.to_string(), new_value.clone());
                             Ok(new_value)
                         }
                         _ => Err(Error::new(
