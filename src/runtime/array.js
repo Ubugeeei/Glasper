@@ -17,9 +17,9 @@ Array.prototype = {
 		return c;
 	},
 
-	every: function (f) {
+	every: function (callback) {
 		for (let i = 0; i < this.length; i++) {
-			if (!f(this[i])) {
+			if (!callback(this[i])) {
 				return false;
 			}
 		}
