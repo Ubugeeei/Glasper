@@ -8,6 +8,9 @@ console.log("arr.length:", arr.length);
 const last = arr.at(-1);
 console.log("last:", last);
 
+const concat = arr.concat([6, 7, 8]);
+console.log("concat[6]", concat[6]);
+
 const joined = arr.join("/");
 console.log("joined:", joined);
 

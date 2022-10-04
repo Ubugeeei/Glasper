@@ -6,6 +6,17 @@ Array.prototype = {
 		return this[index];
 	},
 
+	concat: function (v) {
+		const c = [];
+		for (let i = 0; i < this.length; i++) {
+			c[i] = this[i];
+		}
+		for (let i = 0; i < v.length; i++) {
+			c[i + this.length + 2] = v[i];
+		}
+		return c;
+	},
+
 	join: function (sep) {
 		let s = "";
 
