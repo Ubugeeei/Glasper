@@ -12,14 +12,17 @@ Array.prototype = {
 		return s;
 	},
 
-	// TODO:
-	// map: function (callback) {
-	// 	const a = [];
+	map: function (callback) {
+		const m = [];
+		for (let i = 0; i < this.length; i++) {
+			m[i] = callback(this[i], i);
+		}
+		return m;
+	},
 
+	// forEach: function (callback) {
 	// 	for (let i = 0; i < this.length; i++) {
-	// 		a[i] = callback(this[i], i);
+	// 		callback(this[i], i);
 	// 	}
-
-	// 	return a;
-	// }
+	// },
 };
