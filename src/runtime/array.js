@@ -20,6 +20,15 @@ Array.prototype = {
 		return m;
 	},
 
+	find: function (callback) {
+		for (let i = 0; i < this.length; i++) {
+			if (callback(this[i], i)) {
+				return this[i];
+			}
+		}
+		return undefined;
+	}
+
 	// forEach: function (callback) {
 	// 	for (let i = 0; i < this.length; i++) {
 	// 		callback(this[i], i);
