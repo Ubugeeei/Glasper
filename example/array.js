@@ -11,6 +11,11 @@ console.log("last:", last);
 const concat = arr.concat([6, 7, 8]);
 console.log("concat[6]", concat[6]);
 
+const every = arr.every(function (v) {
+	return v < 10;
+});
+console.log("every:", every);
+
 const joined = arr.join("/");
 console.log("joined:", joined);
 

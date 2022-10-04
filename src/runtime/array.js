@@ -17,6 +17,15 @@ Array.prototype = {
 		return c;
 	},
 
+	every: function (f) {
+		for (let i = 0; i < this.length; i++) {
+			if (!f(this[i])) {
+				return false;
+			}
+		}
+		return true;
+	},
+
 	join: function (sep) {
 		let s = "";
 
