@@ -34,6 +34,7 @@ impl<'a> Evaluator<'a> {
         let mut result = RuntimeObject::Undefined(JSUndefined);
         for statement in &program.statements {
             result = self.eval_statement(statement, ScopeType::Block)?;
+
             if let RuntimeObject::Return(o) = result {
                 return Ok(*o);
             };
@@ -852,13 +853,19 @@ impl<'a> Evaluator<'a> {
         let mut result = RuntimeObject::Undefined(JSUndefined);
         for stmt in &block.statements {
             result = self.eval_statement(stmt, scope_type)?;
-            if let RuntimeObject::Return(_) = result {
-                self.ctx.scope.scope_out();
-                return Ok(result);
-            };
-        }
-        self.ctx.scope.scope_out();
 
+            match result {
+                RuntimeObject::Return(_) | RuntimeObject::Break | RuntimeObject::Continue => {
+                    self.ctx.scope.scope_out();
+                    return Ok(result);
+                }
+                _ => {
+                    continue;
+                }
+            }
+        }
+
+        self.ctx.scope.scope_out();
         if scope_type == ScopeType::Function {
             Ok(result)
         } else {
