@@ -9,7 +9,7 @@ use crate::engine::{
 };
 
 impl<'a> Parser<'a> {
-    pub(in super::super::super) fn parse_let_statement(&mut self) -> Result<Statement, Error> {
+    pub(super) fn parse_let_statement(&mut self) -> Result<Statement, Error> {
         self.next_token();
 
         // guard

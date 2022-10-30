@@ -15,7 +15,7 @@ use crate::engine::{
 };
 
 impl<'a> Parser<'a> {
-    pub(in super::super::super) fn parse_statement(&mut self) -> Result<Statement, Error> {
+    pub(super) fn parse_statement(&mut self) -> Result<Statement, Error> {
         match self.cur_token.token_type {
             TokenType::Let => self.parse_let_statement(),
             TokenType::Const => self.parse_const_statement(),

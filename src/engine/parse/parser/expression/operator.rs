@@ -6,7 +6,7 @@ use crate::engine::parse::{
 };
 
 impl<'a> Parser<'a> {
-    pub(in super::super) fn parse_unary_expression(&mut self) -> Result<Expression, Error> {
+    pub(super) fn parse_unary_expression(&mut self) -> Result<Expression, Error> {
         let token = self.cur_token.clone();
         self.next_token();
 
@@ -15,7 +15,7 @@ impl<'a> Parser<'a> {
         Ok(expr)
     }
 
-    pub(in super::super) fn parse_update_expression(&mut self) -> Result<Expression, Error> {
+    pub(super) fn parse_update_expression(&mut self) -> Result<Expression, Error> {
         let ident = self.cur_token.literal.to_string();
         self.next_token();
         let update_token = self.cur_token.clone();
@@ -23,7 +23,7 @@ impl<'a> Parser<'a> {
         Ok(expr)
     }
 
-    pub(in super::super) fn parse_binary_expression(
+    pub(super) fn parse_binary_expression(
         &mut self,
         left: Expression,
     ) -> Result<Expression, Error> {

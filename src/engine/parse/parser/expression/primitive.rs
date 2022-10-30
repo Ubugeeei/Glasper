@@ -3,7 +3,7 @@ use std::io::{Error, ErrorKind};
 use crate::engine::{parse::parser::Parser, tokenize::token::TokenType};
 
 impl<'a> Parser<'a> {
-    pub(in super::super) fn parse_number(&mut self) -> Result<f64, Error> {
+    pub(super) fn parse_number(&mut self) -> Result<f64, Error> {
         let mut lit_iter = self.cur_token.literal.chars();
         if lit_iter.next() == Some('0') {
             if let Some(c) = lit_iter.next() {
@@ -33,11 +33,11 @@ impl<'a> Parser<'a> {
         Ok(self.cur_token.literal.parse::<f64>().unwrap())
     }
 
-    pub(in super::super) fn parse_string(&mut self) -> Result<String, Error> {
+    pub(super) fn parse_string(&mut self) -> Result<String, Error> {
         Ok(self.cur_token.literal.to_string())
     }
 
-    pub(in super::super) fn parse_boolean(&mut self) -> Result<bool, Error> {
+    pub(super) fn parse_boolean(&mut self) -> Result<bool, Error> {
         match self.cur_token.token_type {
             TokenType::True => Ok(true),
             TokenType::False => Ok(false),

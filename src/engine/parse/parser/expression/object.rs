@@ -12,7 +12,7 @@ use crate::engine::{
 };
 
 impl<'a> Parser<'a> {
-    pub(in super::super) fn parse_object(&mut self) -> Result<Expression, Error> {
+    pub(super) fn parse_object(&mut self) -> Result<Expression, Error> {
         self.next_token(); // skip '{'
         let mut properties = Vec::new();
         while self.cur_token.token_type != TokenType::RBrace {
@@ -26,7 +26,7 @@ impl<'a> Parser<'a> {
         Ok(Expression::Object(ObjectExpression::new(properties)))
     }
 
-    pub(in super::super) fn parse_object_property(&mut self) -> Result<ObjectProperty, Error> {
+    pub(super) fn parse_object_property(&mut self) -> Result<ObjectProperty, Error> {
         if self.cur_token.token_type != TokenType::Ident {
             return Err(Error::new(
                 ErrorKind::InvalidInput,
@@ -63,7 +63,7 @@ impl<'a> Parser<'a> {
         Ok(ObjectProperty::new(key, value))
     }
 
-    pub(in super::super) fn parse_array(&mut self) -> Result<Expression, Error> {
+    pub(super) fn parse_array(&mut self) -> Result<Expression, Error> {
         self.next_token(); // skip '['
         let mut elements = Vec::new();
         while self.cur_token.token_type != TokenType::RBracket {
@@ -77,7 +77,7 @@ impl<'a> Parser<'a> {
         Ok(Expression::Array(ArrayExpression::new(elements)))
     }
 
-    pub(in super::super) fn parse_member_expression(
+    pub(super) fn parse_member_expression(
         &mut self,
         left: Expression,
     ) -> Result<Expression, Error> {
@@ -92,7 +92,7 @@ impl<'a> Parser<'a> {
         Ok(expr)
     }
 
-    pub(in super::super) fn parse_dynamic_member_expression(
+    pub(super) fn parse_dynamic_member_expression(
         &mut self,
         left: Expression,
     ) -> Result<Expression, Error> {

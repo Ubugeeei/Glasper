@@ -9,7 +9,7 @@ use crate::engine::{
 };
 
 impl<'a> Parser<'a> {
-    pub(in super::super::super) fn parse_block_statement(&mut self) -> Result<Statement, Error> {
+    pub(in super::super) fn parse_block_statement(&mut self) -> Result<Statement, Error> {
         // guard
         if self.cur_token.token_type != TokenType::LBrace {
             return Err(Error::new(

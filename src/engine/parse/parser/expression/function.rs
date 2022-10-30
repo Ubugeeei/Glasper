@@ -12,7 +12,7 @@ use crate::engine::{
 };
 
 impl<'a> Parser<'a> {
-    pub(in super::super) fn parse_function_expression(&mut self) -> Result<Expression, Error> {
+    pub(super) fn parse_function_expression(&mut self) -> Result<Expression, Error> {
         // guard
         if self.peeked_token.token_type != TokenType::LParen {
             return Err(Error::new(
@@ -45,9 +45,7 @@ impl<'a> Parser<'a> {
         Ok(Expression::Function(FunctionExpression::new(params, body)))
     }
 
-    pub(in super::super) fn parse_function_parameters(
-        &mut self,
-    ) -> Result<Vec<FunctionParameter>, Error> {
+    pub(super) fn parse_function_parameters(&mut self) -> Result<Vec<FunctionParameter>, Error> {
         // guard
         if self.peeked_token.token_type != TokenType::LParen {
             return Err(Error::new(
@@ -94,7 +92,7 @@ impl<'a> Parser<'a> {
         Ok(parameters)
     }
 
-    pub(in super::super) fn parse_call_expression(
+    pub(super) fn parse_call_expression(
         &mut self,
         function: Expression,
     ) -> Result<Expression, Error> {

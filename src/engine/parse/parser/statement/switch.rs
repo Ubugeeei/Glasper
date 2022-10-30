@@ -9,7 +9,7 @@ use crate::engine::{
 };
 
 impl<'a> Parser<'a> {
-    pub(in super::super::super) fn parse_switch_statement(&mut self) -> Result<Statement, Error> {
+    pub(super) fn parse_switch_statement(&mut self) -> Result<Statement, Error> {
         // guard
         if self.peeked_token.token_type != TokenType::LParen {
             return Err(Error::new(
