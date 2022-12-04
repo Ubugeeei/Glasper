@@ -66,7 +66,7 @@ let console = console_builder.build();
 global.set("console", console);
 
 let mut isolate = Isolate::new(context);
-let mut script = Script::compile(String::from("log(1, 2, 3);"),  &mut isolate.context);
+let mut script = Script::compile(String::from("console.log(1, 2, 3);"),  &mut isolate.context);
 script.run()
 ```
 
