@@ -23,7 +23,7 @@ use crate::engine::{
         ForStatement, IfStatement, LetStatement, MemberExpression, ObjectExpression, Program,
         Statement, SwitchStatement, UpdateExpression,
     },
-    core::object::{JSBoolean, JSNull, JSNumber, JSUndefined, RuntimeObject},
+    execution::object::{JSBoolean, JSNull, JSNumber, JSUndefined, RuntimeObject},
     handles::{Variable, VariableKind},
 };
 

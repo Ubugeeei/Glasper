@@ -2,7 +2,7 @@ pub mod ast;
 
 pub mod parsing;
 
-pub mod core;
+pub mod execution;
 
 pub mod api;
 

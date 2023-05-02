@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use super::core::object::RuntimeObject;
+use super::execution::object::RuntimeObject;
 
 pub struct HandleScope {
     pub scopes: Vec<HashMap<String, Variable>>,
@@ -80,7 +80,7 @@ pub enum VariableKind {
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::engine::core::object::JSNumber;
+    use crate::engine::execution::object::JSNumber;
 
     #[test]
     fn test_set_get() {
