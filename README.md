@@ -208,7 +208,7 @@ const concat = arr.concat([6, 7, 8]);
 console.log(concat[6]); // 6
 
 const every = arr.every(function (v) {
-	return v < 10;
+  return v < 10;
 });
 console.log(every); // true
 
@@ -216,12 +216,12 @@ const joined = arr.join("/");
 console.log(joined); // "1/2/3/4/5/6/7/8"
 
 const mapped = arr.map(function (it) {
-	return it * 2;
+  return it * 2;
 });
 console.log(mapped[0]); // 2
 
 const found = arr.find(function (it) {
-	return it % 2 === 0;
+  return it % 2 === 0;
 });
 console.log(found); // 2
 ```
@@ -230,7 +230,7 @@ console.log(found); // 2
 
 ```js
 let o = {
-	message: "hello object",
+  message: "hello object",
 };
 console.log(o.message);
 
@@ -277,9 +277,9 @@ const c = 7; // error
 let v = 1;
 let global = 100;
 {
-	let v = 2;
-	console.log("child scope v:", v); // 2
-	console.log("global in child:", global); // 100
+  let v = 2;
+  console.log("child scope v:", v); // 2
+  console.log("global in child:", global); // 100
 }
 console.log("parent scoped v:", v); // 1
 ```
@@ -288,7 +288,7 @@ console.log("parent scoped v:", v); // 1
 
 ```js
 const add = function (a, b) {
-	return a + b;
+  return a + b;
 };
 
 console.log("add(1, 2):", add(1, 2));
@@ -297,8 +297,8 @@ console.log("add(1, 2):", add(1, 2));
 ```js
 // recursive
 const factorial = function (num) {
-	if (num == 0) return 1;
-	return num * factorial(num - 1);
+  if (num == 0) return 1;
+  return num * factorial(num - 1);
 };
 console.log("factorial(5):", factorial(5)); // 120
 ```
@@ -307,19 +307,19 @@ console.log("factorial(5):", factorial(5)); // 120
 
 ```js
 const inner_f = function () {
-	return this.value;
+  return this.value;
 };
 console.log(inner_f()); // undefined
 
 const o = {
-	value: 1,
-	f: inner_f,
+  value: 1,
+  f: inner_f,
 };
 console.log(o.f()); // { value: 1, f: [Function] }
 
 const oo = {
-	value: 2,
-	f: inner_f,
+  value: 2,
+  f: inner_f,
 };
 console.log(oo.f()); // { value: 2, f: [Function] }
 ```
@@ -328,9 +328,9 @@ console.log(oo.f()); // { value: 2, f: [Function] }
 
 ```js
 Array.prototype = {
-	nth: function (n) {
-		return this[n];
-	},
+  nth: function (n) {
+    return this[n];
+  },
 };
 
 const arr = [1, 2, 3, 4, 5];
@@ -344,9 +344,9 @@ console.log(arr.nth(2)); // 3
 ```js
 let num = 2;
 if (num % 2 == 0) {
-	console.log("even!");
+  console.log("even!");
 } else {
-	console.log("odd!");
+  console.log("odd!");
 }
 ```
 
@@ -354,20 +354,20 @@ if (num % 2 == 0) {
 
 ```js
 const match = function (num) {
-	switch (num) {
-		case 1: {
-			console.log("one");
-			break;
-		}
-		case 2: {
-			console.log("two");
-			break;
-		}
-		default: {
-			console.log("other");
-			break;
-		}
-	}
+  switch (num) {
+    case 1: {
+      console.log("one");
+      break;
+    }
+    case 2: {
+      console.log("two");
+      break;
+    }
+    default: {
+      console.log("other");
+      break;
+    }
+  }
 };
 match(1);
 match(2);
@@ -376,14 +376,14 @@ match(99);
 
 ```js
 const match_no_break = function (num) {
-	switch (num) {
-		case 1:
-			console.log("one");
-		case 2:
-			console.log("two");
-		default:
-			console.log("other");
-	}
+  switch (num) {
+    case 1:
+      console.log("one");
+    case 2:
+      console.log("two");
+    default:
+      console.log("other");
+  }
 };
 match_no_break(1);
 match_no_break(2);
@@ -396,11 +396,11 @@ match_no_break(99);
 const arr = [1, 2, 3, 4];
 
 for (let i = 0; i < arr.length; i++) {
-	if (i % 2) {
-		continue; // skip odd index
-	}
+  if (i % 2) {
+    continue; // skip odd index
+  }
 
-	console.log(arr[i] * 2);
+  console.log(arr[i] * 2);
 }
 ```
 
@@ -408,20 +408,20 @@ for (let i = 0; i < arr.length; i++) {
 
 ```js
 const fizzBuzz = function (num) {
-	// comment out
-	if (!num) return 0;
+  // comment out
+  if (!num) return 0;
 
-	if (num % 15 == 0) {
-		console.log("FizzBuzz");
-	} else if (num % 5 == 0) {
-		console.log("Buzz");
-	} else if (num % 3 == 0) {
-		console.log("Fizz");
-	} else {
-		console.log(num);
-	}
+  if (num % 15 == 0) {
+    console.log("FizzBuzz");
+  } else if (num % 5 == 0) {
+    console.log("Buzz");
+  } else if (num % 3 == 0) {
+    console.log("Fizz");
+  } else {
+    console.log(num);
+  }
 
-	fizzBuzz(num - 1);
+  fizzBuzz(num - 1);
 };
 
 fizzBuzz(20);
