@@ -1,11 +1,8 @@
 use std::io::{Error, ErrorKind};
 
 use crate::engine::{
-    parser::{
-        ast::{ConstStatement, Expression, LetStatement, Precedence, Statement},
-        parser::Parser,
-    },
-    lexer::token::TokenType,
+    ast::{ConstStatement, Expression, LetStatement, Precedence, Statement},
+    parsing::{lexer::token::TokenType, parser::Parser},
 };
 
 impl<'a> Parser<'a> {
@@ -105,11 +102,8 @@ impl<'a> Parser<'a> {
 #[cfg(test)]
 mod test {
     use crate::engine::{
-        parser::{
-            ast::{ConstStatement, Expression, LetStatement, Statement},
-            parser::Parser,
-        },
-        lexer::lexer::Lexer,
+        ast::{ConstStatement, Expression, LetStatement, Statement},
+        parsing::{lexer::Lexer, parser::Parser},
     };
 
     #[test]

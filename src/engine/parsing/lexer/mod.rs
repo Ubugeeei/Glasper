@@ -1,4 +1,5 @@
-use super::{token::lookup_indent, Token, TokenType};
+pub mod token;
+use token::*;
 
 pub struct Lexer {
     input: String,

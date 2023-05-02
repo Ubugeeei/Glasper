@@ -1,6 +1,6 @@
 use std::io::{Error, ErrorKind};
 
-use crate::engine::{parser::parser::Parser, lexer::token::TokenType};
+use crate::engine::parsing::{lexer::token::TokenType, parser::Parser};
 
 impl<'a> Parser<'a> {
     pub(super) fn parse_number(&mut self) -> Result<f64, Error> {
@@ -55,11 +55,8 @@ impl<'a> Parser<'a> {
 #[cfg(test)]
 mod test {
     use crate::engine::{
-        parser::{
-            ast::{BinaryExpression, Expression, Statement, UnaryExpression},
-            parser::Parser,
-        },
-        lexer::lexer::Lexer,
+        ast::{BinaryExpression, Expression, Statement, UnaryExpression},
+        parsing::{lexer::Lexer, parser::Parser},
     };
 
     #[test]

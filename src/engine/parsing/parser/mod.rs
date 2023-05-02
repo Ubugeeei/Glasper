@@ -1,11 +1,12 @@
 pub mod expression;
 pub mod statement;
 
-use crate::engine::lexer::token::TokenType;
-
-use super::{
-    super::{lexer::lexer::Lexer, token::Token},
+use crate::engine::{
     ast::{Precedence, Program},
+    parsing::lexer::{
+        token::{Token, TokenType},
+        Lexer,
+    },
 };
 
 pub struct Parser<'a> {

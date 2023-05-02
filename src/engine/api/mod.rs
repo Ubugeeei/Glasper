@@ -1,8 +1,8 @@
 use crate::engine::{
-    core::{evaluator::Evaluator, object::RuntimeObject},
-    handle_scope::HandleScope,
-    parser::{ast::Program, parser::Parser},
-    lexer::lexer::Lexer,
+    ast::Program,
+    core::{host::Evaluator, object::RuntimeObject},
+    handles::HandleScope,
+    parsing::{lexer::Lexer, parser::Parser},
 };
 use std::{cell::RefCell, collections::HashMap, io::Error, rc::Rc};
 

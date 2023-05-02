@@ -18,13 +18,13 @@ use std::{cell::RefCell, collections::HashMap, io::Error, rc::Rc};
 
 use crate::engine::{
     api::Context,
-    core::object::{JSBoolean, JSNull, JSNumber, JSUndefined, RuntimeObject},
-    handle_scope::{Variable, VariableKind},
-    parser::ast::{
+    ast::{
         ArrayExpression, BlockStatement, CallExpression, ConstStatement, Expression, ForInit,
         ForStatement, IfStatement, LetStatement, MemberExpression, ObjectExpression, Program,
         Statement, SwitchStatement, UpdateExpression,
     },
+    core::object::{JSBoolean, JSNull, JSNumber, JSUndefined, RuntimeObject},
+    handles::{Variable, VariableKind},
 };
 
 use super::object::{JSFunction, JSNaN, JSObject, JSString};
@@ -120,7 +120,7 @@ impl<'a> Evaluator<'a> {
 
     fn eval_unary_expression(
         &mut self,
-        expr: &crate::engine::parser::ast::UnaryExpression,
+        expr: &crate::engine::ast::UnaryExpression,
     ) -> Result<RuntimeObject, Error> {
         let right = self.eval_expression(&expr.right)?;
         match expr.operator.as_str() {
@@ -1020,7 +1020,10 @@ enum ScopeType {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::engine::{handle_scope::HandleScope, parser::parser::Parser, lexer::lexer::Lexer};
+    use crate::engine::{
+        handles::HandleScope,
+        parsing::{lexer::Lexer, parser::Parser},
+    };
 
     #[test]
     fn test_eval_let_statement() {

@@ -1,10 +1,9 @@
-pub mod lexer;
-use lexer::*;
+pub mod ast;
 
-pub mod parser;
+pub mod parsing;
 
 pub mod core;
 
 pub mod api;
 
-pub mod handle_scope;
+pub mod handles;

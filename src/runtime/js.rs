@@ -3,7 +3,7 @@ use std::io::Error;
 use crate::engine::{
     api::{Context, Isolate, Script},
     core::object::RuntimeObject,
-    handle_scope::HandleScope,
+    handles::HandleScope,
 };
 
 use super::binding::console::ConsoleBuilder;
