@@ -7,11 +7,11 @@ pub mod variables;
 use std::io::Error;
 
 use crate::engine::{
-    parse::{
+    parser::{
         ast::{Expression, Precedence, Statement},
         parser::Parser,
     },
-    tokenize::token::TokenType,
+    lexer::token::TokenType,
 };
 
 impl<'a> Parser<'a> {
@@ -64,7 +64,7 @@ impl<'a> Parser<'a> {
 
 #[cfg(test)]
 mod test {
-    use crate::engine::{parse::parser::Parser, tokenize::lexer::Lexer};
+    use crate::engine::{parser::parser::Parser, lexer::lexer::Lexer};
 
     #[test]
     fn test_parse_return_statements() {

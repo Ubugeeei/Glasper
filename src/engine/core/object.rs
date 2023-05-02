@@ -2,7 +2,7 @@
 
 use std::{cell::RefCell, collections::HashMap, fmt::Display, rc::Rc};
 
-use crate::engine::parse::ast::{BlockStatement, FunctionParameter};
+use crate::engine::parser::ast::{BlockStatement, FunctionParameter};
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum RuntimeObject {

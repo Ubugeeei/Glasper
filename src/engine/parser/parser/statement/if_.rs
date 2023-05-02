@@ -1,11 +1,11 @@
 use std::io::{Error, ErrorKind};
 
 use crate::engine::{
-    parse::{
+    parser::{
         ast::{IfStatement, Precedence, Statement},
         parser::Parser,
     },
-    tokenize::token::TokenType,
+    lexer::token::TokenType,
 };
 
 impl<'a> Parser<'a> {
@@ -62,13 +62,13 @@ impl<'a> Parser<'a> {
 #[cfg(test)]
 mod test {
     use crate::engine::{
-        parse::{
+        parser::{
             ast::{
                 BinaryExpression, BlockStatement, Expression, IfStatement, LetStatement, Statement,
             },
             parser::Parser,
         },
-        tokenize::lexer::Lexer,
+        lexer::lexer::Lexer,
     };
 
     #[test]

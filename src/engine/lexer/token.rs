@@ -1,6 +1,6 @@
 #![allow(non_camel_case_types)]
 
-use crate::engine::parse::ast::Precedence;
+use crate::engine::parser::ast::Precedence;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Token {

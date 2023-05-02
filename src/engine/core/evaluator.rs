@@ -18,9 +18,9 @@ use std::{cell::RefCell, collections::HashMap, io::Error, rc::Rc};
 
 use crate::engine::{
     api::Context,
-    eval::object::{JSBoolean, JSNull, JSNumber, JSUndefined, RuntimeObject},
+    core::object::{JSBoolean, JSNull, JSNumber, JSUndefined, RuntimeObject},
     handle_scope::{Variable, VariableKind},
-    parse::ast::{
+    parser::ast::{
         ArrayExpression, BlockStatement, CallExpression, ConstStatement, Expression, ForInit,
         ForStatement, IfStatement, LetStatement, MemberExpression, ObjectExpression, Program,
         Statement, SwitchStatement, UpdateExpression,
@@ -120,7 +120,7 @@ impl<'a> Evaluator<'a> {
 
     fn eval_unary_expression(
         &mut self,
-        expr: &crate::engine::parse::ast::UnaryExpression,
+        expr: &crate::engine::parser::ast::UnaryExpression,
     ) -> Result<RuntimeObject, Error> {
         let right = self.eval_expression(&expr.right)?;
         match expr.operator.as_str() {
@@ -1020,7 +1020,7 @@ enum ScopeType {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::engine::{handle_scope::HandleScope, parse::parser::Parser, tokenize::lexer::Lexer};
+    use crate::engine::{handle_scope::HandleScope, parser::parser::Parser, lexer::lexer::Lexer};
 
     #[test]
     fn test_eval_let_statement() {

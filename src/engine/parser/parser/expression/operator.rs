@@ -1,6 +1,6 @@
 use std::io::Error;
 
-use crate::engine::parse::{
+use crate::engine::parser::{
     ast::{BinaryExpression, Expression, Precedence, UnaryExpression, UpdateExpression},
     parser::Parser,
 };
@@ -43,11 +43,11 @@ impl<'a> Parser<'a> {
 #[cfg(test)]
 mod test {
     use crate::engine::{
-        parse::{
+        parser::{
             ast::{BinaryExpression, Expression, Statement, UnaryExpression, UpdateExpression},
             parser::Parser,
         },
-        tokenize::lexer::Lexer,
+        lexer::lexer::Lexer,
     };
 
     #[test]

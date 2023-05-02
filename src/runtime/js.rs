@@ -2,7 +2,7 @@ use std::io::Error;
 
 use crate::engine::{
     api::{Context, Isolate, Script},
-    eval::object::RuntimeObject,
+    core::object::RuntimeObject,
     handle_scope::HandleScope,
 };
 

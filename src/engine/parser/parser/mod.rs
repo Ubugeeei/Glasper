@@ -1,10 +1,10 @@
 pub mod expression;
 pub mod statement;
 
-use crate::engine::tokenize::token::TokenType;
+use crate::engine::lexer::token::TokenType;
 
 use super::{
-    super::{lexer::Lexer, token::Token},
+    super::{lexer::lexer::Lexer, token::Token},
     ast::{Precedence, Program},
 };
 

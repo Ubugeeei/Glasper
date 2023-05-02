@@ -1,11 +1,11 @@
 use std::io::{Error, ErrorKind};
 
 use crate::engine::{
-    parse::{
+    parser::{
         ast::{BlockStatement, Statement},
         parser::Parser,
     },
-    tokenize::token::TokenType,
+    lexer::token::TokenType,
 };
 
 impl<'a> Parser<'a> {

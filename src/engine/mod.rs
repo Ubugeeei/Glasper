@@ -1,9 +1,9 @@
-pub mod tokenize;
-use tokenize::*;
+pub mod lexer;
+use lexer::*;
 
-pub mod parse;
+pub mod parser;
 
-pub mod eval;
+pub mod core;
 
 pub mod api;
 
