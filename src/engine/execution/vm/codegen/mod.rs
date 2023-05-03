@@ -24,6 +24,49 @@ fn gen_expression(expr: &Expression, code: &mut Vec<u8>) {
         Expression::Number(literal) => {
             gen_number(*literal, code);
         }
+        Expression::Binary(expr) => match expr.operator.as_str() {
+            "+" => {
+                gen_expression(&expr.left, code);
+                gen_expression(&expr.right, code);
+                code.extend_from_slice(&[Bytecodes::Pop, RName::R1]);
+                code.extend_from_slice(&[Bytecodes::Pop, RName::R2]);
+                code.extend_from_slice(&[Bytecodes::Add, RName::R1, RName::R2]);
+                code.extend_from_slice(&[Bytecodes::Push, RName::R1]);
+            }
+            "-" => {
+                gen_expression(&expr.left, code);
+                gen_expression(&expr.right, code);
+                code.extend_from_slice(&[Bytecodes::Pop, RName::R1]);
+                code.extend_from_slice(&[Bytecodes::Pop, RName::R2]);
+                code.extend_from_slice(&[Bytecodes::Sub, RName::R1, RName::R2]);
+                code.extend_from_slice(&[Bytecodes::Push, RName::R1]);
+            }
+            "*" => {
+                gen_expression(&expr.left, code);
+                gen_expression(&expr.right, code);
+                code.extend_from_slice(&[Bytecodes::Pop, RName::R1]);
+                code.extend_from_slice(&[Bytecodes::Pop, RName::R2]);
+                code.extend_from_slice(&[Bytecodes::Mul, RName::R1, RName::R2]);
+                code.extend_from_slice(&[Bytecodes::Push, RName::R1]);
+            }
+            "/" => {
+                gen_expression(&expr.left, code);
+                gen_expression(&expr.right, code);
+                code.extend_from_slice(&[Bytecodes::Pop, RName::R1]);
+                code.extend_from_slice(&[Bytecodes::Pop, RName::R2]);
+                code.extend_from_slice(&[Bytecodes::Div, RName::R1, RName::R2]);
+                code.extend_from_slice(&[Bytecodes::Push, RName::R1]);
+            }
+            "%" => {
+                gen_expression(&expr.left, code);
+                gen_expression(&expr.right, code);
+                code.extend_from_slice(&[Bytecodes::Pop, RName::R1]);
+                code.extend_from_slice(&[Bytecodes::Pop, RName::R2]);
+                code.extend_from_slice(&[Bytecodes::Mod, RName::R1, RName::R2]);
+                code.extend_from_slice(&[Bytecodes::Push, RName::R1]);
+            }
+            _ => todo!(),
+        },
         _ => todo!(),
     }
 }
@@ -41,4 +84,7 @@ fn gen_number(n: f64, code: &mut Vec<u8>) {
     code.push(((n >> 40) & 0xff as i64) as u8);
     code.push(((n >> 48) & 0xff as i64) as u8);
     code.push(((n >> 56) & 0xff as i64) as u8);
+
+    code.push(Bytecodes::Push);
+    code.push(RName::R1);
 }
