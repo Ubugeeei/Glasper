@@ -2,12 +2,14 @@
 
 use super::{
     bytecodes::Bytecodes,
+    heap::Heap,
     register::{RName, Register},
 };
 
 pub(crate) struct VM {
     register: Register,
     stack: Vec<i64>,
+    heap: Heap,
     pc: usize,
     code: Vec<u8>,
 }
@@ -17,6 +19,7 @@ impl VM {
         Self {
             register: Register::new(),
             stack: Vec::new(),
+            heap: Heap::new(1024 * 1024),
             pc: 0,
             code: Vec::new(),
         }

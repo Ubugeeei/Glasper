@@ -1,7 +1,7 @@
 use std::{marker::PhantomData, ptr::NonNull};
 
 pub(crate) struct JSObject<T> {
-    ptr: NonNull<T>,
+    pub(crate) ptr: NonNull<T>,
     _marker: PhantomData<T>,
 }
 
