@@ -23,14 +23,13 @@ impl VM {
 
     pub(crate) fn run(&mut self) {
         loop {
-            let opcode = self.code[self.pc];
-            self.pc += 1;
+            let opcode = self.fetch();
 
             match opcode {
                 Bytecodes::Mov => {
                     let r = self.fetch();
-                    let v = self.fetch();
-                    self.mov(r, v as i64);
+                    let v = self.fetch_int64();
+                    self.mov(r, v);
                 }
                 Bytecodes::Push => {
                     let r = self.fetch();
@@ -40,6 +39,7 @@ impl VM {
                     let r = self.fetch();
                     self.pop(r);
                 }
+
                 Bytecodes::Add => {
                     let r1 = self.fetch();
                     let r2 = self.fetch();
@@ -91,6 +91,9 @@ impl VM {
                     let r2 = self.fetch();
                     self.modi(r1, r2 as i64)
                 }
+                Bytecodes::Hlt => {
+                    break;
+                }
                 _ => {
                     todo!()
                 }
@@ -103,9 +106,35 @@ impl VM {
     }
 
     fn fetch(&mut self) -> u8 {
-        let opcode = self.code[self.pc];
-        self.pc += 1;
-        opcode
+        if self.pc < self.code.len() {
+            let opcode = self.code[self.pc];
+            self.pc += 1;
+            opcode
+        } else {
+            Bytecodes::Hlt
+        }
+    }
+
+    fn fetch_int64(&mut self) -> i64 {
+        let v1 = self.fetch();
+        let v2 = self.fetch();
+        let v3 = self.fetch();
+        let v4 = self.fetch();
+        let v5 = self.fetch();
+        let v6 = self.fetch();
+        let v7 = self.fetch();
+        let v8 = self.fetch();
+
+        let v = (v8 as i64) << 56
+            | (v7 as i64) << 48
+            | (v6 as i64) << 40
+            | (v5 as i64) << 32
+            | (v4 as i64) << 24
+            | (v3 as i64) << 16
+            | (v2 as i64) << 8
+            | (v1 as i64);
+
+        v
     }
 
     fn mov(&mut self, r: u8, v: i64) {

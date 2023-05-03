@@ -95,4 +95,5 @@ pub(crate) mod Bytecodes {
     pub(crate) const CallProperty: u8 = 0x49;
 
     pub(crate) const Return: u8 = 0x4a;
+    pub(crate) const Hlt: u8 = 0x4b;
 }
