@@ -8,7 +8,6 @@ use super::{
 pub(crate) struct VM {
     register: Register,
     stack: Vec<i64>,
-
     pc: usize,
     code: Vec<u8>,
 }

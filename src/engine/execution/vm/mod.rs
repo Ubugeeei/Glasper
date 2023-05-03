@@ -8,6 +8,7 @@ use super::object::{JSNumber, RuntimeObject};
 
 pub(crate) mod bytecodes;
 pub(crate) mod codegen;
+pub(crate) mod heap;
 pub(crate) mod register;
 #[allow(clippy::module_inception)]
 pub(crate) mod vm;
