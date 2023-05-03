@@ -1,7 +1,6 @@
-use crate::engine::{
-    ast::Program,
-    parsing::{lexer, parser::Parser},
-};
+#![allow(dead_code)]
+
+use crate::engine::parsing::{lexer, parser::Parser};
 
 use self::register::RName;
 

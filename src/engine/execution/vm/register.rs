@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 pub(crate) struct Register {
     pub(crate) r1: i64,
     pub(crate) r2: i64,
@@ -40,6 +42,7 @@ impl Register {
     }
 }
 
+#[allow(non_snake_case)]
 pub(crate) mod RName {
     pub(crate) const R1: u8 = 0x01;
     pub(crate) const R2: u8 = 0x02;

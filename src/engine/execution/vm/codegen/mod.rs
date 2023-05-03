@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 use crate::engine::ast::{Expression, Program, Statement};
 
 use super::{bytecodes::Bytecodes, register::RName};

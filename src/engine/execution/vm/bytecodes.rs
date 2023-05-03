@@ -1,4 +1,7 @@
-#![allow(non_snake_case)]
+#![allow(non_upper_case_globals)]
+#![allow(dead_code)]
+
+#[allow(non_snake_case)]
 pub(crate) mod Bytecodes {
     /* - [Loading the accumulator] */
     pub(crate) const Ldar: u8 = 0x01;

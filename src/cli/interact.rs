@@ -73,7 +73,7 @@ fn start_vm_repl() {
                 }
 
                 let js_value = interpreter.run(line);
-                println!("{:?}", js_value)
+                println!("{}", js_value)
             }
 
             Err(ReadlineError::Interrupted) | Err(ReadlineError::Eof) => {

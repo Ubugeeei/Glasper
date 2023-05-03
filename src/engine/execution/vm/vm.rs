@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 use super::{
     bytecodes::Bytecodes,
     register::{RName, Register},
@@ -22,6 +24,21 @@ impl VM {
     }
 
     pub(crate) fn run(&mut self) {
+        // print code as hex
+        println!("byte codes:");
+        for (i, byte) in self.code.iter().enumerate() {
+            if i % 16 == 0 {
+                print!("\x1b[30m{:08x}:\x1b[0m     ", i / 16);
+                print!("\x1b[30m{:02x}\x1b[0m ", byte);
+            } else {
+                print!("\x1b[30m{:02x}\x1b[0m ", byte);
+            }
+            if i % 16 == 15 {
+                println!();
+            }
+        }
+        println!();
+
         loop {
             let opcode = self.fetch();
 
