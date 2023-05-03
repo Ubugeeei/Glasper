@@ -199,7 +199,7 @@ impl VM {
         self.mov(r, v1 % v);
     }
 
-    fn get_reg_v(&self, r: u8) -> i64 {
+    pub(crate) fn get_reg_v(&self, r: u8) -> i64 {
         match r {
             RName::R1 => self.register.r1,
             RName::R2 => self.register.r2,

@@ -11,6 +11,7 @@ Options:
     -                             script read from stdin (default if no file name is provided, interactive mode if a tty)
     -v, --version                 print version
     -h, --help                    print command line options (currently set)
+    --vm                          run in vm mode (currently set)
 "#;
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -18,7 +19,7 @@ const VERSION: &str = env!("CARGO_PKG_VERSION");
 fn main() {
     let args: Vec<String> = env::args().collect();
     if args.len() == 1 {
-        cli::interact::start();
+        cli::interact::start(false);
     } else {
         match &*args[1] {
             "-h" | "--help" => {
@@ -26,6 +27,9 @@ fn main() {
             }
             "-v" | "--version" => {
                 println!("v{}", VERSION);
+            }
+            "--vm" => {
+                cli::interact::start(true);
             }
             arg => {
                 cli::file::run(arg);
