@@ -12,12 +12,12 @@ pub(crate) struct VM {
 }
 
 impl VM {
-    pub(crate) fn new(code: Vec<u8>) -> Self {
+    pub(crate) fn new() -> Self {
         Self {
             register: Register::new(),
             stack: Vec::new(),
             pc: 0,
-            code,
+            code: Vec::new(),
         }
     }
 
@@ -96,6 +96,10 @@ impl VM {
                 }
             }
         }
+    }
+
+    pub(crate) fn append_code(&mut self, code: &mut Vec<u8>) {
+        self.code.append(code);
     }
 
     fn fetch(&mut self) -> u8 {
