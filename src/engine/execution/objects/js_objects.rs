@@ -1,6 +1,7 @@
 use std::{marker::PhantomData, ptr::NonNull};
 
 pub(crate) struct JSObject<T> {
+    #[allow(dead_code)]
     pub(crate) ptr: NonNull<T>,
     _marker: PhantomData<T>,
 }

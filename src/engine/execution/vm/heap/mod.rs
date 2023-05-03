@@ -30,7 +30,7 @@ impl Heap {
     pub(crate) fn alloc<T>(&mut self, value: T) -> Option<JSObject<T>> {
         let size = std::mem::size_of::<T>();
         let align = std::mem::align_of::<T>();
-        let aligned_next = self.next as usize + align - 1 & !(align - 1);
+        let aligned_next = (self.next as usize + align - 1) & !(align - 1);
         let next = aligned_next as *mut u8;
 
         if next.wrapping_add(size) <= self.end {
