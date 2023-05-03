@@ -8,4 +8,4 @@ name = "gls"
 path = "src/main.rs"
 
 [dependencies]
-rustyline = "8"
+rustyline = "11"

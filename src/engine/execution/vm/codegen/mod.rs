@@ -78,14 +78,14 @@ fn gen_number(n: f64, code: &mut Vec<u8>) {
     code.push(RName::R1);
 
     let n = n as i64;
-    code.push(((n >> 0) & 0xff as i64) as u8);
-    code.push(((n >> 8) & 0xff as i64) as u8);
-    code.push(((n >> 16) & 0xff as i64) as u8);
-    code.push(((n >> 24) & 0xff as i64) as u8);
-    code.push(((n >> 32) & 0xff as i64) as u8);
-    code.push(((n >> 40) & 0xff as i64) as u8);
-    code.push(((n >> 48) & 0xff as i64) as u8);
-    code.push(((n >> 56) & 0xff as i64) as u8);
+    code.push(((n) & 0xff_i64) as u8);
+    code.push(((n >> 8) & 0xff_i64) as u8);
+    code.push(((n >> 16) & 0xff_i64) as u8);
+    code.push(((n >> 24) & 0xff_i64) as u8);
+    code.push(((n >> 32) & 0xff_i64) as u8);
+    code.push(((n >> 40) & 0xff_i64) as u8);
+    code.push(((n >> 48) & 0xff_i64) as u8);
+    code.push(((n >> 56) & 0xff_i64) as u8);
 
     code.push(Bytecodes::Push);
     code.push(RName::R1);

@@ -142,16 +142,14 @@ impl VM {
         let v7 = self.fetch();
         let v8 = self.fetch();
 
-        let v = (v8 as i64) << 56
+        (v8 as i64) << 56
             | (v7 as i64) << 48
             | (v6 as i64) << 40
             | (v5 as i64) << 32
             | (v4 as i64) << 24
             | (v3 as i64) << 16
             | (v2 as i64) << 8
-            | (v1 as i64);
-
-        v
+            | (v1 as i64)
     }
 
     fn mov(&mut self, r: u8, v: i64) {

@@ -1,5 +1,4 @@
-extern crate rustyline;
-use rustyline::{error::ReadlineError, Editor};
+use rustyline::error::ReadlineError;
 
 use crate::engine::execution::vm::Interpreter;
 use crate::runtime::js::JavaScriptRuntime;
@@ -16,13 +15,13 @@ pub fn start(vm: bool) {
 
 fn start_host_repl() {
     let mut runtime = JavaScriptRuntime::new();
-    let mut rl = Editor::<()>::new();
+    let mut rl = rustyline::DefaultEditor::new().unwrap();
 
     loop {
         let input = rl.readline("> ");
         match input {
             Ok(line) => {
-                rl.add_history_entry(&line);
+                let _ = rl.add_history_entry(&line);
 
                 /*
                  *
@@ -59,13 +58,13 @@ fn start_host_repl() {
 
 fn start_vm_repl() {
     let mut interpreter = Interpreter::new();
-    let mut rl = Editor::<()>::new();
+    let mut rl = rustyline::DefaultEditor::new().unwrap();
 
     loop {
         let input = rl.readline("> ");
         match input {
             Ok(line) => {
-                rl.add_history_entry(&line);
+                let _ = rl.add_history_entry(&line);
 
                 if line == "exit()" {
                     println!("Bye!");
