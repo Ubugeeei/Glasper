@@ -6,12 +6,12 @@ use super::{
     register::{RName, Register},
 };
 
-pub(crate) struct VM {
+pub struct VM {
     register: Register,
-    stack: Vec<i64>,
-    heap: Heap,
     pc: usize,
     code: Vec<u8>,
+    stack: Vec<i64>,
+    pub(crate) heap: Heap,
 }
 
 impl VM {
