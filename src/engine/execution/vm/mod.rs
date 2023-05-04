@@ -34,7 +34,7 @@ impl Interpreter {
     }
 
     fn get_js_value(&self) -> RuntimeObject {
-        let r1 = self.vm.get_reg_v(RName::R1);
+        let r1 = self.vm.get_reg_v(RName::R0);
         RuntimeObject::Number(JSNumber::new(r1 as f64))
     }
 }

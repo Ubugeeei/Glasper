@@ -122,18 +122,15 @@ impl VM {
                 }
                 Bytecodes::Construct => {
                     // TODO: other types
-                    let reg = self.fetch();
-                    let reg_v = self.get_reg_v(reg);
-
+                    let reg_v = self.get_reg_v(RName::R0);
                     let mut o = self.heap.alloc().unwrap();
                     let js_value = JSNumber::create(reg_v as f64, &mut o, self);
                     let raw_ptr = js_value.ptr.as_ptr() as i64;
-                    self.mov(reg, raw_ptr);
+                    self.mov(RName::R0, raw_ptr);
                 }
-                Bytecodes::LdaContextSlot => {
+                Bytecodes::StaContextSlot => {
                     let name = self.fetch_string();
-                    let reg = self.fetch();
-                    let reg_v = self.get_reg_v(reg);
+                    let reg_v = self.get_reg_v(RName::R0);
                     let ptr = NonNull::new(reg_v as *mut JSObject).unwrap();
                     self.execution_context
                         .context
@@ -194,6 +191,7 @@ impl VM {
 
     fn mov(&mut self, r: u8, v: i64) {
         match r {
+            RName::R0 => self.register.r0 = v,
             RName::R1 => self.register.r1 = v,
             RName::R2 => self.register.r2 = v,
             RName::R3 => self.register.r3 = v,
@@ -209,13 +207,13 @@ impl VM {
             RName::R13 => self.register.r13 = v,
             RName::R14 => self.register.r14 = v,
             RName::R15 => self.register.r15 = v,
-            RName::R16 => self.register.r16 = v,
             _ => unreachable!(),
         }
     }
 
     fn push(&mut self, r: u8) {
         match r {
+            RName::R0 => self.stack.push(self.register.r0),
             RName::R1 => self.stack.push(self.register.r1),
             RName::R2 => self.stack.push(self.register.r2),
             RName::R3 => self.stack.push(self.register.r3),
@@ -231,13 +229,13 @@ impl VM {
             RName::R13 => self.stack.push(self.register.r13),
             RName::R14 => self.stack.push(self.register.r14),
             RName::R15 => self.stack.push(self.register.r15),
-            RName::R16 => self.stack.push(self.register.r16),
             _ => unreachable!(),
         }
     }
 
     fn pop(&mut self, r: u8) {
         match r {
+            RName::R0 => self.register.r0 = self.stack.pop().unwrap(),
             RName::R1 => self.register.r1 = self.stack.pop().unwrap(),
             RName::R2 => self.register.r2 = self.stack.pop().unwrap(),
             RName::R3 => self.register.r3 = self.stack.pop().unwrap(),
@@ -253,7 +251,6 @@ impl VM {
             RName::R13 => self.register.r13 = self.stack.pop().unwrap(),
             RName::R14 => self.register.r14 = self.stack.pop().unwrap(),
             RName::R15 => self.register.r15 = self.stack.pop().unwrap(),
-            RName::R16 => self.register.r16 = self.stack.pop().unwrap(),
             _ => unreachable!(),
         }
     }
@@ -285,6 +282,7 @@ impl VM {
 
     pub(crate) fn get_reg_v(&self, r: u8) -> i64 {
         match r {
+            RName::R0 => self.register.r0,
             RName::R1 => self.register.r1,
             RName::R2 => self.register.r2,
             RName::R3 => self.register.r3,
@@ -300,7 +298,6 @@ impl VM {
             RName::R13 => self.register.r13,
             RName::R14 => self.register.r14,
             RName::R15 => self.register.r15,
-            RName::R16 => self.register.r16,
             _ => unreachable!(),
         }
     }

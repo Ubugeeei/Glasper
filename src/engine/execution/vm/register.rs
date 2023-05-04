@@ -1,6 +1,7 @@
 #![allow(dead_code)]
 
 pub(crate) struct Register {
+    pub(crate) r0: i64,
     pub(crate) r1: i64,
     pub(crate) r2: i64,
     pub(crate) r3: i64,
@@ -16,12 +17,12 @@ pub(crate) struct Register {
     pub(crate) r13: i64,
     pub(crate) r14: i64,
     pub(crate) r15: i64,
-    pub(crate) r16: i64,
 }
 
 impl Register {
     pub(crate) fn new() -> Self {
         Self {
+            r0: 0,
             r1: 0,
             r2: 0,
             r3: 0,
@@ -37,7 +38,6 @@ impl Register {
             r13: 0,
             r14: 0,
             r15: 0,
-            r16: 0,
         }
     }
 }
