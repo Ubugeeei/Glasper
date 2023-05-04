@@ -41,6 +41,7 @@ fn gen_expression(expr: &Expression, code: &mut Vec<u8>) {
             gen_number(*literal, code);
             code.extend_from_slice(&[Pop, R0]);
             code.extend_from_slice(&[Construct]); // r0 = created object ptr
+            code.extend_from_slice(&[Push, R0]);
         }
         Expression::Binary(expr) => match expr.operator.as_str() {
             "+" => {

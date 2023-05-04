@@ -1,11 +1,6 @@
 #![allow(dead_code)]
 
-use std::ptr::NonNull;
-
-use crate::engine::execution::{
-    legacy_object::JSObject,
-    objects::{js_number::JSNumber, object::Object},
-};
+use crate::engine::execution::objects::{js_number::JSNumber, js_object::JSType, object::Object};
 
 use super::{
     bytecodes::{Bytecodes, RName},
@@ -69,11 +64,7 @@ impl VM {
                     self.pop(r);
                 }
 
-                Bytecodes::Add => {
-                    let r1 = self.fetch();
-                    let r2 = self.fetch();
-                    self.addi(r1, self.get_reg_v(r2))
-                }
+                Bytecodes::Add => self.add(),
                 Bytecodes::Sub => {
                     let r1 = self.fetch();
                     let r2 = self.fetch();
@@ -251,6 +242,25 @@ impl VM {
             RName::R6 => self.register.r6 = self.stack.pop().unwrap(),
             RName::R7 => self.register.r7 = self.stack.pop().unwrap(),
             _ => unreachable!(),
+        }
+    }
+
+    fn add(&mut self) {
+        let r1 = self.fetch();
+        let r2 = self.fetch();
+        let o1 = Object::from_row_ptr(self.get_reg_v(r1));
+        let o2 = Object::from_row_ptr(self.get_reg_v(r2));
+        let jso1 = o1.as_js_object_ref();
+        let jso2 = o2.as_js_object_ref();
+
+        match (&jso1._type, &jso2._type) {
+            (JSType::Number(n1), JSType::Number(n2)) => {
+                let mut base_obj = self.heap.alloc().unwrap();
+                let num_obj = JSNumber::create(n1 + n2, &mut base_obj, self);
+                let raw_ptr = num_obj.raw_ptr();
+                self.mov(RName::R0, raw_ptr);
+            }
+            _ => todo!("implement add for other types"),
         }
     }
 
