@@ -19,6 +19,10 @@ impl Object {
         }
     }
 
+    pub(crate) fn raw_ptr(&self) -> i64 {
+        self.ptr.as_ptr() as i64
+    }
+
     pub(crate) fn as_js_object_ref(&self) -> &JSObject {
         unsafe { self.ptr.as_ref() }
     }

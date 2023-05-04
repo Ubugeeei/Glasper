@@ -20,20 +20,14 @@ pub fn gen(program: &Program) -> Vec<u8> {
 fn gen_statement(statement: &Statement, code: &mut Vec<u8>) {
     match statement {
         Statement::Expression(expr) => {
-            // TODO: other types
             gen_expression(expr, code);
-            code.extend_from_slice(&[Pop, R0]);
-            code.extend_from_slice(&[Construct]); // r0 = created js-object ptr
         }
         Statement::Let(stmt) => {
-            // TODO: other types
             gen_expression(&stmt.value, code);
-            code.extend_from_slice(&[Pop, R0]);
-            code.extend_from_slice(&[Construct]); // r0 = created js-object ptr
 
             code.extend(&[StaContextSlot]);
             let name = stmt.name.as_bytes();
-            let len_bytes = (name.len() as i32).to_le_bytes();
+            let len_bytes = (name.len() as i64).to_le_bytes();
             code.extend(len_bytes);
             code.extend(name);
         }
@@ -45,6 +39,8 @@ fn gen_expression(expr: &Expression, code: &mut Vec<u8>) {
     match expr {
         Expression::Number(literal) => {
             gen_number(*literal, code);
+            code.extend_from_slice(&[Pop, R0]);
+            code.extend_from_slice(&[Construct]); // r0 = created object ptr
         }
         Expression::Binary(expr) => match expr.operator.as_str() {
             "+" => {
@@ -92,9 +88,10 @@ fn gen_expression(expr: &Expression, code: &mut Vec<u8>) {
         Expression::Identifier(name) => {
             code.extend_from_slice(&[LdaContextSlot]);
             let name = name.as_bytes();
-            let len_bytes = (name.len() as i32).to_le_bytes();
+            let len_bytes = (name.len() as i64).to_le_bytes();
             code.extend(len_bytes);
             code.extend(name);
+            code.extend_from_slice(&[Push, R0]);
         }
         _ => todo!(),
     }

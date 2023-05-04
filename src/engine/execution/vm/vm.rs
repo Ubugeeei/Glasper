@@ -2,7 +2,10 @@
 
 use std::ptr::NonNull;
 
-use crate::engine::execution::objects::{js_number::JSNumber, object::Object};
+use crate::engine::execution::{
+    legacy_object::JSObject,
+    objects::{js_number::JSNumber, object::Object},
+};
 
 use super::{
     bytecodes::{Bytecodes, RName},
@@ -124,34 +127,31 @@ impl VM {
                 Bytecodes::Construct => {
                     // TODO: other types
                     let reg_v = self.get_reg_v(RName::R0);
-                    let mut o = self.heap.alloc().unwrap();
-                    let js_value = JSNumber::create(reg_v as f64, &mut o, self);
-                    let raw_ptr = js_value.ptr.as_ptr() as i64;
+                    let mut base_obj = self.heap.alloc().unwrap();
+                    let num_obj = JSNumber::create(reg_v as f64, &mut base_obj, self);
+                    let raw_ptr = num_obj.raw_ptr();
                     self.mov(RName::R0, raw_ptr);
                 }
 
                 Bytecodes::StaContextSlot => {
-                    let name = self.fetch_string();
                     let reg_v = self.get_reg_v(RName::R0);
-                    let ptr = NonNull::new(reg_v as *mut Object).unwrap();
+                    let name = self.fetch_string();
                     self.execution_context
                         .context
                         .clone()
                         .borrow_mut()
-                        .set(name, ptr);
+                        .set(name, reg_v);
                 }
                 Bytecodes::LdaContextSlot => {
                     let name = self.fetch_string();
                     // TODO: undefined
-                    let ptr = self
+                    let raw_ptr = self
                         .execution_context
                         .context
                         .clone()
                         .borrow()
                         .get(&name)
                         .unwrap();
-
-                    let raw_ptr = ptr.as_ptr() as i64;
                     self.mov(RName::R0, raw_ptr);
                 }
                 _ => {
