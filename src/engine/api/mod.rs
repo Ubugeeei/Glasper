@@ -1,12 +1,12 @@
 use crate::engine::{
     ast::Program,
-    execution::{host::Evaluator, object::RuntimeObject},
+    execution::{host::Evaluator, legacy_object::RuntimeObject},
     handles::HandleScope,
     parsing::{lexer::Lexer, parser::Parser},
 };
 use std::{cell::RefCell, collections::HashMap, io::Error, rc::Rc};
 
-use super::execution::object::JSObject;
+use super::execution::legacy_object::JSObject;
 
 pub struct Isolate {
     pub context: Context,

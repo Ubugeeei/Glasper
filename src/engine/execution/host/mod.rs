@@ -23,11 +23,11 @@ use crate::engine::{
         ForStatement, IfStatement, LetStatement, MemberExpression, ObjectExpression, Program,
         Statement, SwitchStatement, UpdateExpression,
     },
-    execution::object::{JSBoolean, JSNull, JSNumber, JSUndefined, RuntimeObject},
+    execution::legacy_object::{JSBoolean, JSNull, JSNumber, JSUndefined, RuntimeObject},
     handles::{Variable, VariableKind},
 };
 
-use super::object::{JSFunction, JSNaN, JSObject, JSString};
+use super::legacy_object::{JSFunction, JSNaN, JSObject, JSString};
 
 pub struct Evaluator<'a> {
     ctx: &'a mut Context,

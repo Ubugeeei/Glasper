@@ -4,7 +4,7 @@ use crate::engine::parsing::{lexer, parser::Parser};
 
 use self::register::RName;
 
-use super::object::{JSNumber, RuntimeObject};
+use super::legacy_object::{JSNumber, RuntimeObject};
 
 pub(crate) mod bytecodes;
 pub(crate) mod codegen;
