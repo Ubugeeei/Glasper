@@ -15,7 +15,7 @@ pub struct VM {
     register: Register,
     pc: usize,
     code: Vec<u8>,
-    stack: Vec<usize>,
+    stack: Vec<i64>,
     execution_context: ExecutionContext,
     pub(crate) heap: Heap,
 }
@@ -54,7 +54,7 @@ impl VM {
             match opcode {
                 Bytecodes::Mov => {
                     let r = self.fetch();
-                    let v = self.fetch_usize();
+                    let v = self.fetch_i64();
                     self.mov(r, v);
                 }
                 Bytecodes::Push => {
@@ -95,27 +95,27 @@ impl VM {
                 Bytecodes::AddSmi => {
                     let r1 = self.fetch();
                     let r2 = self.fetch();
-                    self.addi(r1, r2 as usize)
+                    self.addi(r1, r2 as i64)
                 }
                 Bytecodes::SubSmi => {
                     let r1 = self.fetch();
                     let r2 = self.fetch();
-                    self.subi(r1, r2 as usize)
+                    self.subi(r1, r2 as i64)
                 }
                 Bytecodes::MulSmi => {
                     let r1 = self.fetch();
                     let r2 = self.fetch();
-                    self.muli(r1, r2 as usize)
+                    self.muli(r1, r2 as i64)
                 }
                 Bytecodes::DivSmi => {
                     let r1 = self.fetch();
                     let r2 = self.fetch();
-                    self.divi(r1, r2 as usize)
+                    self.divi(r1, r2 as i64)
                 }
                 Bytecodes::ModSmi => {
                     let r1 = self.fetch();
                     let r2 = self.fetch();
-                    self.modi(r1, r2 as usize)
+                    self.modi(r1, r2 as i64)
                 }
                 Bytecodes::Hlt => {
                     break;
@@ -123,13 +123,10 @@ impl VM {
 
                 Bytecodes::Construct => {
                     // TODO: other types
-                    let reg_v_h = self.get_reg_v(RName::R0);
-                    let reg_v_l = self.get_reg_v(RName::R1);
-                    let reg_v = ((reg_v_h as u64) << 32) | (reg_v_l as u64);
-
+                    let reg_v = self.get_reg_v(RName::R0);
                     let mut o = self.heap.alloc().unwrap();
                     let js_value = JSNumber::create(reg_v as f64, &mut o, self);
-                    let raw_ptr = js_value.ptr.as_ptr() as usize;
+                    let raw_ptr = js_value.ptr.as_ptr() as i64;
                     self.mov(RName::R0, raw_ptr);
                 }
 
@@ -154,7 +151,7 @@ impl VM {
                         .get(&name)
                         .unwrap();
 
-                    let raw_ptr = ptr.as_ptr() as usize;
+                    let raw_ptr = ptr.as_ptr() as i64;
                     self.mov(RName::R0, raw_ptr);
                 }
                 _ => {
@@ -185,17 +182,28 @@ impl VM {
         }
     }
 
-    fn fetch_usize(&mut self) -> usize {
+    fn fetch_i64(&mut self) -> i64 {
+        let v0 = self.fetch();
         let v1 = self.fetch();
         let v2 = self.fetch();
         let v3 = self.fetch();
         let v4 = self.fetch();
+        let v5 = self.fetch();
+        let v6 = self.fetch();
+        let v7 = self.fetch();
 
-        (v4 as usize) << 24 | (v3 as usize) << 16 | (v2 as usize) << 8 | (v1 as usize)
+        (v7 as i64) << 56
+            | (v6 as i64) << 48
+            | (v5 as i64) << 40
+            | (v4 as i64) << 32
+            | (v3 as i64) << 24
+            | (v2 as i64) << 16
+            | (v1 as i64) << 8
+            | (v0 as i64)
     }
 
     fn fetch_string(&mut self) -> String {
-        let len = self.fetch_usize();
+        let len = self.fetch_i64();
         let mut s = String::new();
         for _ in 0..len {
             let c = self.fetch();
@@ -204,7 +212,7 @@ impl VM {
         s
     }
 
-    fn mov(&mut self, r: u8, v: usize) {
+    fn mov(&mut self, r: u8, v: i64) {
         match r {
             RName::R0 => self.register.r0 = v,
             RName::R1 => self.register.r1 = v,
@@ -214,14 +222,6 @@ impl VM {
             RName::R5 => self.register.r5 = v,
             RName::R6 => self.register.r6 = v,
             RName::R7 => self.register.r7 = v,
-            RName::R8 => self.register.r8 = v,
-            RName::R9 => self.register.r9 = v,
-            RName::R10 => self.register.r10 = v,
-            RName::R11 => self.register.r11 = v,
-            RName::R12 => self.register.r12 = v,
-            RName::R13 => self.register.r13 = v,
-            RName::R14 => self.register.r14 = v,
-            RName::R15 => self.register.r15 = v,
             _ => unreachable!(),
         }
     }
@@ -236,14 +236,6 @@ impl VM {
             RName::R5 => self.stack.push(self.register.r5),
             RName::R6 => self.stack.push(self.register.r6),
             RName::R7 => self.stack.push(self.register.r7),
-            RName::R8 => self.stack.push(self.register.r8),
-            RName::R9 => self.stack.push(self.register.r9),
-            RName::R10 => self.stack.push(self.register.r10),
-            RName::R11 => self.stack.push(self.register.r11),
-            RName::R12 => self.stack.push(self.register.r12),
-            RName::R13 => self.stack.push(self.register.r13),
-            RName::R14 => self.stack.push(self.register.r14),
-            RName::R15 => self.stack.push(self.register.r15),
             _ => unreachable!(),
         }
     }
@@ -258,44 +250,36 @@ impl VM {
             RName::R5 => self.register.r5 = self.stack.pop().unwrap(),
             RName::R6 => self.register.r6 = self.stack.pop().unwrap(),
             RName::R7 => self.register.r7 = self.stack.pop().unwrap(),
-            RName::R8 => self.register.r8 = self.stack.pop().unwrap(),
-            RName::R9 => self.register.r9 = self.stack.pop().unwrap(),
-            RName::R10 => self.register.r10 = self.stack.pop().unwrap(),
-            RName::R11 => self.register.r11 = self.stack.pop().unwrap(),
-            RName::R12 => self.register.r12 = self.stack.pop().unwrap(),
-            RName::R13 => self.register.r13 = self.stack.pop().unwrap(),
-            RName::R14 => self.register.r14 = self.stack.pop().unwrap(),
-            RName::R15 => self.register.r15 = self.stack.pop().unwrap(),
             _ => unreachable!(),
         }
     }
 
-    fn addi(&mut self, r: u8, v: usize) {
+    fn addi(&mut self, r: u8, v: i64) {
         let v1 = self.get_reg_v(r);
         self.mov(r, v1 + v);
     }
 
-    fn subi(&mut self, r: u8, v: usize) {
+    fn subi(&mut self, r: u8, v: i64) {
         let v1 = self.get_reg_v(r);
         self.mov(r, v1 - v);
     }
 
-    fn muli(&mut self, r: u8, v: usize) {
+    fn muli(&mut self, r: u8, v: i64) {
         let v1 = self.get_reg_v(r);
         self.mov(r, v1 * v);
     }
 
-    fn divi(&mut self, r: u8, v: usize) {
+    fn divi(&mut self, r: u8, v: i64) {
         let v1 = self.get_reg_v(r);
         self.mov(r, v1 / v);
     }
 
-    fn modi(&mut self, r: u8, v: usize) {
+    fn modi(&mut self, r: u8, v: i64) {
         let v1 = self.get_reg_v(r);
         self.mov(r, v1 % v);
     }
 
-    pub(crate) fn get_reg_v(&self, r: u8) -> usize {
+    pub(crate) fn get_reg_v(&self, r: u8) -> i64 {
         match r {
             RName::R0 => self.register.r0,
             RName::R1 => self.register.r1,
@@ -305,14 +289,6 @@ impl VM {
             RName::R5 => self.register.r5,
             RName::R6 => self.register.r6,
             RName::R7 => self.register.r7,
-            RName::R8 => self.register.r8,
-            RName::R9 => self.register.r9,
-            RName::R10 => self.register.r10,
-            RName::R11 => self.register.r11,
-            RName::R12 => self.register.r12,
-            RName::R13 => self.register.r13,
-            RName::R14 => self.register.r14,
-            RName::R15 => self.register.r15,
             _ => unreachable!(),
         }
     }

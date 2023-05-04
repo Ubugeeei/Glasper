@@ -13,7 +13,7 @@ impl Object {
         Object { ptr }
     }
 
-    pub(crate) fn from_row_ptr(ptr: usize) -> Self {
+    pub(crate) fn from_row_ptr(ptr: i64) -> Self {
         Object {
             ptr: NonNull::new(ptr as *mut JSObject).unwrap(),
         }

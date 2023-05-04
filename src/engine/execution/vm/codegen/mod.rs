@@ -6,7 +6,7 @@ use super::bytecodes::{
     Bytecodes::{
         Add, Construct, Div, LdaContextSlot, Mod, Mov, Mul, Pop, Push, StaContextSlot, Sub,
     },
-    RName::{R0, R1},
+    RName::{R0, R1, R2, R3},
 };
 
 pub fn gen(program: &Program) -> Vec<u8> {
@@ -23,7 +23,6 @@ fn gen_statement(statement: &Statement, code: &mut Vec<u8>) {
             // TODO: other types
             gen_expression(expr, code);
             code.extend_from_slice(&[Pop, R0]);
-            code.extend_from_slice(&[Pop, R1]);
             code.extend_from_slice(&[Construct]); // r0 = created js-object ptr
         }
         Statement::Let(stmt) => {
@@ -110,11 +109,6 @@ fn gen_number(n: f64, code: &mut Vec<u8>) {
     code.push(((n >> 8) & 0xff_i64) as u8);
     code.push(((n >> 16) & 0xff_i64) as u8);
     code.push(((n >> 24) & 0xff_i64) as u8);
-    code.push(Push);
-    code.push(R0);
-
-    code.push(Mov);
-    code.push(R0);
     code.push(((n >> 32) & 0xff_i64) as u8);
     code.push(((n >> 40) & 0xff_i64) as u8);
     code.push(((n >> 48) & 0xff_i64) as u8);

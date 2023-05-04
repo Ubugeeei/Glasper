@@ -11,14 +11,6 @@ pub(crate) mod Bytecodes {
     pub(crate) const Star5: u8 = 0x05;
     pub(crate) const Star6: u8 = 0x06;
     pub(crate) const Star7: u8 = 0x07;
-    pub(crate) const Star8: u8 = 0x08;
-    pub(crate) const Star9: u8 = 0x09;
-    pub(crate) const Star10: u8 = 0x0a;
-    pub(crate) const Star11: u8 = 0x0b;
-    pub(crate) const Star12: u8 = 0x0c;
-    pub(crate) const Star13: u8 = 0x0d;
-    pub(crate) const Star14: u8 = 0x0e;
-    pub(crate) const Star15: u8 = 0x0f;
 
     /* - [Loading the accumulator] */
     pub(crate) const Ldar: u8 = 0x10;
@@ -130,12 +122,4 @@ pub(crate) mod RName {
     pub(crate) const R5: u8 = 0x06;
     pub(crate) const R6: u8 = 0x07;
     pub(crate) const R7: u8 = 0x08;
-    pub(crate) const R8: u8 = 0x09;
-    pub(crate) const R9: u8 = 0x0A;
-    pub(crate) const R10: u8 = 0x0B;
-    pub(crate) const R11: u8 = 0x0C;
-    pub(crate) const R12: u8 = 0x0D;
-    pub(crate) const R13: u8 = 0x0E;
-    pub(crate) const R14: u8 = 0x0F;
-    pub(crate) const R15: u8 = 0x10;
 }
