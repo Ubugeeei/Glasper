@@ -1,9 +1,13 @@
 #![allow(dead_code)]
 
+use std::collections::HashMap;
+
+use crate::engine::execution::objects::js_number::JSNumber;
+
 use super::{
-    bytecodes::Bytecodes,
+    bytecodes::{Bytecodes, RName},
     heap::Heap,
-    register::{RName, Register},
+    register::Register,
 };
 
 pub struct VM {
@@ -12,6 +16,9 @@ pub struct VM {
     code: Vec<u8>,
     stack: Vec<i64>,
     pub(crate) heap: Heap,
+
+    // TODO: scopes
+    l_vars: HashMap<String, i64>,
 }
 
 impl VM {
@@ -22,6 +29,7 @@ impl VM {
             heap: Heap::new(1024 * 1024),
             pc: 0,
             code: Vec::new(),
+            l_vars: HashMap::new(),
         }
     }
 
@@ -113,6 +121,22 @@ impl VM {
                 Bytecodes::Hlt => {
                     break;
                 }
+                Bytecodes::Construct => {
+                    // TODO: other types
+                    let reg = self.fetch();
+                    let reg_v = self.get_reg_v(reg);
+
+                    let mut o = self.heap.alloc().unwrap();
+                    let js_value = JSNumber::create(reg_v as f64, &mut o, self);
+                    let raw_ptr = js_value.ptr.as_ptr() as i64;
+                    self.mov(reg, raw_ptr);
+                }
+                Bytecodes::Declare => {
+                    let name = self.fetch_string();
+                    let reg = self.fetch();
+                    let reg_v = self.get_reg_v(reg);
+                    self.l_vars.insert(name, reg_v);
+                }
                 _ => {
                     todo!()
                 }
@@ -152,6 +176,16 @@ impl VM {
             | (v3 as i64) << 16
             | (v2 as i64) << 8
             | (v1 as i64)
+    }
+
+    fn fetch_string(&mut self) -> String {
+        let len = self.fetch_int64();
+        let mut s = String::new();
+        for _ in 0..len {
+            let c = self.fetch();
+            s.push(c as char);
+        }
+        s
     }
 
     fn mov(&mut self, r: u8, v: i64) {

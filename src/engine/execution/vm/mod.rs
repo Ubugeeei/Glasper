@@ -2,7 +2,7 @@
 
 use crate::engine::parsing::{lexer, parser::Parser};
 
-use self::register::RName;
+use self::bytecodes::RName;
 
 use super::legacy_object::{JSNumber, RuntimeObject};
 

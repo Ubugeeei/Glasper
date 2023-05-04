@@ -2,7 +2,7 @@
 
 use crate::engine::ast::{Expression, Program, Statement};
 
-use super::{bytecodes::Bytecodes, register::RName};
+use super::bytecodes::{Bytecodes, RName};
 
 pub fn gen(program: &Program) -> Vec<u8> {
     let mut code: Vec<u8> = Vec::new();
@@ -16,6 +16,19 @@ fn gen_statement(statement: &Statement, code: &mut Vec<u8>) {
     match statement {
         Statement::Expression(expr) => {
             gen_expression(expr, code);
+        }
+        Statement::Let(stmt) => {
+            // TODO: other types
+            gen_expression(&stmt.value, code);
+            code.extend_from_slice(&[Bytecodes::Pop, RName::R1]);
+            code.extend_from_slice(&[Bytecodes::Construct, RName::R1]); // r1 = created js-object ptr
+
+            code.extend(&[Bytecodes::Declare]);
+            let name = stmt.name.as_bytes();
+            let len_bytes = (name.len() as i64).to_le_bytes();
+            code.extend(len_bytes);
+            code.extend(name);
+            code.extend([RName::R1]);
         }
         _ => todo!(),
     }
