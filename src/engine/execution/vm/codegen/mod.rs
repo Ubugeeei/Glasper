@@ -2,7 +2,10 @@
 
 use crate::engine::ast::{Expression, Program, Statement};
 
-use super::bytecodes::{Bytecodes, RName};
+use super::bytecodes::{
+    Bytecodes::{Add, Construct, Declare, Div, Mod, Mov, Mul, Pop, Push, Sub},
+    RName::{R1, R2},
+};
 
 pub fn gen(program: &Program) -> Vec<u8> {
     let mut code: Vec<u8> = Vec::new();
@@ -20,15 +23,15 @@ fn gen_statement(statement: &Statement, code: &mut Vec<u8>) {
         Statement::Let(stmt) => {
             // TODO: other types
             gen_expression(&stmt.value, code);
-            code.extend_from_slice(&[Bytecodes::Pop, RName::R1]);
-            code.extend_from_slice(&[Bytecodes::Construct, RName::R1]); // r1 = created js-object ptr
+            code.extend_from_slice(&[Pop, R1]);
+            code.extend_from_slice(&[Construct, R1]); // r1 = created js-object ptr
 
-            code.extend(&[Bytecodes::Declare]);
+            code.extend(&[Declare]);
             let name = stmt.name.as_bytes();
             let len_bytes = (name.len() as i64).to_le_bytes();
             code.extend(len_bytes);
             code.extend(name);
-            code.extend([RName::R1]);
+            code.extend([R1]);
         }
         _ => todo!(),
     }
@@ -43,42 +46,42 @@ fn gen_expression(expr: &Expression, code: &mut Vec<u8>) {
             "+" => {
                 gen_expression(&expr.left, code);
                 gen_expression(&expr.right, code);
-                code.extend_from_slice(&[Bytecodes::Pop, RName::R1]);
-                code.extend_from_slice(&[Bytecodes::Pop, RName::R2]);
-                code.extend_from_slice(&[Bytecodes::Add, RName::R1, RName::R2]);
-                code.extend_from_slice(&[Bytecodes::Push, RName::R1]);
+                code.extend_from_slice(&[Pop, R1]);
+                code.extend_from_slice(&[Pop, R2]);
+                code.extend_from_slice(&[Add, R1, R2]);
+                code.extend_from_slice(&[Push, R1]);
             }
             "-" => {
                 gen_expression(&expr.left, code);
                 gen_expression(&expr.right, code);
-                code.extend_from_slice(&[Bytecodes::Pop, RName::R1]);
-                code.extend_from_slice(&[Bytecodes::Pop, RName::R2]);
-                code.extend_from_slice(&[Bytecodes::Sub, RName::R1, RName::R2]);
-                code.extend_from_slice(&[Bytecodes::Push, RName::R1]);
+                code.extend_from_slice(&[Pop, R1]);
+                code.extend_from_slice(&[Pop, R2]);
+                code.extend_from_slice(&[Sub, R1, R2]);
+                code.extend_from_slice(&[Push, R1]);
             }
             "*" => {
                 gen_expression(&expr.left, code);
                 gen_expression(&expr.right, code);
-                code.extend_from_slice(&[Bytecodes::Pop, RName::R1]);
-                code.extend_from_slice(&[Bytecodes::Pop, RName::R2]);
-                code.extend_from_slice(&[Bytecodes::Mul, RName::R1, RName::R2]);
-                code.extend_from_slice(&[Bytecodes::Push, RName::R1]);
+                code.extend_from_slice(&[Pop, R1]);
+                code.extend_from_slice(&[Pop, R2]);
+                code.extend_from_slice(&[Mul, R1, R2]);
+                code.extend_from_slice(&[Push, R1]);
             }
             "/" => {
                 gen_expression(&expr.left, code);
                 gen_expression(&expr.right, code);
-                code.extend_from_slice(&[Bytecodes::Pop, RName::R1]);
-                code.extend_from_slice(&[Bytecodes::Pop, RName::R2]);
-                code.extend_from_slice(&[Bytecodes::Div, RName::R1, RName::R2]);
-                code.extend_from_slice(&[Bytecodes::Push, RName::R1]);
+                code.extend_from_slice(&[Pop, R1]);
+                code.extend_from_slice(&[Pop, R2]);
+                code.extend_from_slice(&[Div, R1, R2]);
+                code.extend_from_slice(&[Push, R1]);
             }
             "%" => {
                 gen_expression(&expr.left, code);
                 gen_expression(&expr.right, code);
-                code.extend_from_slice(&[Bytecodes::Pop, RName::R1]);
-                code.extend_from_slice(&[Bytecodes::Pop, RName::R2]);
-                code.extend_from_slice(&[Bytecodes::Mod, RName::R1, RName::R2]);
-                code.extend_from_slice(&[Bytecodes::Push, RName::R1]);
+                code.extend_from_slice(&[Pop, R1]);
+                code.extend_from_slice(&[Pop, R2]);
+                code.extend_from_slice(&[Mod, R1, R2]);
+                code.extend_from_slice(&[Push, R1]);
             }
             _ => todo!(),
         },
@@ -87,8 +90,8 @@ fn gen_expression(expr: &Expression, code: &mut Vec<u8>) {
 }
 
 fn gen_number(n: f64, code: &mut Vec<u8>) {
-    code.push(Bytecodes::Mov);
-    code.push(RName::R1);
+    code.push(Mov);
+    code.push(R1);
 
     let n = n as i64;
     code.push(((n) & 0xff_i64) as u8);
@@ -100,6 +103,6 @@ fn gen_number(n: f64, code: &mut Vec<u8>) {
     code.push(((n >> 48) & 0xff_i64) as u8);
     code.push(((n >> 56) & 0xff_i64) as u8);
 
-    code.push(Bytecodes::Push);
-    code.push(RName::R1);
+    code.push(Push);
+    code.push(R1);
 }
