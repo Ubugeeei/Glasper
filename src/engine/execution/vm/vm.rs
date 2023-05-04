@@ -1,11 +1,12 @@
 #![allow(dead_code)]
 
-use std::collections::HashMap;
+use std::ptr::NonNull;
 
-use crate::engine::execution::objects::js_number::JSNumber;
+use crate::engine::execution::objects::{js_number::JSNumber, js_objects::JSObject};
 
 use super::{
     bytecodes::{Bytecodes, RName},
+    context::ExecutionContext,
     heap::Heap,
     register::Register,
 };
@@ -15,21 +16,19 @@ pub struct VM {
     pc: usize,
     code: Vec<u8>,
     stack: Vec<i64>,
+    execution_context: ExecutionContext,
     pub(crate) heap: Heap,
-
-    // TODO: scopes
-    l_vars: HashMap<String, i64>,
 }
 
 impl VM {
     pub(crate) fn new() -> Self {
         Self {
             register: Register::new(),
-            stack: Vec::new(),
-            heap: Heap::new(1024 * 1024),
             pc: 0,
+            stack: Vec::new(),
             code: Vec::new(),
-            l_vars: HashMap::new(),
+            execution_context: ExecutionContext::new(),
+            heap: Heap::new(1024 * 1024),
         }
     }
 
@@ -131,11 +130,16 @@ impl VM {
                     let raw_ptr = js_value.ptr.as_ptr() as i64;
                     self.mov(reg, raw_ptr);
                 }
-                Bytecodes::Declare => {
+                Bytecodes::LdaContextSlot => {
                     let name = self.fetch_string();
                     let reg = self.fetch();
                     let reg_v = self.get_reg_v(reg);
-                    self.l_vars.insert(name, reg_v);
+                    let ptr = NonNull::new(reg_v as *mut JSObject).unwrap();
+                    self.execution_context
+                        .context
+                        .clone()
+                        .borrow_mut()
+                        .set(name, ptr);
                 }
                 _ => {
                     todo!()

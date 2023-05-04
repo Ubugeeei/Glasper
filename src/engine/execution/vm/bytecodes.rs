@@ -101,9 +101,6 @@ pub(crate) mod Bytecodes {
     pub(crate) const Hlt: u8 = 0x4b;
 
     pub(crate) const Construct: u8 = 0x4c;
-
-    // TODO:
-    pub(crate) const Declare: u8 = 0x4d;
 }
 
 #[allow(non_snake_case)]

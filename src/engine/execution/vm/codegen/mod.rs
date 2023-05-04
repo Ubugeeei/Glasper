@@ -3,7 +3,7 @@
 use crate::engine::ast::{Expression, Program, Statement};
 
 use super::bytecodes::{
-    Bytecodes::{Add, Construct, Declare, Div, Mod, Mov, Mul, Pop, Push, Sub},
+    Bytecodes::{Add, Construct, Div, LdaContextSlot, Mod, Mov, Mul, Pop, Push, Sub},
     RName::{R1, R2},
 };
 
@@ -26,7 +26,7 @@ fn gen_statement(statement: &Statement, code: &mut Vec<u8>) {
             code.extend_from_slice(&[Pop, R1]);
             code.extend_from_slice(&[Construct, R1]); // r1 = created js-object ptr
 
-            code.extend(&[Declare]);
+            code.extend(&[LdaContextSlot]);
             let name = stmt.name.as_bytes();
             let len_bytes = (name.len() as i64).to_le_bytes();
             code.extend(len_bytes);

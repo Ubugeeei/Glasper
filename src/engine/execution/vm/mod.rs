@@ -8,6 +8,7 @@ use super::legacy_object::{JSNumber, RuntimeObject};
 
 pub(crate) mod bytecodes;
 pub(crate) mod codegen;
+pub(crate) mod context;
 pub(crate) mod heap;
 pub(crate) mod register;
 #[allow(clippy::module_inception)]
