@@ -2,7 +2,7 @@
 
 use std::ptr::NonNull;
 
-use crate::engine::execution::objects::{js_number::JSNumber, js_objects::JSObject};
+use crate::engine::execution::objects::{js_number::JSNumber, objects::Object};
 
 use super::{
     bytecodes::{Bytecodes, RName},
@@ -15,7 +15,7 @@ pub struct VM {
     register: Register,
     pc: usize,
     code: Vec<u8>,
-    stack: Vec<i64>,
+    stack: Vec<usize>,
     execution_context: ExecutionContext,
     pub(crate) heap: Heap,
 }
@@ -54,7 +54,7 @@ impl VM {
             match opcode {
                 Bytecodes::Mov => {
                     let r = self.fetch();
-                    let v = self.fetch_int64();
+                    let v = self.fetch_usize();
                     self.mov(r, v);
                 }
                 Bytecodes::Push => {
@@ -95,48 +95,67 @@ impl VM {
                 Bytecodes::AddSmi => {
                     let r1 = self.fetch();
                     let r2 = self.fetch();
-                    self.addi(r1, r2 as i64)
+                    self.addi(r1, r2 as usize)
                 }
                 Bytecodes::SubSmi => {
                     let r1 = self.fetch();
                     let r2 = self.fetch();
-                    self.subi(r1, r2 as i64)
+                    self.subi(r1, r2 as usize)
                 }
                 Bytecodes::MulSmi => {
                     let r1 = self.fetch();
                     let r2 = self.fetch();
-                    self.muli(r1, r2 as i64)
+                    self.muli(r1, r2 as usize)
                 }
                 Bytecodes::DivSmi => {
                     let r1 = self.fetch();
                     let r2 = self.fetch();
-                    self.divi(r1, r2 as i64)
+                    self.divi(r1, r2 as usize)
                 }
                 Bytecodes::ModSmi => {
                     let r1 = self.fetch();
                     let r2 = self.fetch();
-                    self.modi(r1, r2 as i64)
+                    self.modi(r1, r2 as usize)
                 }
                 Bytecodes::Hlt => {
                     break;
                 }
+
                 Bytecodes::Construct => {
                     // TODO: other types
-                    let reg_v = self.get_reg_v(RName::R0);
+                    let reg_v_h = self.get_reg_v(RName::R0);
+                    let reg_v_l = self.get_reg_v(RName::R1);
+                    let reg_v = ((reg_v_h as u64) << 32) | (reg_v_l as u64);
+
                     let mut o = self.heap.alloc().unwrap();
                     let js_value = JSNumber::create(reg_v as f64, &mut o, self);
-                    let raw_ptr = js_value.ptr.as_ptr() as i64;
+                    let raw_ptr = js_value.ptr.as_ptr() as usize;
                     self.mov(RName::R0, raw_ptr);
                 }
+
                 Bytecodes::StaContextSlot => {
                     let name = self.fetch_string();
                     let reg_v = self.get_reg_v(RName::R0);
-                    let ptr = NonNull::new(reg_v as *mut JSObject).unwrap();
+                    let ptr = NonNull::new(reg_v as *mut Object).unwrap();
                     self.execution_context
                         .context
                         .clone()
                         .borrow_mut()
                         .set(name, ptr);
+                }
+                Bytecodes::LdaContextSlot => {
+                    let name = self.fetch_string();
+                    // TODO: undefined
+                    let ptr = self
+                        .execution_context
+                        .context
+                        .clone()
+                        .borrow()
+                        .get(&name)
+                        .unwrap();
+
+                    let raw_ptr = ptr.as_ptr() as usize;
+                    self.mov(RName::R0, raw_ptr);
                 }
                 _ => {
                     todo!()
@@ -149,6 +168,13 @@ impl VM {
         self.code.append(code);
     }
 
+    pub(crate) fn display(&self) {
+        let ptr = self.get_reg_v(RName::R0);
+        let o = Object::from_row_ptr(ptr);
+        let js_value = o.as_js_object_ref();
+        println!("{}", js_value);
+    }
+
     fn fetch(&mut self) -> u8 {
         if self.pc < self.code.len() {
             let opcode = self.code[self.pc];
@@ -159,28 +185,17 @@ impl VM {
         }
     }
 
-    fn fetch_int64(&mut self) -> i64 {
+    fn fetch_usize(&mut self) -> usize {
         let v1 = self.fetch();
         let v2 = self.fetch();
         let v3 = self.fetch();
         let v4 = self.fetch();
-        let v5 = self.fetch();
-        let v6 = self.fetch();
-        let v7 = self.fetch();
-        let v8 = self.fetch();
 
-        (v8 as i64) << 56
-            | (v7 as i64) << 48
-            | (v6 as i64) << 40
-            | (v5 as i64) << 32
-            | (v4 as i64) << 24
-            | (v3 as i64) << 16
-            | (v2 as i64) << 8
-            | (v1 as i64)
+        (v4 as usize) << 24 | (v3 as usize) << 16 | (v2 as usize) << 8 | (v1 as usize)
     }
 
     fn fetch_string(&mut self) -> String {
-        let len = self.fetch_int64();
+        let len = self.fetch_usize();
         let mut s = String::new();
         for _ in 0..len {
             let c = self.fetch();
@@ -189,7 +204,7 @@ impl VM {
         s
     }
 
-    fn mov(&mut self, r: u8, v: i64) {
+    fn mov(&mut self, r: u8, v: usize) {
         match r {
             RName::R0 => self.register.r0 = v,
             RName::R1 => self.register.r1 = v,
@@ -255,32 +270,32 @@ impl VM {
         }
     }
 
-    fn addi(&mut self, r: u8, v: i64) {
+    fn addi(&mut self, r: u8, v: usize) {
         let v1 = self.get_reg_v(r);
         self.mov(r, v1 + v);
     }
 
-    fn subi(&mut self, r: u8, v: i64) {
+    fn subi(&mut self, r: u8, v: usize) {
         let v1 = self.get_reg_v(r);
         self.mov(r, v1 - v);
     }
 
-    fn muli(&mut self, r: u8, v: i64) {
+    fn muli(&mut self, r: u8, v: usize) {
         let v1 = self.get_reg_v(r);
         self.mov(r, v1 * v);
     }
 
-    fn divi(&mut self, r: u8, v: i64) {
+    fn divi(&mut self, r: u8, v: usize) {
         let v1 = self.get_reg_v(r);
         self.mov(r, v1 / v);
     }
 
-    fn modi(&mut self, r: u8, v: i64) {
+    fn modi(&mut self, r: u8, v: usize) {
         let v1 = self.get_reg_v(r);
         self.mov(r, v1 % v);
     }
 
-    pub(crate) fn get_reg_v(&self, r: u8) -> i64 {
+    pub(crate) fn get_reg_v(&self, r: u8) -> usize {
         match r {
             RName::R0 => self.register.r0,
             RName::R1 => self.register.r1,

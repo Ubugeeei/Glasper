@@ -1,18 +1,17 @@
 #![allow(dead_code)]
 
+use super::objects::Object;
 use crate::engine::execution::vm::vm::VM;
-use std::{collections::HashMap, fmt::Display, ptr::NonNull};
+use std::{collections::HashMap, fmt::Display};
 
 pub struct JSObject {
-    pub(crate) ptr: NonNull<JSObject>,
-    pub(crate) properties: HashMap<String, JSObject>,
+    pub(crate) properties: HashMap<String, Object>,
     pub(crate) _type: JSType,
 }
 
 impl JSObject {
-    pub(crate) fn new(ptr: NonNull<JSObject>) -> Self {
+    pub(crate) fn new() -> Self {
         JSObject {
-            ptr,
             properties: HashMap::new(),
             _type: JSType::Object,
         }
@@ -38,9 +37,9 @@ pub(crate) enum JSType {
     Boolean(bool),
     Number(f64),
     String(String),
-    Array(Box<JSObject>),
+    Array(Box<Object>),
     Object,
     Function,
     Undefined,
-    NativeFunction(fn(vm: &mut VM, this: JSObject, _: Vec<JSObject>) -> JSObject),
+    NativeFunction(fn(vm: &mut VM, this: &mut Object, _: Vec<Object>) -> Object),
 }

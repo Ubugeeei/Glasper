@@ -3,7 +3,9 @@
 use crate::engine::ast::{Expression, Program, Statement};
 
 use super::bytecodes::{
-    Bytecodes::{Add, Construct, Div, Mod, Mov, Mul, Pop, Push, StaContextSlot, Sub},
+    Bytecodes::{
+        Add, Construct, Div, LdaContextSlot, Mod, Mov, Mul, Pop, Push, StaContextSlot, Sub,
+    },
     RName::{R0, R1},
 };
 
@@ -18,7 +20,11 @@ pub fn gen(program: &Program) -> Vec<u8> {
 fn gen_statement(statement: &Statement, code: &mut Vec<u8>) {
     match statement {
         Statement::Expression(expr) => {
+            // TODO: other types
             gen_expression(expr, code);
+            code.extend_from_slice(&[Pop, R0]);
+            code.extend_from_slice(&[Pop, R1]);
+            code.extend_from_slice(&[Construct]); // r0 = created js-object ptr
         }
         Statement::Let(stmt) => {
             // TODO: other types
@@ -28,7 +34,7 @@ fn gen_statement(statement: &Statement, code: &mut Vec<u8>) {
 
             code.extend(&[StaContextSlot]);
             let name = stmt.name.as_bytes();
-            let len_bytes = (name.len() as i64).to_le_bytes();
+            let len_bytes = (name.len() as i32).to_le_bytes();
             code.extend(len_bytes);
             code.extend(name);
         }
@@ -84,19 +90,31 @@ fn gen_expression(expr: &Expression, code: &mut Vec<u8>) {
             }
             _ => todo!(),
         },
+        Expression::Identifier(name) => {
+            code.extend_from_slice(&[LdaContextSlot]);
+            let name = name.as_bytes();
+            let len_bytes = (name.len() as i32).to_le_bytes();
+            code.extend(len_bytes);
+            code.extend(name);
+        }
         _ => todo!(),
     }
 }
 
 fn gen_number(n: f64, code: &mut Vec<u8>) {
+    let n = n as i64;
+
     code.push(Mov);
     code.push(R0);
-
-    let n = n as i64;
     code.push(((n) & 0xff_i64) as u8);
     code.push(((n >> 8) & 0xff_i64) as u8);
     code.push(((n >> 16) & 0xff_i64) as u8);
     code.push(((n >> 24) & 0xff_i64) as u8);
+    code.push(Push);
+    code.push(R0);
+
+    code.push(Mov);
+    code.push(R0);
     code.push(((n >> 32) & 0xff_i64) as u8);
     code.push(((n >> 40) & 0xff_i64) as u8);
     code.push(((n >> 48) & 0xff_i64) as u8);

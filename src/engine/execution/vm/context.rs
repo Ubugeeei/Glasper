@@ -1,6 +1,6 @@
 use std::{cell::RefCell, collections::HashMap, ptr::NonNull, rc::Rc};
 
-use crate::engine::execution::objects::js_objects::JSObject;
+use crate::engine::execution::objects::objects::Object;
 
 pub(crate) struct ExecutionContext {
     // this: JSObject,
@@ -24,7 +24,7 @@ impl ExecutionContext {
     }
 }
 
-type ContextSlot = HashMap<String, NonNull<JSObject>>;
+type ContextSlot = HashMap<String, NonNull<Object>>;
 pub(crate) struct Context {
     slots: Rc<RefCell<ContextSlot>>,
     outer: Option<Rc<RefCell<Context>>>,
@@ -37,11 +37,11 @@ impl Context {
         }
     }
 
-    pub(crate) fn set(&self, name: String, value: NonNull<JSObject>) {
+    pub(crate) fn set(&self, name: String, value: NonNull<Object>) {
         self.slots.borrow_mut().insert(name, value);
     }
 
-    pub(crate) fn get(&self, name: &str) -> Option<NonNull<JSObject>> {
+    pub(crate) fn get(&self, name: &str) -> Option<NonNull<Object>> {
         self.slots.borrow().get(name).cloned().or_else(|| {
             self.outer
                 .as_ref()

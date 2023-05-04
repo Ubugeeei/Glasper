@@ -1,22 +1,22 @@
 #![allow(dead_code)]
 
 pub(crate) struct Register {
-    pub(crate) r0: i64,
-    pub(crate) r1: i64,
-    pub(crate) r2: i64,
-    pub(crate) r3: i64,
-    pub(crate) r4: i64,
-    pub(crate) r5: i64,
-    pub(crate) r6: i64,
-    pub(crate) r7: i64,
-    pub(crate) r8: i64,
-    pub(crate) r9: i64,
-    pub(crate) r10: i64,
-    pub(crate) r11: i64,
-    pub(crate) r12: i64,
-    pub(crate) r13: i64,
-    pub(crate) r14: i64,
-    pub(crate) r15: i64,
+    pub(crate) r0: usize,
+    pub(crate) r1: usize,
+    pub(crate) r2: usize,
+    pub(crate) r3: usize,
+    pub(crate) r4: usize,
+    pub(crate) r5: usize,
+    pub(crate) r6: usize,
+    pub(crate) r7: usize,
+    pub(crate) r8: usize,
+    pub(crate) r9: usize,
+    pub(crate) r10: usize,
+    pub(crate) r11: usize,
+    pub(crate) r12: usize,
+    pub(crate) r13: usize,
+    pub(crate) r14: usize,
+    pub(crate) r15: usize,
 }
 
 impl Register {

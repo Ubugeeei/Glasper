@@ -71,8 +71,8 @@ fn start_vm_repl() {
                     break;
                 }
 
-                let js_value = interpreter.run(line);
-                println!("{}", js_value)
+                let _ = interpreter.run(line);
+                interpreter.vm.display();
             }
 
             Err(ReadlineError::Interrupted) | Err(ReadlineError::Eof) => {

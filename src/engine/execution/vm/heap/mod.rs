@@ -1,5 +1,5 @@
 use self::{gc::GarbageCollector, page_allocator::PageAllocator, virtual_memory::VirtualMemory};
-use crate::engine::execution::objects::js_objects::JSObject;
+use crate::engine::execution::objects::{js_object::JSObject, objects::Object};
 use std::ptr::NonNull;
 
 mod gc;
@@ -27,7 +27,7 @@ impl Heap {
         }
     }
 
-    pub(crate) fn alloc(&mut self) -> Option<JSObject> {
+    pub(crate) fn alloc(&mut self) -> Option<Object> {
         let size = std::mem::size_of::<JSObject>();
         let align = std::mem::align_of::<JSObject>();
         let aligned_next = (self.next as usize + align - 1) & !(align - 1);
@@ -36,9 +36,10 @@ impl Heap {
         if next.wrapping_add(size) <= self.end {
             let ptr = next as *mut JSObject;
             unsafe {
+                ptr.write(JSObject::new());
                 self.next = ptr.add(1) as *mut u8;
             }
-            Some(JSObject::new(NonNull::new(ptr).unwrap()))
+            Some(Object::new(NonNull::new(ptr).unwrap()))
         } else {
             None
         }
