@@ -1,6 +1,6 @@
 #![allow(dead_code)]
 
-use super::objects::Object;
+use super::object::Object;
 use crate::engine::execution::vm::vm::VM;
 use std::{collections::HashMap, fmt::Display};
 

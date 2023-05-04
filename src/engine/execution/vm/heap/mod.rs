@@ -1,5 +1,5 @@
 use self::{gc::GarbageCollector, page_allocator::PageAllocator, virtual_memory::VirtualMemory};
-use crate::engine::execution::objects::{js_object::JSObject, objects::Object};
+use crate::engine::execution::objects::{js_object::JSObject, object::Object};
 use std::ptr::NonNull;
 
 mod gc;

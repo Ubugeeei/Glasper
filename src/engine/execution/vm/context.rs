@@ -1,6 +1,6 @@
 use std::{cell::RefCell, collections::HashMap, ptr::NonNull, rc::Rc};
 
-use crate::engine::execution::objects::objects::Object;
+use crate::engine::execution::objects::object::Object;
 
 pub(crate) struct ExecutionContext {
     // this: JSObject,

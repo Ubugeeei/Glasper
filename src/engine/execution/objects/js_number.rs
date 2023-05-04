@@ -1,7 +1,7 @@
 #![allow(dead_code)]
 use crate::engine::execution::vm::vm::VM;
 
-use super::{js_object::JSType, objects::Object};
+use super::{js_object::JSType, object::Object};
 
 pub(crate) struct JSNumber;
 

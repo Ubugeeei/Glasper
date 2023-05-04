@@ -2,7 +2,7 @@
 
 use std::ptr::NonNull;
 
-use crate::engine::execution::objects::{js_number::JSNumber, objects::Object};
+use crate::engine::execution::objects::{js_number::JSNumber, object::Object};
 
 use super::{
     bytecodes::{Bytecodes, RName},

@@ -6,7 +6,7 @@ use super::bytecodes::{
     Bytecodes::{
         Add, Construct, Div, LdaContextSlot, Mod, Mov, Mul, Pop, Push, StaContextSlot, Sub,
     },
-    RName::{R0, R1, R2, R3},
+    RName::{R0, R1},
 };
 
 pub fn gen(program: &Program) -> Vec<u8> {
