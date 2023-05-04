@@ -40,6 +40,6 @@ impl Context {
     }
 
     pub(crate) fn get(&self, name: &str) -> Option<i64> {
-        self.slots.borrow().get(name).map(|o| *o)
+        self.slots.borrow().get(name).copied()
     }
 }
