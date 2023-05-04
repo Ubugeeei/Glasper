@@ -71,8 +71,12 @@ fn start_vm_repl() {
                     break;
                 }
 
-                let _ = interpreter.run(line);
-                interpreter.vm.display();
+                if line == "%GetBytes()" {
+                    interpreter.vm.display_bytecode();
+                } else {
+                    let _ = interpreter.run(line);
+                    interpreter.vm.display();
+                }
             }
 
             Err(ReadlineError::Interrupted) | Err(ReadlineError::Eof) => {

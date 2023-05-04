@@ -31,21 +31,6 @@ impl VM {
     }
 
     pub(crate) fn run(&mut self) {
-        // print code as hex
-        println!("byte codes:");
-        for (i, byte) in self.code.iter().enumerate() {
-            if i % 16 == 0 {
-                print!("\x1b[30m{:08x}:\x1b[0m     ", i / 16);
-                print!("\x1b[30m{:02x}\x1b[0m ", byte);
-            } else {
-                print!("\x1b[30m{:02x}\x1b[0m ", byte);
-            }
-            if i % 16 == 15 {
-                println!();
-            }
-        }
-        println!();
-
         loop {
             let opcode = self.fetch();
 
@@ -113,13 +98,6 @@ impl VM {
 
     pub(crate) fn append_code(&mut self, code: &mut Vec<u8>) {
         self.code.append(code);
-    }
-
-    pub(crate) fn display(&self) {
-        let ptr = self.get_reg_v(RName::R0);
-        let o = Object::from_row_ptr(ptr);
-        let js_value = o.as_js_object_ref();
-        println!("{}", js_value);
     }
 
     fn fetch(&mut self) -> u8 {
@@ -311,5 +289,27 @@ impl VM {
             RName::R7 => self.register.r7,
             _ => unreachable!(),
         }
+    }
+
+    pub(crate) fn display(&self) {
+        let ptr = self.get_reg_v(RName::R0);
+        let o = Object::from_row_ptr(ptr);
+        let js_value = o.as_js_object_ref();
+        println!("{}", js_value);
+    }
+
+    pub(crate) fn display_bytecode(&self) {
+        for (i, byte) in self.code.iter().enumerate() {
+            if i % 16 == 0 {
+                print!("\x1b[30m{:08x}:\x1b[0m     ", i / 16);
+                print!("\x1b[30m{:02x}\x1b[0m ", byte);
+            } else {
+                print!("\x1b[30m{:02x}\x1b[0m ", byte);
+            }
+            if i % 16 == 15 {
+                println!();
+            }
+        }
+        println!();
     }
 }
