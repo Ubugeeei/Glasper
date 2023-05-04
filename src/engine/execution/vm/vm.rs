@@ -63,57 +63,16 @@ impl VM {
                     let r = self.fetch();
                     self.pop(r);
                 }
-
-                Bytecodes::Add => self.add(),
-                Bytecodes::Sub => {
-                    let r1 = self.fetch();
-                    let r2 = self.fetch();
-                    self.subi(r1, self.get_reg_v(r2))
-                }
-                Bytecodes::Mul => {
-                    let r1 = self.fetch();
-                    let r2 = self.fetch();
-                    self.muli(r1, self.get_reg_v(r2))
-                }
-                Bytecodes::Div => {
-                    let r1 = self.fetch();
-                    let r2 = self.fetch();
-                    self.divi(r1, self.get_reg_v(r2))
-                }
-                Bytecodes::Mod => {
-                    let r1 = self.fetch();
-                    let r2 = self.fetch();
-                    self.modi(r1, self.get_reg_v(r2))
-                }
-
-                Bytecodes::AddSmi => {
-                    let r1 = self.fetch();
-                    let r2 = self.fetch();
-                    self.addi(r1, r2 as i64)
-                }
-                Bytecodes::SubSmi => {
-                    let r1 = self.fetch();
-                    let r2 = self.fetch();
-                    self.subi(r1, r2 as i64)
-                }
-                Bytecodes::MulSmi => {
-                    let r1 = self.fetch();
-                    let r2 = self.fetch();
-                    self.muli(r1, r2 as i64)
-                }
-                Bytecodes::DivSmi => {
-                    let r1 = self.fetch();
-                    let r2 = self.fetch();
-                    self.divi(r1, r2 as i64)
-                }
-                Bytecodes::ModSmi => {
-                    let r1 = self.fetch();
-                    let r2 = self.fetch();
-                    self.modi(r1, r2 as i64)
-                }
                 Bytecodes::Hlt => {
                     break;
                 }
+
+                // binary operations
+                Bytecodes::Add => self.add(),
+                Bytecodes::Sub => self.sub(),
+                Bytecodes::Mul => self.mul(),
+                Bytecodes::Div => self.div(),
+                Bytecodes::Mod => self.r#mod(),
 
                 Bytecodes::Construct => {
                     // TODO: other types
@@ -264,29 +223,80 @@ impl VM {
         }
     }
 
-    fn addi(&mut self, r: u8, v: i64) {
-        let v1 = self.get_reg_v(r);
-        self.mov(r, v1 + v);
+    fn sub(&mut self) {
+        let r1 = self.fetch();
+        let r2 = self.fetch();
+        let o1 = Object::from_row_ptr(self.get_reg_v(r1));
+        let o2 = Object::from_row_ptr(self.get_reg_v(r2));
+        let jso1 = o1.as_js_object_ref();
+        let jso2 = o2.as_js_object_ref();
+
+        match (&jso1._type, &jso2._type) {
+            (JSType::Number(n1), JSType::Number(n2)) => {
+                let mut base_obj = self.heap.alloc().unwrap();
+                let num_obj = JSNumber::create(n1 - n2, &mut base_obj, self);
+                let raw_ptr = num_obj.raw_ptr();
+                self.mov(RName::R0, raw_ptr);
+            }
+            _ => todo!("implement add for other types"),
+        }
     }
 
-    fn subi(&mut self, r: u8, v: i64) {
-        let v1 = self.get_reg_v(r);
-        self.mov(r, v1 - v);
+    fn mul(&mut self) {
+        let r1 = self.fetch();
+        let r2 = self.fetch();
+        let o1 = Object::from_row_ptr(self.get_reg_v(r1));
+        let o2 = Object::from_row_ptr(self.get_reg_v(r2));
+        let jso1 = o1.as_js_object_ref();
+        let jso2 = o2.as_js_object_ref();
+
+        match (&jso1._type, &jso2._type) {
+            (JSType::Number(n1), JSType::Number(n2)) => {
+                let mut base_obj = self.heap.alloc().unwrap();
+                let num_obj = JSNumber::create(n1 * n2, &mut base_obj, self);
+                let raw_ptr = num_obj.raw_ptr();
+                self.mov(RName::R0, raw_ptr);
+            }
+            _ => todo!("implement add for other types"),
+        }
     }
 
-    fn muli(&mut self, r: u8, v: i64) {
-        let v1 = self.get_reg_v(r);
-        self.mov(r, v1 * v);
+    fn div(&mut self) {
+        let r1 = self.fetch();
+        let r2 = self.fetch();
+        let o1 = Object::from_row_ptr(self.get_reg_v(r1));
+        let o2 = Object::from_row_ptr(self.get_reg_v(r2));
+        let jso1 = o1.as_js_object_ref();
+        let jso2 = o2.as_js_object_ref();
+
+        match (&jso1._type, &jso2._type) {
+            (JSType::Number(n1), JSType::Number(n2)) => {
+                let mut base_obj = self.heap.alloc().unwrap();
+                let num_obj = JSNumber::create(n1 / n2, &mut base_obj, self);
+                let raw_ptr = num_obj.raw_ptr();
+                self.mov(RName::R0, raw_ptr);
+            }
+            _ => todo!("implement add for other types"),
+        }
     }
 
-    fn divi(&mut self, r: u8, v: i64) {
-        let v1 = self.get_reg_v(r);
-        self.mov(r, v1 / v);
-    }
+    fn r#mod(&mut self) {
+        let r1 = self.fetch();
+        let r2 = self.fetch();
+        let o1 = Object::from_row_ptr(self.get_reg_v(r1));
+        let o2 = Object::from_row_ptr(self.get_reg_v(r2));
+        let jso1 = o1.as_js_object_ref();
+        let jso2 = o2.as_js_object_ref();
 
-    fn modi(&mut self, r: u8, v: i64) {
-        let v1 = self.get_reg_v(r);
-        self.mov(r, v1 % v);
+        match (&jso1._type, &jso2._type) {
+            (JSType::Number(n1), JSType::Number(n2)) => {
+                let mut base_obj = self.heap.alloc().unwrap();
+                let num_obj = JSNumber::create(n1 % n2, &mut base_obj, self);
+                let raw_ptr = num_obj.raw_ptr();
+                self.mov(RName::R0, raw_ptr);
+            }
+            _ => todo!("implement add for other types"),
+        }
     }
 
     pub(crate) fn get_reg_v(&self, r: u8) -> i64 {
