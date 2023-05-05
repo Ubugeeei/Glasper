@@ -488,6 +488,16 @@ impl VM {
                     ));
                     i += 9 + len;
                 }
+
+                Bytecodes::LdaUndefined => {
+                    res.push((format!("LdaUndefined"), &code[i..i + 1]));
+                    i += 1;
+                }
+
+                Bytecodes::Return => {
+                    res.push((format!("Return"), &code[i..i + 1]));
+                    i += 1;
+                }
                 _ => {}
             }
         }
