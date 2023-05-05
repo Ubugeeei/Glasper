@@ -77,9 +77,9 @@ fn start_vm_repl() {
                     interpreter.print_dump();
                 } else if line == "%PrintIr()" {
                     interpreter.print_ir();
-                } else if line == "%GetBytes()" {
+                } else if line == "%PrintBytes()" {
                     interpreter.print_bytecode();
-                } else {
+                } else if !line.trim().is_empty() {
                     if let Err(e) = interpreter.run(line) {
                         println!("{}", e);
                     } else {

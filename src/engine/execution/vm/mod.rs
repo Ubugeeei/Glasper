@@ -20,12 +20,12 @@ pub(crate) mod heap;
 pub(crate) mod register;
 
 enum VMErrorKind {
-    TypeError,
-    ReferenceError,
-    SyntaxError,
-    RangeError,
-    EvalError,
-    InternalError,
+    Type,
+    Reference,
+    Syntax,
+    Range,
+    Eval,
+    Internal,
 }
 pub(crate) struct VMError {
     kind: VMErrorKind,
@@ -42,12 +42,12 @@ impl Display for VMError {
             f,
             "{}: {}",
             match self.kind {
-                VMErrorKind::TypeError => "TypeError",
-                VMErrorKind::ReferenceError => "ReferenceError",
-                VMErrorKind::SyntaxError => "SyntaxError",
-                VMErrorKind::RangeError => "RangeError",
-                VMErrorKind::EvalError => "EvalError",
-                VMErrorKind::InternalError => "InternalError",
+                VMErrorKind::Type => "TypeError",
+                VMErrorKind::Reference => "ReferenceError",
+                VMErrorKind::Syntax => "SyntaxError",
+                VMErrorKind::Range => "RangeError",
+                VMErrorKind::Eval => "EvalError",
+                VMErrorKind::Internal => "InternalError",
             },
             self.message
         )
@@ -135,7 +135,7 @@ impl VirtualMachine {
                         self.mov(RName::R0, raw_ptr);
                     } else {
                         return Err(VMError::new(
-                            VMErrorKind::InternalError,
+                            VMErrorKind::Internal,
                             "internal error".to_string(),
                         ));
                     }
@@ -148,7 +148,7 @@ impl VirtualMachine {
                         self.mov(RName::R0, raw_ptr);
                     } else {
                         return Err(VMError::new(
-                            VMErrorKind::InternalError,
+                            VMErrorKind::Internal,
                             "allocation failed".to_string(),
                         ));
                     }
@@ -162,7 +162,7 @@ impl VirtualMachine {
                         self.mov(RName::R0, raw_ptr);
                     } else {
                         return Err(VMError::new(
-                            VMErrorKind::InternalError,
+                            VMErrorKind::Internal,
                             "allocation failed".to_string(),
                         ));
                     }
@@ -175,7 +175,7 @@ impl VirtualMachine {
                         self.mov(RName::R0, raw_ptr);
                     } else {
                         return Err(VMError::new(
-                            VMErrorKind::ReferenceError,
+                            VMErrorKind::Reference,
                             format!("{} is not defined", name),
                         ));
                     }
