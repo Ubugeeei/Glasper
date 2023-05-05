@@ -30,7 +30,18 @@ impl VM {
         }
     }
 
+    fn init_internal(&mut self) {
+        let mut base_obj = self.heap.alloc().unwrap();
+        base_obj.as_js_object_mut()._type = JSType::Undefined;
+        self.execution_context
+            .context
+            .clone()
+            .borrow_mut()
+            .set("undefined".to_string(), base_obj.raw_ptr());
+    }
+
     pub(crate) fn run(&mut self) {
+        self.init_internal();
         loop {
             let opcode = self.fetch();
 
@@ -49,6 +60,21 @@ impl VM {
                     self.pop(r);
                 }
                 Bytecodes::Hlt => {
+                    break;
+                }
+
+                Bytecodes::LdaUndefined => {
+                    let raw_ptr = self
+                        .execution_context
+                        .context
+                        .clone()
+                        .borrow()
+                        .get("undefined")
+                        .unwrap();
+                    self.mov(RName::R0, raw_ptr);
+                }
+                Bytecodes::Return => {
+                    // TODO: return to called point
                     break;
                 }
 

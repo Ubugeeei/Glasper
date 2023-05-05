@@ -4,7 +4,8 @@ use crate::engine::ast::{Expression, Program, Statement};
 
 use super::bytecodes::{
     Bytecodes::{
-        Add, Construct, Div, LdaContextSlot, Mod, Mov, Mul, Pop, Push, StaContextSlot, Sub,
+        Add, Construct, Div, LdaContextSlot, LdaUndefined, Mod, Mov, Mul, Pop, Push, Return,
+        StaContextSlot, Sub,
     },
     RName::{R0, R1},
 };
@@ -30,6 +31,8 @@ fn gen_statement(statement: &Statement, code: &mut Vec<u8>) {
             let len_bytes = (name.len() as i64).to_le_bytes();
             code.extend(len_bytes);
             code.extend(name);
+            code.extend(&[LdaUndefined]);
+            code.extend(&[Return]);
         }
         _ => todo!(),
     }
@@ -37,6 +40,9 @@ fn gen_statement(statement: &Statement, code: &mut Vec<u8>) {
 
 fn gen_expression(expr: &Expression, code: &mut Vec<u8>) {
     match expr {
+        Expression::Undefined => {
+            code.extend(&[LdaUndefined]);
+        }
         Expression::Number(literal) => {
             gen_number(*literal, code);
             code.extend_from_slice(&[Pop, R0]);
