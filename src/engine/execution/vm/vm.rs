@@ -4,6 +4,7 @@ use crate::engine::execution::objects::{js_number::JSNumber, js_object::JSType, 
 
 use super::{
     bytecodes::{Bytecodes, RName},
+    constant_table::ConstantTable,
     context::ExecutionContext,
     heap::Heap,
     register::Register,
@@ -14,6 +15,7 @@ pub struct VM {
     pc: usize,
     code: Vec<u8>,
     stack: Vec<i64>,
+    constant_table: ConstantTable,
     execution_context: ExecutionContext,
     pub(crate) heap: Heap,
 }
@@ -21,11 +23,13 @@ pub struct VM {
 impl VM {
     pub(crate) fn new() -> Self {
         Self {
+            execution_context: ExecutionContext::new(),
+            constant_table: ConstantTable::new(),
+
             register: Register::new(),
             pc: 0,
             stack: Vec::new(),
             code: Vec::new(),
-            execution_context: ExecutionContext::new(),
             heap: Heap::new(1024 * 1024),
         }
     }
