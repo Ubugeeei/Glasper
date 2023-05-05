@@ -124,11 +124,7 @@ impl VirtualMachine {
                     break;
                 }
 
-                Bytecodes::LdaUndefined => {
-                    if let Err(e) = self.load_undefined() {
-                        return Err(e);
-                    }
-                }
+                Bytecodes::LdaUndefined => self.load_undefined()?,
                 Bytecodes::LdaSmi => {
                     let v = self.fetch_i64();
                     if let Some(mut base_obj) = self.heap.alloc() {
@@ -335,10 +331,10 @@ impl VirtualMachine {
             self.mov(RName::R0, raw_ptr);
             Ok(())
         } else {
-            return Err(VMError::new(
+            Err(VMError::new(
                 VMErrorKind::Internal,
                 "internal error".to_string(),
-            ));
+            ))
         }
     }
 

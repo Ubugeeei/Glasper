@@ -29,12 +29,10 @@ impl JSObject {
     fn recursive_follow_prototype(&self, key: &str) -> Option<&Object> {
         if let Some(prop) = self.properties.get(key) {
             Some(prop)
+        } else if let Some(prototype) = self.properties.get(PROTOTYPE_KEY_NAME) {
+            prototype.as_js_object_ref().recursive_follow_prototype(key)
         } else {
-            if let Some(prototype) = self.properties.get(PROTOTYPE_KEY_NAME) {
-                prototype.as_js_object_ref().recursive_follow_prototype(key)
-            } else {
-                None
-            }
+            None
         }
     }
 }

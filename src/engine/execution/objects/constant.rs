@@ -1,1 +1,1 @@
-pub(crate) const PROTOTYPE_KEY_NAME: &'static str = "__proto__";
+pub(crate) const PROTOTYPE_KEY_NAME: &str = "__proto__";
