@@ -193,6 +193,37 @@ impl VirtualMachine {
                         .set(name, reg_v);
                 }
 
+                Bytecodes::CallProperty => {
+                    // get callee function
+                    let callee_pointer_reg = self.fetch();
+                    let callee_pointer = self.get_reg_v(callee_pointer_reg);
+                    let mut callee = Object::from_row_ptr(callee_pointer);
+                    let callee = callee.as_js_object_mut();
+                    let callee_fn = match callee._type {
+                        JSType::NativeFunction(f) => f,
+                        // TODO: JSFunction,
+                        _ => {
+                            return Err(VMError::new(
+                                VMErrorKind::Type,
+                                "callee is not a function".to_string(),
+                            ))
+                        }
+                    };
+
+                    // TODO: arguments
+                    // let arg_pointer_reg = self.fetch();
+                    // let arg_pointer = self.get_reg_v(arg_pointer_reg);
+
+                    // parent object
+                    let parent_obj_pointer_reg = self.fetch();
+                    let parent_obj_pointer = self.get_reg_v(parent_obj_pointer_reg);
+                    let mut parent_obj = Object::from_row_ptr(parent_obj_pointer);
+
+                    // call
+                    let ret = callee_fn(self, &mut parent_obj, vec![]);
+                    self.mov(RName::R0, ret.raw_ptr());
+                }
+
                 Bytecodes::Return => {
                     // TODO: return to called point
                     break;
@@ -664,11 +695,35 @@ impl VirtualMachine {
                     i += 9;
                 }
 
+                Bytecodes::GetNamedProperty => {
+                    let obj_ptr_reg = code[i + 1];
+                    let prop_name_idx = code[i + 2];
+                    res.push((
+                        format!("GetNamedProperty r{obj_ptr_reg}, [{prop_name_idx}]",),
+                        &code[i..i + 3],
+                    ));
+                    i += 3;
+                }
+
+                Bytecodes::CallProperty => {
+                    let callee_pointer_reg = code[i + 1];
+                    // let arg_count_reg = code[i + 2];
+                    let parent_obj_pointer = code[i + 2];
+
+                    res.push((
+                        format!("CallProperty r{callee_pointer_reg}, r{parent_obj_pointer}",),
+                        &code[i..i + 3],
+                    ));
+                    i += 3;
+                }
+
                 Bytecodes::Return => {
                     res.push(("Return".to_string(), &code[i..i + 1]));
                     i += 1;
                 }
-                _ => {}
+                _ => {
+                    i += 1;
+                }
             }
         }
 

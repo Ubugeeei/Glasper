@@ -5,10 +5,10 @@ use crate::engine::ast::{Expression, Program, Statement};
 use super::{
     bytecodes::{
         Bytecodes::{
-            Add, Div, GetNamedProperty, LdaConstant, LdaContextSlot, LdaSmi, LdaUndefined, Mod,
-            Mul, Pop, Push, Return, StaContextSlot, Sub,
+            Add, CallProperty, Div, GetNamedProperty, LdaConstant, LdaContextSlot, LdaSmi,
+            LdaUndefined, Mod, Mul, Pop, Push, Return, StaContextSlot, Sub,
         },
-        RName::{R0, R1},
+        RName::{R0, R1, R2},
     },
     constant_table::ConstantTable,
 };
@@ -87,6 +87,37 @@ impl<'a> CodeGenerator<'a> {
 
                 self.code.extend_from_slice(&[Push, R0]);
             }
+
+            Expression::Call(call_expr) => {
+                match call_expr.callee.as_ref() {
+                    Expression::Member(member_expr) => {
+                        // gen callee
+                        self.gen_expression(&call_expr.callee);
+                        self.code.extend_from_slice(&[Pop, R1]);
+
+                        // TODO: arguments (gen array)
+                        // self.gen_expression(expr.arguments);
+
+                        self.gen_expression(&member_expr.object);
+                        self.code.extend_from_slice(&[Pop, R2]);
+
+                        // gen call instruction (signature: `[CallProperty, callee_pointer, argument_pointer, parent_obj_pointer]`)
+                        self.code.extend_from_slice(&[CallProperty, R1, R2]);
+                    }
+                    _ => todo!(),
+                }
+
+                // self.gen_expression(&expr.callee);
+                // self.code.extend_from_slice(&[Pop, R1]);
+
+                // TODO: arguments (gen array)
+                // for arg in expr.arguments.iter() {
+                //     self.gen_expression(arg);
+                // }
+
+                self.code.extend_from_slice(&[Pop, R1]);
+            }
+
             Expression::Binary(expr) => match expr.operator.as_str() {
                 "+" => {
                     self.gen_expression(&expr.left);
