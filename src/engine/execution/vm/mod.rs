@@ -274,7 +274,13 @@ impl VirtualMachine {
                 let raw_ptr = num_obj.raw_ptr();
                 self.mov(RName::R0, raw_ptr);
             }
-            _ => todo!("implement add for other types"),
+            _ => {
+                // TODO: string + others
+                let mut base_obj = self.heap.alloc().unwrap();
+                let num_obj = JSNumber::create(f64::NAN, &mut base_obj, self);
+                let raw_ptr = num_obj.raw_ptr();
+                self.mov(RName::R0, raw_ptr);
+            }
         }
     }
 
@@ -293,7 +299,12 @@ impl VirtualMachine {
                 let raw_ptr = num_obj.raw_ptr();
                 self.mov(RName::R0, raw_ptr);
             }
-            _ => todo!("implement add for other types"),
+            _ => {
+                let mut base_obj = self.heap.alloc().unwrap();
+                let num_obj = JSNumber::create(f64::NAN, &mut base_obj, self);
+                let raw_ptr = num_obj.raw_ptr();
+                self.mov(RName::R0, raw_ptr);
+            }
         }
     }
 
@@ -312,7 +323,12 @@ impl VirtualMachine {
                 let raw_ptr = num_obj.raw_ptr();
                 self.mov(RName::R0, raw_ptr);
             }
-            _ => todo!("implement add for other types"),
+            _ => {
+                let mut base_obj = self.heap.alloc().unwrap();
+                let num_obj = JSNumber::create(f64::NAN, &mut base_obj, self);
+                let raw_ptr = num_obj.raw_ptr();
+                self.mov(RName::R0, raw_ptr);
+            }
         }
     }
 
@@ -331,7 +347,12 @@ impl VirtualMachine {
                 let raw_ptr = num_obj.raw_ptr();
                 self.mov(RName::R0, raw_ptr);
             }
-            _ => todo!("implement add for other types"),
+            _ => {
+                let mut base_obj = self.heap.alloc().unwrap();
+                let num_obj = JSNumber::create(f64::NAN, &mut base_obj, self);
+                let raw_ptr = num_obj.raw_ptr();
+                self.mov(RName::R0, raw_ptr);
+            }
         }
     }
 
@@ -350,7 +371,12 @@ impl VirtualMachine {
                 let raw_ptr = num_obj.raw_ptr();
                 self.mov(RName::R0, raw_ptr);
             }
-            _ => todo!("implement add for other types"),
+            _ => {
+                let mut base_obj = self.heap.alloc().unwrap();
+                let num_obj = JSNumber::create(f64::NAN, &mut base_obj, self);
+                let raw_ptr = num_obj.raw_ptr();
+                self.mov(RName::R0, raw_ptr);
+            }
         }
     }
 

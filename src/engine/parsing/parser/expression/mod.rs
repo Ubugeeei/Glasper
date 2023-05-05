@@ -18,7 +18,7 @@ impl<'a> Parser<'a> {
             TokenType::String => Expression::String(self.parse_string()?),
             TokenType::Null => Expression::Null,
             TokenType::Undefined => Expression::Undefined,
-            TokenType::NaN => Expression::NaN,
+            TokenType::NaN => Expression::Number(f64::NAN),
             TokenType::This => Expression::This,
 
             // object

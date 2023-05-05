@@ -15,7 +15,6 @@ pub enum RuntimeObject {
     BuiltinFunction(JSBuiltinFunction),
     Null(JSNull),
     Undefined(JSUndefined),
-    NaN(JSNaN),
     Return(Box<RuntimeObject>),
     Break,
     Continue,
@@ -32,7 +31,6 @@ impl RuntimeObject {
             Self::Function(_) => "function".to_string(),
             Self::Null(_) => "object".to_string(),
             Self::Undefined(_) => "undefined".to_string(),
-            Self::NaN(_) => "number".to_string(),
             Self::BuiltinFunction(_) => "function".to_string(),
             Self::Return(_) => "".to_string(),
             Self::Break => "".to_string(),
@@ -62,7 +60,6 @@ impl Display for RuntimeObject {
 
             Self::Null(_) => write!(f, "null"),
             Self::Undefined(_) => write!(f, "\x1b[30mundefined\x1b[0m"),
-            Self::NaN(_) => write!(f, "\x1b[33mNaN\x1b[0m"),
 
             Self::BuiltinFunction(b) => {
                 write!(f, "\x1b[33mf\x1b[0m {}() {{ [native code] }}", b.name)
@@ -90,11 +87,11 @@ impl JSNumber {
                 let value = s.value.parse::<f64>();
                 match value {
                     Ok(v) => RuntimeObject::Number(JSNumber { value: v }),
-                    Err(_) => RuntimeObject::NaN(JSNaN {}),
+                    Err(_) => RuntimeObject::Number(JSNumber { value: f64::NAN }),
                 }
             }
             RuntimeObject::Null(_) => RuntimeObject::Number(JSNumber { value: 0.0 }),
-            _ => RuntimeObject::NaN(JSNaN),
+            _ => RuntimeObject::Number(JSNumber { value: f64::NAN }),
         }
     }
 }
@@ -143,12 +140,12 @@ impl JSBoolean {
         match o {
             RuntimeObject::Boolean(b) => RuntimeObject::Boolean(b),
             RuntimeObject::Number(JSNumber { value }) => RuntimeObject::Boolean(JSBoolean {
-                value: value != 0.0,
+                value: value != 0.0 && !value.is_nan(),
             }),
             RuntimeObject::String(JSString { value }) => RuntimeObject::Boolean(JSBoolean {
                 value: value != *"",
             }),
-            RuntimeObject::Null(_) | RuntimeObject::Undefined(_) | RuntimeObject::NaN(_) => {
+            RuntimeObject::Null(_) | RuntimeObject::Undefined(_) => {
                 RuntimeObject::Boolean(JSBoolean { value: false })
             }
             _ => RuntimeObject::Boolean(JSBoolean { value: true }),
@@ -189,9 +186,6 @@ pub struct JSNull;
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct JSUndefined;
-
-#[derive(Debug, PartialEq, Eq, Clone)]
-pub struct JSNaN;
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct JSBuiltinFunction {
@@ -244,18 +238,8 @@ mod test {
                 RuntimeObject::Number(JSNumber { value: 1.1 }),
             ),
             (
-                RuntimeObject::String(JSString {
-                    value: "a".to_string(),
-                }),
-                RuntimeObject::NaN(JSNaN {}),
-            ),
-            (
                 RuntimeObject::Null(JSNull {}),
                 RuntimeObject::Number(JSNumber { value: 0.0 }),
-            ),
-            (
-                RuntimeObject::Undefined(JSUndefined {}),
-                RuntimeObject::NaN(JSNaN {}),
             ),
         ];
 
@@ -293,10 +277,6 @@ mod test {
             ),
             (
                 RuntimeObject::Undefined(JSUndefined {}),
-                RuntimeObject::Boolean(JSBoolean { value: false }),
-            ),
-            (
-                RuntimeObject::NaN(JSNaN {}),
                 RuntimeObject::Boolean(JSBoolean { value: false }),
             ),
         ];
@@ -337,12 +317,6 @@ mod test {
                 RuntimeObject::Undefined(JSUndefined {}),
                 RuntimeObject::String(JSString {
                     value: "undefined".to_string(),
-                }),
-            ),
-            (
-                RuntimeObject::NaN(JSNaN {}),
-                RuntimeObject::String(JSString {
-                    value: "".to_string(),
                 }),
             ),
         ];

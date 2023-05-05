@@ -145,7 +145,6 @@ pub enum Expression {
     Array(ArrayExpression),
     Null,
     Undefined,
-    NaN,
     This,
     Identifier(String),
     Unary(UnaryExpression),

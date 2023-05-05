@@ -27,7 +27,7 @@ use crate::engine::{
     handles::{Variable, VariableKind},
 };
 
-use super::legacy_object::{JSFunction, JSNaN, JSObject, JSString};
+use super::legacy_object::{JSFunction, JSObject, JSString};
 
 pub struct Evaluator<'a> {
     ctx: &'a mut Context,
@@ -89,7 +89,6 @@ impl<'a> Evaluator<'a> {
             ))),
             Expression::Null => Ok(RuntimeObject::Null(JSNull)),
             Expression::Undefined => Ok(RuntimeObject::Undefined(JSUndefined)),
-            Expression::NaN => Ok(RuntimeObject::NaN(JSNaN)),
             Expression::This => Ok(RuntimeObject::Object(self.exec_ctx_this.clone())),
 
             // objects
@@ -218,7 +217,7 @@ impl<'a> Evaluator<'a> {
                                 value: l.value + r.value,
                             }))
                         }
-                        _ => Ok(RuntimeObject::NaN(JSNaN)),
+                        _ => Ok(RuntimeObject::Number(JSNumber { value: f64::NAN })),
                     }
                 }
             },
@@ -231,7 +230,7 @@ impl<'a> Evaluator<'a> {
                             value: l.value - r.value,
                         }))
                     }
-                    _ => Ok(RuntimeObject::NaN(JSNaN)),
+                    _ => Ok(RuntimeObject::Number(JSNumber { value: f64::NAN })),
                 }
             }
             "*" => {
@@ -243,7 +242,7 @@ impl<'a> Evaluator<'a> {
                             value: l.value * r.value,
                         }))
                     }
-                    _ => Ok(RuntimeObject::NaN(JSNaN)),
+                    _ => Ok(RuntimeObject::Number(JSNumber { value: f64::NAN })),
                 }
             }
             "/" => {
@@ -255,7 +254,7 @@ impl<'a> Evaluator<'a> {
                             value: l.value / r.value,
                         }))
                     }
-                    _ => Ok(RuntimeObject::NaN(JSNaN)),
+                    _ => Ok(RuntimeObject::Number(JSNumber { value: f64::NAN })),
                 }
             }
             "%" => {
@@ -267,7 +266,7 @@ impl<'a> Evaluator<'a> {
                             value: l.value % r.value,
                         }))
                     }
-                    _ => Ok(RuntimeObject::NaN(JSNaN)),
+                    _ => Ok(RuntimeObject::Number(JSNumber { value: f64::NAN })),
                 }
             }
             "**" => {
@@ -279,7 +278,7 @@ impl<'a> Evaluator<'a> {
                             value: l.value.powf(r.value),
                         }))
                     }
-                    _ => Ok(RuntimeObject::NaN(JSNaN)),
+                    _ => Ok(RuntimeObject::Number(JSNumber { value: f64::NAN })),
                 }
             }
             "|" => {
@@ -291,7 +290,7 @@ impl<'a> Evaluator<'a> {
                             value: ((l.value as i64) | (r.value as i64)) as f64,
                         }))
                     }
-                    _ => Ok(RuntimeObject::NaN(JSNaN)),
+                    _ => Ok(RuntimeObject::Number(JSNumber { value: f64::NAN })),
                 }
             }
             "&" => {
@@ -303,7 +302,7 @@ impl<'a> Evaluator<'a> {
                             value: ((l.value as i64) & (r.value as i64)) as f64,
                         }))
                     }
-                    _ => Ok(RuntimeObject::NaN(JSNaN)),
+                    _ => Ok(RuntimeObject::Number(JSNumber { value: f64::NAN })),
                 }
             }
             "<<" => match (left.clone(), right) {
@@ -335,7 +334,7 @@ impl<'a> Evaluator<'a> {
                             value: (l.value as i64 ^ r.value as i64) as f64,
                         }))
                     }
-                    _ => Ok(RuntimeObject::NaN(JSNaN)),
+                    _ => Ok(RuntimeObject::Number(JSNumber { value: f64::NAN })),
                 }
             }
             "<" => {
@@ -348,7 +347,7 @@ impl<'a> Evaluator<'a> {
                             value: l.value < r.value,
                         }))
                     }
-                    _ => Ok(RuntimeObject::NaN(JSNaN)),
+                    _ => Ok(RuntimeObject::Number(JSNumber { value: f64::NAN })),
                 }
             }
             ">" => {
@@ -361,7 +360,7 @@ impl<'a> Evaluator<'a> {
                             value: l.value > r.value,
                         }))
                     }
-                    _ => Ok(RuntimeObject::NaN(JSNaN)),
+                    _ => Ok(RuntimeObject::Number(JSNumber { value: f64::NAN })),
                 }
             }
             "<=" => {
@@ -374,7 +373,7 @@ impl<'a> Evaluator<'a> {
                             value: l.value <= r.value,
                         }))
                     }
-                    _ => Ok(RuntimeObject::NaN(JSNaN)),
+                    _ => Ok(RuntimeObject::Number(JSNumber { value: f64::NAN })),
                 }
             }
             ">=" => {
@@ -387,7 +386,7 @@ impl<'a> Evaluator<'a> {
                             value: l.value >= r.value,
                         }))
                     }
-                    _ => Ok(RuntimeObject::NaN(JSNaN)),
+                    _ => Ok(RuntimeObject::Number(JSNumber { value: f64::NAN })),
                 }
             }
             "==" => {
@@ -400,7 +399,7 @@ impl<'a> Evaluator<'a> {
                             value: l.value == r.value,
                         }))
                     }
-                    _ => Ok(RuntimeObject::NaN(JSNaN)),
+                    _ => Ok(RuntimeObject::Number(JSNumber { value: f64::NAN })),
                 }
             }
             "!=" => {
@@ -413,7 +412,7 @@ impl<'a> Evaluator<'a> {
                             value: l.value != r.value,
                         }))
                     }
-                    _ => Ok(RuntimeObject::NaN(JSNaN)),
+                    _ => Ok(RuntimeObject::Number(JSNumber { value: f64::NAN })),
                 }
             }
             "===" => Ok(RuntimeObject::Boolean(JSBoolean {
