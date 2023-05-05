@@ -80,8 +80,11 @@ fn start_vm_repl() {
                 } else if line == "%GetBytes()" {
                     interpreter.print_bytecode();
                 } else {
-                    interpreter.run(line);
-                    interpreter.print_current_expr();
+                    if let Err(e) = interpreter.run(line) {
+                        println!("{}", e);
+                    } else {
+                        interpreter.print_current_expr();
+                    };
                 }
             }
 

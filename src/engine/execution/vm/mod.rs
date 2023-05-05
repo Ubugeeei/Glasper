@@ -10,6 +10,7 @@ use self::{
 };
 use super::objects::{js_number::JSNumber, js_object::JSType, js_string::JSString, object::Object};
 use crate::engine::parsing::{lexer, parser::Parser};
+use std::fmt::Display;
 
 pub(crate) mod bytecodes;
 pub(crate) mod codegen;
@@ -17,6 +18,41 @@ pub(crate) mod constant_table;
 pub(crate) mod context;
 pub(crate) mod heap;
 pub(crate) mod register;
+
+enum VMErrorKind {
+    TypeError,
+    ReferenceError,
+    SyntaxError,
+    RangeError,
+    EvalError,
+    InternalError,
+}
+pub(crate) struct VMError {
+    kind: VMErrorKind,
+    message: String,
+}
+impl VMError {
+    fn new(kind: VMErrorKind, message: String) -> Self {
+        VMError { kind, message }
+    }
+}
+impl Display for VMError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "{}: {}",
+            match self.kind {
+                VMErrorKind::TypeError => "TypeError",
+                VMErrorKind::ReferenceError => "ReferenceError",
+                VMErrorKind::SyntaxError => "SyntaxError",
+                VMErrorKind::RangeError => "RangeError",
+                VMErrorKind::EvalError => "EvalError",
+                VMErrorKind::InternalError => "InternalError",
+            },
+            self.message
+        )
+    }
+}
 
 pub(crate) struct VirtualMachine {
     execution_context: ExecutionContext,
@@ -56,17 +92,17 @@ impl VirtualMachine {
             .set("undefined".to_string(), base_obj.raw_ptr());
     }
 
-    pub(crate) fn run(&mut self, source: String) {
+    pub(crate) fn run(&mut self, source: String) -> Result<(), VMError> {
         let mut lexer = lexer::Lexer::new(source);
         let mut parser = Parser::new(&mut lexer);
         let program = parser.parse_program();
         let mut codegen = CodeGenerator::new(&mut self.constant_table);
         let mut code = codegen.gen(&program);
         self.code.append(&mut code);
-        self.interpret();
+        self.interpret()
     }
 
-    fn interpret(&mut self) {
+    fn interpret(&mut self) -> Result<(), VMError> {
         loop {
             let opcode = self.fetch();
 
@@ -89,41 +125,60 @@ impl VirtualMachine {
                 }
 
                 Bytecodes::LdaUndefined => {
-                    let raw_ptr = self
+                    if let Some(raw_ptr) = self
                         .execution_context
                         .context
                         .clone()
                         .borrow()
                         .get("undefined")
-                        .unwrap();
-                    self.mov(RName::R0, raw_ptr);
+                    {
+                        self.mov(RName::R0, raw_ptr);
+                    } else {
+                        return Err(VMError::new(
+                            VMErrorKind::InternalError,
+                            "internal error".to_string(),
+                        ));
+                    }
                 }
                 Bytecodes::LdaSmi => {
                     let v = self.fetch_i64();
-                    let mut base_obj = self.heap.alloc().unwrap();
-                    let num_obj = JSNumber::create(v as f64, &mut base_obj, self);
-                    let raw_ptr = num_obj.raw_ptr();
-                    self.mov(RName::R0, raw_ptr);
+                    if let Some(mut base_obj) = self.heap.alloc() {
+                        let num_obj = JSNumber::create(v as f64, &mut base_obj, self);
+                        let raw_ptr = num_obj.raw_ptr();
+                        self.mov(RName::R0, raw_ptr);
+                    } else {
+                        return Err(VMError::new(
+                            VMErrorKind::InternalError,
+                            "allocation failed".to_string(),
+                        ));
+                    }
                 }
                 Bytecodes::LdaConstant => {
                     let id = self.fetch_i64();
-                    let mut base_obj = self.heap.alloc().unwrap();
-                    let s = self.constant_table.get(id as u32).clone();
-                    let str_obj = JSString::create(s, &mut base_obj, self);
-                    let raw_ptr = str_obj.raw_ptr();
-                    self.mov(RName::R0, raw_ptr);
+                    if let Some(mut base_obj) = self.heap.alloc() {
+                        let s = self.constant_table.get(id as u32).clone();
+                        let str_obj = JSString::create(s, &mut base_obj, self);
+                        let raw_ptr = str_obj.raw_ptr();
+                        self.mov(RName::R0, raw_ptr);
+                    } else {
+                        return Err(VMError::new(
+                            VMErrorKind::InternalError,
+                            "allocation failed".to_string(),
+                        ));
+                    }
                 }
                 Bytecodes::LdaContextSlot => {
                     let name = self.fetch_string();
-                    // TODO: handle undeclared variable
-                    let raw_ptr = self
-                        .execution_context
-                        .context
-                        .clone()
-                        .borrow()
-                        .get(&name)
-                        .unwrap();
-                    self.mov(RName::R0, raw_ptr);
+                    if let Some(raw_ptr) =
+                        self.execution_context.context.clone().borrow().get(&name)
+                    {
+                        self.mov(RName::R0, raw_ptr);
+                    } else {
+                        return Err(VMError::new(
+                            VMErrorKind::ReferenceError,
+                            format!("{} is not defined", name),
+                        ));
+                    }
                 }
 
                 Bytecodes::StaContextSlot => {
@@ -151,6 +206,7 @@ impl VirtualMachine {
                 _ => todo!(),
             }
         }
+        Ok(())
     }
 
     fn fetch(&mut self) -> u8 {
