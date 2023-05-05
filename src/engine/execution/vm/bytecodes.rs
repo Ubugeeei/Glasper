@@ -23,9 +23,9 @@ pub(crate) mod Bytecodes {
     pub(crate) const LdaFalse: u8 = 0x17;
     pub(crate) const LdaConstant: u8 = 0x18;
     pub(crate) const LdaContextSlot: u8 = 0x19; // implicit store to r0
-    pub(crate) const LdaImmutableContextSlot: u8 = 0x1a;
-    pub(crate) const LdaCurrentContextSlot: u8 = 0x1b;
-    pub(crate) const LdaImmutableCurrentContextSlot: u8 = 0x1c;
+
+    /* Property loads (LoadIC) operations */
+    pub(crate) const GetNamedProperty: u8 = 0x1c;
 
     /* - [Register Loads ] */
     pub(crate) const Mov: u8 = 0x1d;

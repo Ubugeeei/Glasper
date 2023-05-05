@@ -125,19 +125,8 @@ impl VirtualMachine {
                 }
 
                 Bytecodes::LdaUndefined => {
-                    if let Some(raw_ptr) = self
-                        .execution_context
-                        .context
-                        .clone()
-                        .borrow()
-                        .get("undefined")
-                    {
-                        self.mov(RName::R0, raw_ptr);
-                    } else {
-                        return Err(VMError::new(
-                            VMErrorKind::Internal,
-                            "internal error".to_string(),
-                        ));
+                    if let Err(e) = self.load_undefined() {
+                        return Err(e);
                     }
                 }
                 Bytecodes::LdaSmi => {
@@ -178,6 +167,19 @@ impl VirtualMachine {
                             VMErrorKind::Reference,
                             format!("{} is not defined", name),
                         ));
+                    }
+                }
+                Bytecodes::GetNamedProperty => {
+                    let reg = self.fetch();
+                    let obj_ptr = self.get_reg_v(reg);
+                    let id = self.fetch_i64();
+                    let name = self.constant_table.get(id as u32).clone();
+                    let obj = Object::from_row_ptr(obj_ptr);
+                    let obj = obj.as_js_object_ref();
+                    if let Some(prop) = obj.get(&name) {
+                        self.mov(RName::R0, prop.raw_ptr());
+                    } else {
+                        let _ = self.load_undefined();
                     }
                 }
 
@@ -288,6 +290,24 @@ impl VirtualMachine {
             RName::R6 => self.register.r6 = self.stack.pop().unwrap(),
             RName::R7 => self.register.r7 = self.stack.pop().unwrap(),
             _ => unreachable!(),
+        }
+    }
+
+    fn load_undefined(&mut self) -> Result<(), VMError> {
+        if let Some(raw_ptr) = self
+            .execution_context
+            .context
+            .clone()
+            .borrow()
+            .get("undefined")
+        {
+            self.mov(RName::R0, raw_ptr);
+            Ok(())
+        } else {
+            return Err(VMError::new(
+                VMErrorKind::Internal,
+                "internal error".to_string(),
+            ));
         }
     }
 

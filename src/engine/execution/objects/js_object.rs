@@ -2,7 +2,7 @@
 
 use crate::engine::execution::vm::VirtualMachine;
 
-use super::object::Object;
+use super::{constant::PROTOTYPE_KEY_NAME, object::Object};
 use std::{collections::HashMap, fmt::Display};
 
 pub struct JSObject {
@@ -15,6 +15,26 @@ impl JSObject {
         JSObject {
             properties: HashMap::new(),
             _type: JSType::Object,
+        }
+    }
+
+    pub(crate) fn get(&self, key: &str) -> Option<&Object> {
+        if let Some(prop) = self.properties.get(key) {
+            Some(prop)
+        } else {
+            self.recursive_follow_prototype(key)
+        }
+    }
+
+    fn recursive_follow_prototype(&self, key: &str) -> Option<&Object> {
+        if let Some(prop) = self.properties.get(key) {
+            Some(prop)
+        } else {
+            if let Some(prototype) = self.properties.get(PROTOTYPE_KEY_NAME) {
+                prototype.as_js_object_ref().recursive_follow_prototype(key)
+            } else {
+                None
+            }
         }
     }
 }

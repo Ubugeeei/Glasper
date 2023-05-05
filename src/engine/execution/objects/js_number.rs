@@ -1,7 +1,7 @@
 #![allow(dead_code)]
-use crate::engine::execution::vm::VirtualMachine;
 
-use super::{js_object::JSType, object::Object};
+use super::{constant::PROTOTYPE_KEY_NAME, js_object::JSType, object::Object};
+use crate::engine::execution::vm::VirtualMachine;
 
 pub(crate) struct JSNumber;
 
@@ -11,22 +11,21 @@ impl JSNumber {
         allocated: &'a mut Object,
         vm: &mut VirtualMachine,
     ) -> &'a mut Object {
-        let object_ref = allocated.as_js_object_mut();
-        object_ref._type = JSType::Number(n);
-
+        // number prototype
         let mut prototype = vm.heap.alloc().unwrap();
-
         let mut to_string_fn = vm.heap.alloc().unwrap();
         to_string_fn.as_js_object_mut()._type = JSType::NativeFunction(number_to_string);
-
         prototype
             .as_js_object_mut()
             .properties
             .insert("toString".to_string(), to_string_fn);
 
+        // create number instance
+        let object_ref = allocated.as_js_object_mut();
+        object_ref._type = JSType::Number(n);
         object_ref
             .properties
-            .insert("prototype".to_string(), prototype);
+            .insert(String::from(PROTOTYPE_KEY_NAME), prototype);
 
         allocated
     }

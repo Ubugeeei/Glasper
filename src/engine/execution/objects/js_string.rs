@@ -1,7 +1,7 @@
 #![allow(dead_code)]
 use crate::engine::execution::vm::VirtualMachine;
 
-use super::{js_object::JSType, object::Object};
+use super::{constant::PROTOTYPE_KEY_NAME, js_object::JSType, object::Object};
 
 pub(crate) struct JSString;
 
@@ -11,23 +11,22 @@ impl JSString {
         allocated: &'a mut Object,
         vm: &mut VirtualMachine,
     ) -> &'a mut Object {
-        let object_ref = allocated.as_js_object_mut();
-        object_ref._type = JSType::String(s);
-
+        // string prototype
         let mut prototype = vm.heap.alloc().unwrap();
-
         let mut string_char_code_at_fn = vm.heap.alloc().unwrap();
         string_char_code_at_fn.as_js_object_mut()._type =
             JSType::NativeFunction(string_char_code_at);
-
         prototype
             .as_js_object_mut()
             .properties
             .insert("charCodeAt".to_string(), string_char_code_at_fn);
 
+        // create string instance
+        let object_ref = allocated.as_js_object_mut();
+        object_ref._type = JSType::String(s);
         object_ref
             .properties
-            .insert("prototype".to_string(), prototype);
+            .insert(String::from(PROTOTYPE_KEY_NAME), prototype);
 
         allocated
     }

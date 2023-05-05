@@ -5,8 +5,8 @@ use crate::engine::ast::{Expression, Program, Statement};
 use super::{
     bytecodes::{
         Bytecodes::{
-            Add, Div, LdaConstant, LdaContextSlot, LdaSmi, LdaUndefined, Mod, Mul, Pop, Push,
-            Return, StaContextSlot, Sub,
+            Add, Div, GetNamedProperty, LdaConstant, LdaContextSlot, LdaSmi, LdaUndefined, Mod,
+            Mul, Pop, Push, Return, StaContextSlot, Sub,
         },
         RName::{R0, R1},
     },
@@ -69,6 +69,21 @@ impl<'a> CodeGenerator<'a> {
 
                 self.code
                     .extend_from_slice(&[&[LdaConstant], id_bytes].concat());
+
+                self.code.extend_from_slice(&[Push, R0]);
+            }
+            Expression::Member(expr) => {
+                self.gen_expression(&expr.object);
+                self.code.extend_from_slice(&[Pop, R1]);
+                match expr.property.as_ref() {
+                    Expression::String(s) => {
+                        let id = self.constant_table.add(s.clone());
+                        self.code.extend_from_slice(&[GetNamedProperty, R1]);
+                        self.code
+                            .extend_from_slice(&Self::into_bytes(id as f64)[0..]);
+                    }
+                    _ => todo!(),
+                }
 
                 self.code.extend_from_slice(&[Push, R0]);
             }
