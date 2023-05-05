@@ -60,12 +60,12 @@ impl<'a> CodeGenerator<'a> {
             }
             Expression::Number(literal) => {
                 self.code
-                    .extend_from_slice(&[&[LdaSmi], &self.into_bytes(*literal)[0..]].concat());
+                    .extend_from_slice(&[&[LdaSmi], &Self::into_bytes(*literal)[0..]].concat());
                 self.code.extend_from_slice(&[Push, R0]);
             }
             Expression::String(literal) => {
                 let id = self.constant_table.add(literal.clone());
-                let id_bytes = &self.into_bytes(id as f64)[0..];
+                let id_bytes = &Self::into_bytes(id as f64)[0..];
 
                 self.code
                     .extend_from_slice(&[&[LdaConstant], id_bytes].concat());
@@ -127,7 +127,7 @@ impl<'a> CodeGenerator<'a> {
         }
     }
 
-    fn into_bytes(&self, n: f64) -> [u8; 8] {
+    fn into_bytes(n: f64) -> [u8; 8] {
         [
             ((n as i64) & 0xff_i64) as u8,
             ((n as i64 >> 8) & 0xff_i64) as u8,

@@ -253,7 +253,7 @@ impl VirtualMachine {
             (JSType::String(s1), JSType::String(s2)) => {
                 let mut base_obj = self.heap.alloc().unwrap();
                 let mut s = s2.clone();
-                s.push_str(&s1);
+                s.push_str(s1);
                 let num_obj = JSString::create(s, &mut base_obj, self);
                 let raw_ptr = num_obj.raw_ptr();
                 self.mov(RName::R0, raw_ptr);
@@ -269,7 +269,7 @@ impl VirtualMachine {
             (JSType::String(s1), JSType::Number(n2)) => {
                 let mut base_obj = self.heap.alloc().unwrap();
                 let mut s = n2.to_string();
-                s.push_str(&s1);
+                s.push_str(s1);
                 let num_obj = JSString::create(s, &mut base_obj, self);
                 let raw_ptr = num_obj.raw_ptr();
                 self.mov(RName::R0, raw_ptr);
@@ -463,7 +463,7 @@ impl VirtualMachine {
                     i += 2;
                 }
                 Bytecodes::Hlt => {
-                    res.push((format!("Hlt"), &code[i..i + 1]));
+                    res.push(("Hlt".to_string(), &code[i..i + 1]));
                     i += 1;
                 }
 
@@ -499,7 +499,7 @@ impl VirtualMachine {
                 }
 
                 Bytecodes::Construct => {
-                    res.push((format!("Construct"), &code[i..i + 1]));
+                    res.push(("Construct".to_string(), &code[i..i + 1]));
                     i += 1;
                 }
 
@@ -544,7 +544,7 @@ impl VirtualMachine {
                 }
 
                 Bytecodes::LdaUndefined => {
-                    res.push((format!("LdaUndefined"), &code[i..i + 1]));
+                    res.push(("LdaUndefined".to_string(), &code[i..i + 1]));
                     i += 1;
                 }
 
@@ -563,7 +563,7 @@ impl VirtualMachine {
                 }
 
                 Bytecodes::Return => {
-                    res.push((format!("Return"), &code[i..i + 1]));
+                    res.push(("Return".to_string(), &code[i..i + 1]));
                     i += 1;
                 }
                 _ => {}
