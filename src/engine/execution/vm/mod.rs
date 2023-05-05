@@ -12,6 +12,8 @@ use self::{
 
 use crate::engine::parsing::{lexer, parser::Parser};
 
+use super::objects::js_string::JSString;
+
 pub(crate) mod bytecodes;
 pub(crate) mod codegen;
 pub(crate) mod constant_table;
@@ -21,7 +23,7 @@ pub(crate) mod register;
 
 pub(crate) struct VirtualMachine {
     execution_context: ExecutionContext,
-    constant_table: ConstantTable,
+    pub(crate) constant_table: ConstantTable,
 
     register: Register,
     pc: usize,
@@ -104,6 +106,13 @@ impl VirtualMachine {
                     let mut base_obj = self.heap.alloc().unwrap();
                     let num_obj = JSNumber::create(v as f64, &mut base_obj, self);
                     let raw_ptr = num_obj.raw_ptr();
+                    self.mov(RName::R0, raw_ptr);
+                }
+                Bytecodes::LdaConstant => {
+                    let id = self.fetch_i64();
+                    let mut base_obj = self.heap.alloc().unwrap();
+                    let str_obj = JSString::create(id as u32, &mut base_obj, self);
+                    let raw_ptr = str_obj.raw_ptr();
                     self.mov(RName::R0, raw_ptr);
                 }
                 Bytecodes::LdaContextSlot => {

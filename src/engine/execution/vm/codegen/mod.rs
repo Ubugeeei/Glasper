@@ -64,9 +64,13 @@ impl<'a> CodeGenerator<'a> {
                 self.code.extend_from_slice(&[Push, R0]);
             }
             Expression::String(literal) => {
-                // TODO: constant_table
-                // self.code.extend_from_slice(&[LdaConstant]);
-                // self.code.extend_from_slice(&[Push, R0]);
+                let id = self.constant_table.add(literal.clone());
+                let id_bytes = &self.into_bytes(id as f64)[0..];
+
+                self.code
+                    .extend_from_slice(&[&[LdaConstant], id_bytes].concat());
+
+                self.code.extend_from_slice(&[Push, R0]);
             }
             Expression::Binary(expr) => match expr.operator.as_str() {
                 "+" => {
