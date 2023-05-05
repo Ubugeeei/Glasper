@@ -73,6 +73,15 @@ impl VM {
                         .unwrap();
                     self.mov(RName::R0, raw_ptr);
                 }
+
+                Bytecodes::LdaSmi => {
+                    let v = self.fetch_i64();
+                    let mut base_obj = self.heap.alloc().unwrap();
+                    let num_obj = JSNumber::create(v as f64, &mut base_obj, self);
+                    let raw_ptr = num_obj.raw_ptr();
+                    self.mov(RName::R0, raw_ptr);
+                }
+
                 Bytecodes::Return => {
                     // TODO: return to called point
                     break;
@@ -492,6 +501,19 @@ impl VM {
                 Bytecodes::LdaUndefined => {
                     res.push((format!("LdaUndefined"), &code[i..i + 1]));
                     i += 1;
+                }
+                Bytecodes::LdaSmi => {
+                    let v = ((code[i + 8] as i64) << 56
+                        | (code[i + 7] as i64) << 48
+                        | (code[i + 6] as i64) << 40
+                        | (code[i + 5] as i64) << 32
+                        | (code[i + 4] as i64) << 24
+                        | (code[i + 3] as i64) << 16
+                        | (code[i + 2] as i64) << 8
+                        | (code[i + 1] as i64)) as usize;
+
+                    res.push((format!("LdaSmi {}", v), &code[i..i + 9]));
+                    i += 9;
                 }
 
                 Bytecodes::Return => {

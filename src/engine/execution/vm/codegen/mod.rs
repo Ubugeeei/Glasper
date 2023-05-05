@@ -4,7 +4,7 @@ use crate::engine::ast::{Expression, Program, Statement};
 
 use super::bytecodes::{
     Bytecodes::{
-        Add, Construct, Div, LdaContextSlot, LdaUndefined, Mod, Mov, Mul, Pop, Push, Return,
+        Add, Div, LdaContextSlot, LdaSmi, LdaUndefined, Mod, Mul, Pop, Push, Return,
         StaContextSlot, Sub,
     },
     RName::{R0, R1},
@@ -26,11 +26,10 @@ fn gen_statement(statement: &Statement, code: &mut Vec<u8>) {
         Statement::Let(stmt) => {
             gen_expression(&stmt.value, code);
 
-            code.extend(&[StaContextSlot]);
             let name = stmt.name.as_bytes();
             let len_bytes = (name.len() as i64).to_le_bytes();
-            code.extend(len_bytes);
-            code.extend(name);
+
+            code.extend_from_slice(&[&[StaContextSlot], &len_bytes[0..], name].concat());
             code.extend(&[LdaUndefined]);
             code.extend(&[Return]);
         }
@@ -44,9 +43,7 @@ fn gen_expression(expr: &Expression, code: &mut Vec<u8>) {
             code.extend(&[LdaUndefined]);
         }
         Expression::Number(literal) => {
-            gen_number(*literal, code);
-            code.extend_from_slice(&[Pop, R0]);
-            code.extend_from_slice(&[Construct]); // r0 = created object ptr
+            code.extend_from_slice(&[&[LdaSmi], &into_bytes(*literal)[0..]].concat());
             code.extend_from_slice(&[Push, R0]);
         }
         Expression::Binary(expr) => match expr.operator.as_str() {
@@ -93,31 +90,25 @@ fn gen_expression(expr: &Expression, code: &mut Vec<u8>) {
             _ => todo!(),
         },
         Expression::Identifier(name) => {
-            code.extend_from_slice(&[LdaContextSlot]);
             let name = name.as_bytes();
             let len_bytes = (name.len() as i64).to_le_bytes();
-            code.extend(len_bytes);
-            code.extend(name);
+
+            code.extend_from_slice(&[&[LdaContextSlot], &len_bytes[0..], name].concat());
             code.extend_from_slice(&[Push, R0]);
         }
         _ => todo!(),
     }
 }
 
-fn gen_number(n: f64, code: &mut Vec<u8>) {
-    let n = n as i64;
-
-    code.push(Mov);
-    code.push(R0);
-    code.push(((n) & 0xff_i64) as u8);
-    code.push(((n >> 8) & 0xff_i64) as u8);
-    code.push(((n >> 16) & 0xff_i64) as u8);
-    code.push(((n >> 24) & 0xff_i64) as u8);
-    code.push(((n >> 32) & 0xff_i64) as u8);
-    code.push(((n >> 40) & 0xff_i64) as u8);
-    code.push(((n >> 48) & 0xff_i64) as u8);
-    code.push(((n >> 56) & 0xff_i64) as u8);
-
-    code.push(Push);
-    code.push(R0);
+fn into_bytes(n: f64) -> [u8; 8] {
+    [
+        ((n as i64) & 0xff_i64) as u8,
+        ((n as i64 >> 8) & 0xff_i64) as u8,
+        ((n as i64 >> 16) & 0xff_i64) as u8,
+        ((n as i64 >> 24) & 0xff_i64) as u8,
+        ((n as i64 >> 32) & 0xff_i64) as u8,
+        ((n as i64 >> 40) & 0xff_i64) as u8,
+        ((n as i64 >> 48) & 0xff_i64) as u8,
+        ((n as i64 >> 56) & 0xff_i64) as u8,
+    ]
 }
