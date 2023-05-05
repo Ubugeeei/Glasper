@@ -23,12 +23,12 @@ fn gen_statement(statement: &Statement, code: &mut Vec<u8>) {
         Statement::Expression(expr) => {
             gen_expression(expr, code);
         }
-        Statement::Let(stmt) => {
-            gen_expression(&stmt.value, code);
 
+        Statement::Let(stmt) => {
             let name = stmt.name.as_bytes();
             let len_bytes = (name.len() as i64).to_le_bytes();
 
+            gen_expression(&stmt.value, code);
             code.extend_from_slice(&[&[StaContextSlot], &len_bytes[0..], name].concat());
             code.extend(&[LdaUndefined]);
             code.extend(&[Return]);
