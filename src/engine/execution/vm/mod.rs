@@ -1,7 +1,6 @@
 #![allow(dead_code)]
 
 use self::{
-    super::objects::{js_number::JSNumber, js_object::JSType, object::Object},
     bytecodes::{Bytecodes, RName},
     codegen::CodeGenerator,
     constant_table::ConstantTable,
@@ -9,10 +8,8 @@ use self::{
     heap::Heap,
     register::Register,
 };
-
+use super::objects::{js_number::JSNumber, js_object::JSType, js_string::JSString, object::Object};
 use crate::engine::parsing::{lexer, parser::Parser};
-
-use super::objects::js_string::JSString;
 
 pub(crate) mod bytecodes;
 pub(crate) mod codegen;
@@ -111,13 +108,14 @@ impl VirtualMachine {
                 Bytecodes::LdaConstant => {
                     let id = self.fetch_i64();
                     let mut base_obj = self.heap.alloc().unwrap();
-                    let str_obj = JSString::create(id as u32, &mut base_obj, self);
+                    let s = self.constant_table.get(id as u32).clone();
+                    let str_obj = JSString::create(s, &mut base_obj, self);
                     let raw_ptr = str_obj.raw_ptr();
                     self.mov(RName::R0, raw_ptr);
                 }
                 Bytecodes::LdaContextSlot => {
                     let name = self.fetch_string();
-                    // TODO: undefined
+                    // TODO: handle undeclared variable
                     let raw_ptr = self
                         .execution_context
                         .context
@@ -249,6 +247,30 @@ impl VirtualMachine {
             (JSType::Number(n1), JSType::Number(n2)) => {
                 let mut base_obj = self.heap.alloc().unwrap();
                 let num_obj = JSNumber::create(n1 + n2, &mut base_obj, self);
+                let raw_ptr = num_obj.raw_ptr();
+                self.mov(RName::R0, raw_ptr);
+            }
+            (JSType::String(s1), JSType::String(s2)) => {
+                let mut base_obj = self.heap.alloc().unwrap();
+                let mut s = s2.clone();
+                s.push_str(&s1);
+                let num_obj = JSString::create(s, &mut base_obj, self);
+                let raw_ptr = num_obj.raw_ptr();
+                self.mov(RName::R0, raw_ptr);
+            }
+            (JSType::Number(n1), JSType::String(s2)) => {
+                let mut base_obj = self.heap.alloc().unwrap();
+                let mut s = s2.clone();
+                s.push_str(&n1.to_string());
+                let num_obj = JSString::create(s, &mut base_obj, self);
+                let raw_ptr = num_obj.raw_ptr();
+                self.mov(RName::R0, raw_ptr);
+            }
+            (JSType::String(s1), JSType::Number(n2)) => {
+                let mut base_obj = self.heap.alloc().unwrap();
+                let mut s = n2.to_string();
+                s.push_str(&s1);
+                let num_obj = JSString::create(s, &mut base_obj, self);
                 let raw_ptr = num_obj.raw_ptr();
                 self.mov(RName::R0, raw_ptr);
             }

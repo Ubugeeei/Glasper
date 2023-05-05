@@ -7,13 +7,12 @@ pub(crate) struct JSString;
 
 impl JSString {
     pub(crate) fn create<'a>(
-        id: u32,
+        s: String,
         allocated: &'a mut Object,
         vm: &mut VirtualMachine,
     ) -> &'a mut Object {
         let object_ref = allocated.as_js_object_mut();
-        let s = vm.constant_table.get(id);
-        object_ref._type = JSType::String(s.to_owned());
+        object_ref._type = JSType::String(s);
 
         let mut prototype = vm.heap.alloc().unwrap();
 
