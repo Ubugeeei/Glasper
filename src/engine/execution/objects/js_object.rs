@@ -1,7 +1,8 @@
 #![allow(dead_code)]
 
+use crate::engine::execution::vm::VirtualMachine;
+
 use super::object::Object;
-use crate::engine::execution::vm::vm::VM;
 use std::{collections::HashMap, fmt::Display};
 
 pub struct JSObject {
@@ -41,5 +42,5 @@ pub(crate) enum JSType {
     Object,
     Function,
     Undefined,
-    NativeFunction(fn(vm: &mut VM, this: &mut Object, _: Vec<Object>) -> Object),
+    NativeFunction(fn(vm: &mut VirtualMachine, this: &mut Object, _: Vec<Object>) -> Object),
 }

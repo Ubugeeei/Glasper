@@ -1,6 +1,6 @@
 use rustyline::error::ReadlineError;
 
-use crate::engine::execution::vm::Interpreter;
+use crate::engine::execution::vm::VirtualMachine;
 use crate::runtime::js::JavaScriptRuntime;
 
 pub fn start(vm: bool) {
@@ -57,7 +57,9 @@ fn start_host_repl() {
 }
 
 fn start_vm_repl() {
-    let mut interpreter = Interpreter::new();
+    let mut interpreter = VirtualMachine::new();
+    interpreter.init();
+
     let mut rl = rustyline::DefaultEditor::new().unwrap();
 
     loop {
@@ -72,14 +74,14 @@ fn start_vm_repl() {
                 }
 
                 if line == "%PrintDump()" {
-                    interpreter.vm.print_dump();
+                    interpreter.print_dump();
                 } else if line == "%PrintIr()" {
-                    interpreter.vm.print_ir();
+                    interpreter.print_ir();
                 } else if line == "%GetBytes()" {
-                    interpreter.vm.print_bytecode();
+                    interpreter.print_bytecode();
                 } else {
-                    let _ = interpreter.run(line);
-                    interpreter.vm.print();
+                    interpreter.run(line);
+                    interpreter.print_current_expr();
                 }
             }
 

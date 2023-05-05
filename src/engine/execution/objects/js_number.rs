@@ -1,12 +1,16 @@
 #![allow(dead_code)]
-use crate::engine::execution::vm::vm::VM;
+use crate::engine::execution::vm::VirtualMachine;
 
 use super::{js_object::JSType, object::Object};
 
 pub(crate) struct JSNumber;
 
 impl JSNumber {
-    pub(crate) fn create<'a>(n: f64, allocated: &'a mut Object, vm: &mut VM) -> &'a mut Object {
+    pub(crate) fn create<'a>(
+        n: f64,
+        allocated: &'a mut Object,
+        vm: &mut VirtualMachine,
+    ) -> &'a mut Object {
         let object_ref = allocated.as_js_object_mut();
         object_ref._type = JSType::Number(n);
 
@@ -28,7 +32,7 @@ impl JSNumber {
     }
 }
 
-fn number_to_string(vm: &mut VM, this: &mut Object, _: Vec<Object>) -> Object {
+fn number_to_string(vm: &mut VirtualMachine, this: &mut Object, _: Vec<Object>) -> Object {
     let n = match this.as_js_object_mut()._type {
         JSType::Number(n) => n,
         _ => panic!("TypeError: Number.prototype.toString is not generic"),
