@@ -103,6 +103,7 @@ impl<'a> CodeGenerator<'a> {
 
                         // gen call instruction (signature: `[CallProperty, callee_pointer, argument_pointer, parent_obj_pointer]`)
                         self.code.extend_from_slice(&[CallProperty, R1, R2]);
+                        self.code.extend_from_slice(&[Push, R0]);
                     }
                     _ => todo!(),
                 }
