@@ -291,14 +291,14 @@ impl VM {
         }
     }
 
-    pub(crate) fn display(&self) {
+    pub(crate) fn print(&self) {
         let ptr = self.get_reg_v(RName::R0);
         let o = Object::from_row_ptr(ptr);
         let js_value = o.as_js_object_ref();
         println!("{}", js_value);
     }
 
-    pub(crate) fn display_bytecode(&self) {
+    pub(crate) fn print_bytecode(&self) {
         for (i, byte) in self.code.iter().enumerate() {
             if i % 16 == 0 {
                 print!("\x1b[30m{:08x}:\x1b[0m     ", i / 16);
@@ -311,5 +311,161 @@ impl VM {
             }
         }
         println!();
+    }
+
+    pub(crate) fn print_bytecode_with_ir(&self) {
+        for (i, byte) in self.code.iter().enumerate() {
+            if i % 16 == 0 {
+                print!("\x1b[30m{:?} @    {}:\x1b[0m ", byte as *const u8, i / 16);
+                print!("\x1b[30m{:02x}\x1b[0m ", byte);
+            } else {
+                print!("\x1b[30m{:02x}\x1b[0m ", byte);
+            }
+            if i % 16 == 15 {
+                println!();
+            }
+        }
+        println!();
+    }
+
+    pub(crate) fn print_ir(&self) {
+        let i = self.get_instructions(&self.code);
+        for (inst, _) in i {
+            print!("\x1b[30m{inst}\x1b[0m ");
+            println!();
+        }
+    }
+
+    pub(crate) fn print_dump(&self) {
+        let i = self.get_instructions(&self.code);
+        for (idx, (_, bytes)) in i.iter().enumerate() {
+            print!(
+                "  \x1b[30m0x{:x} @     0x{idx:08x} : \x1b[0m",
+                bytes.as_ptr() as usize
+            );
+            for byte in bytes.iter() {
+                print!("\x1b[30m{:02x}\x1b[0m ", byte);
+            }
+            println!();
+        }
+    }
+
+    fn get_instructions<'a>(&'a self, code: &'a Vec<u8>) -> Vec<(String, &[u8])> {
+        let mut res: Vec<(String, &[u8])> = Vec::new();
+        let mut i = 0;
+
+        while i < code.len() {
+            match code[i] {
+                Bytecodes::Mov => {
+                    let r1 = code[i + 1];
+
+                    let v = (code[i + 9] as i64) << 56
+                        | (code[i + 8] as i64) << 48
+                        | (code[i + 7] as i64) << 40
+                        | (code[i + 6] as i64) << 32
+                        | (code[i + 5] as i64) << 24
+                        | (code[i + 4] as i64) << 16
+                        | (code[i + 3] as i64) << 8
+                        | (code[i + 2] as i64);
+
+                    res.push((format!("Mov r{}, {}", r1, v), &code[i..i + 10]));
+                    i += 10;
+                }
+
+                Bytecodes::Push => {
+                    let r1 = code[i + 1];
+                    res.push((format!("Push r{}", r1), &code[i..i + 2]));
+                    i += 2;
+                }
+                Bytecodes::Pop => {
+                    let r1 = code[i + 1];
+                    res.push((format!("Pop r{}", r1), &code[i..i + 2]));
+                    i += 2;
+                }
+                Bytecodes::Hlt => {
+                    res.push((format!("Hlt"), &code[i..i + 1]));
+                    i += 1;
+                }
+
+                Bytecodes::Add => {
+                    let r1 = code[i + 1];
+                    let r2 = code[i + 2];
+                    res.push((format!("Add r{}, r{}", r1, r2), &code[i..i + 3]));
+                    i += 3;
+                }
+                Bytecodes::Sub => {
+                    let r1 = code[i + 1];
+                    let r2 = code[i + 2];
+                    res.push((format!("Sub r{}, r{}", r1, r2), &code[i..i + 3]));
+                    i += 3;
+                }
+                Bytecodes::Mul => {
+                    let r1 = code[i + 1];
+                    let r2 = code[i + 2];
+                    res.push((format!("Mul r{}, r{}", r1, r2), &code[i..i + 3]));
+                    i += 3;
+                }
+                Bytecodes::Div => {
+                    let r1 = code[i + 1];
+                    let r2 = code[i + 2];
+                    res.push((format!("Div r{}, r{}", r1, r2), &code[i..i + 3]));
+                    i += 3;
+                }
+                Bytecodes::Mod => {
+                    let r1 = code[i + 1];
+                    let r2 = code[i + 2];
+                    res.push((format!("Mod r{}, r{}", r1, r2), &code[i..i + 3]));
+                    i += 3;
+                }
+
+                Bytecodes::Construct => {
+                    res.push((format!("Construct"), &code[i..i + 1]));
+                    i += 1;
+                }
+
+                Bytecodes::StaContextSlot => {
+                    let len = ((code[i + 8] as i64) << 56
+                        | (code[i + 7] as i64) << 48
+                        | (code[i + 6] as i64) << 40
+                        | (code[i + 5] as i64) << 32
+                        | (code[i + 4] as i64) << 24
+                        | (code[i + 3] as i64) << 16
+                        | (code[i + 2] as i64) << 8
+                        | (code[i + 1] as i64)) as usize;
+
+                    let name = String::from_utf8(code[i + 9..i + 9 + len].to_vec())
+                        .unwrap_or_else(|_| String::from(""));
+
+                    res.push((
+                        format!("StaContextSlot \"{}\"", name),
+                        &code[i..i + 9 + len],
+                    ));
+                    i += 9 + len;
+                }
+
+                Bytecodes::LdaContextSlot => {
+                    let len = ((code[i + 8] as i64) << 56
+                        | (code[i + 7] as i64) << 48
+                        | (code[i + 6] as i64) << 40
+                        | (code[i + 5] as i64) << 32
+                        | (code[i + 4] as i64) << 24
+                        | (code[i + 3] as i64) << 16
+                        | (code[i + 2] as i64) << 8
+                        | (code[i + 1] as i64)) as usize;
+
+                    let name = String::from_utf8(code[i + 9..i + 9 + len].to_vec())
+                        .unwrap_or_else(|_| String::from(""));
+
+                    res.push((
+                        format!("LdaContextSlot \"{}\"", name),
+                        &code[i..i + 9 + len],
+                    ));
+                    i += 9 + len;
+                }
+                _ => {}
+            }
+        }
+
+        res
     }
 }

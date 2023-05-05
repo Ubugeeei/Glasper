@@ -71,11 +71,15 @@ fn start_vm_repl() {
                     break;
                 }
 
-                if line == "%GetBytes()" {
-                    interpreter.vm.display_bytecode();
+                if line == "%PrintDump()" {
+                    interpreter.vm.print_dump();
+                } else if line == "%PrintIr()" {
+                    interpreter.vm.print_ir();
+                } else if line == "%GetBytes()" {
+                    interpreter.vm.print_bytecode();
                 } else {
                     let _ = interpreter.run(line);
-                    interpreter.vm.display();
+                    interpreter.vm.print();
                 }
             }
 
