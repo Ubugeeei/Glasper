@@ -3,8 +3,12 @@
 use crate::engine::execution::vm::VirtualMachine;
 
 use super::{constant::PROTOTYPE_KEY_NAME, object::Object};
-use std::{collections::HashMap, fmt::Display};
+use std::{
+    collections::HashMap,
+    fmt::{Debug, Display},
+};
 
+#[derive(Debug)]
 pub struct JSObject {
     pub(crate) properties: HashMap<String, Object>,
     pub(crate) _type: JSType,
@@ -61,4 +65,19 @@ pub(crate) enum JSType {
     Function,
     Undefined,
     NativeFunction(fn(vm: &mut VirtualMachine, this: &mut Object, _: Vec<Object>) -> Object),
+}
+
+impl Debug for JSType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            JSType::Boolean(b) => write!(f, "Boolean({})", b),
+            JSType::Number(n) => write!(f, "Number({})", n),
+            JSType::String(s) => write!(f, "String({})", s),
+            JSType::Array(_) => write!(f, "Array"),
+            JSType::Object => write!(f, "Object"),
+            JSType::Function => write!(f, "Function"),
+            JSType::Undefined => write!(f, "Undefined"),
+            JSType::NativeFunction(_) => write!(f, "NativeFunction"),
+        }
+    }
 }

@@ -4,6 +4,7 @@ use std::ptr::NonNull;
 
 use super::js_object::JSObject;
 
+#[derive(Debug)]
 pub struct Object {
     pub(crate) ptr: NonNull<JSObject>,
 }
