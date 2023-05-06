@@ -8,7 +8,11 @@ use self::{
     heap::Heap,
     register::Register,
 };
-use super::objects::{js_number::JSNumber, js_object::JSType, js_string::JSString, object::Object};
+use super::objects::{
+    js_number::JSNumber,
+    js_object::{JSObject, JSType},
+    js_string::JSString,
+};
 use crate::engine::parsing::{lexer, parser::Parser};
 use std::fmt::Display;
 
@@ -83,13 +87,13 @@ impl VirtualMachine {
 /// core impl
 impl VirtualMachine {
     pub(crate) fn init(&mut self) {
-        let mut base_obj = self.heap.alloc().unwrap();
-        base_obj.as_js_object_mut()._type = JSType::Undefined;
+        let base_obj = self.heap.alloc().unwrap();
+        base_obj._type = JSType::Undefined;
         self.execution_context
             .context
             .clone()
             .borrow_mut()
-            .set("undefined".to_string(), base_obj.raw_ptr());
+            .set("undefined".to_string(), base_obj.as_raw_ptr());
     }
 
     pub(crate) fn run(&mut self, source: String) -> Result<(), VMError> {
@@ -127,10 +131,10 @@ impl VirtualMachine {
                 Bytecodes::LdaUndefined => self.load_undefined()?,
                 Bytecodes::LdaSmi => {
                     let v = self.fetch_i64();
-                    if let Some(mut base_obj) = self.heap.alloc() {
-                        let num_obj = JSNumber::create(v as f64, &mut base_obj, self);
-                        let raw_ptr = num_obj.raw_ptr();
-                        self.mov(RName::R0, raw_ptr);
+                    if let Some(base_obj) = self.heap.alloc() {
+                        let num_obj = JSNumber::create(v as f64, base_obj, self);
+                        let ptr = num_obj.as_raw_ptr();
+                        self.mov(RName::R0, ptr);
                     } else {
                         return Err(VMError::new(
                             VMErrorKind::Internal,
@@ -140,11 +144,10 @@ impl VirtualMachine {
                 }
                 Bytecodes::LdaConstant => {
                     let id = self.fetch_i64();
-                    if let Some(mut base_obj) = self.heap.alloc() {
+                    if let Some(base_obj) = self.heap.alloc() {
                         let s = self.constant_table.get(id as u32).clone();
-                        let str_obj = JSString::create(s, &mut base_obj, self);
-                        let raw_ptr = str_obj.raw_ptr();
-                        self.mov(RName::R0, raw_ptr);
+                        let str_obj = JSString::create(s, base_obj, self);
+                        self.mov(RName::R0, str_obj.as_raw_ptr());
                     } else {
                         return Err(VMError::new(
                             VMErrorKind::Internal,
@@ -170,10 +173,9 @@ impl VirtualMachine {
                     let obj_ptr = self.get_reg_v(reg);
                     let id = self.fetch_i64();
                     let name = self.constant_table.get(id as u32).clone();
-                    let obj = Object::from_row_ptr(obj_ptr);
-                    let obj = obj.as_js_object_ref();
+                    let obj = JSObject::from_raw_ptr(obj_ptr);
                     if let Some(prop) = obj.get(&name) {
-                        self.mov(RName::R0, prop.raw_ptr());
+                        self.mov(RName::R0, prop.as_raw_ptr());
                     } else {
                         let _ = self.load_undefined();
                     }
@@ -193,8 +195,7 @@ impl VirtualMachine {
                     // get callee function
                     let callee_pointer_reg = self.fetch();
                     let callee_pointer = self.get_reg_v(callee_pointer_reg);
-                    let mut callee = Object::from_row_ptr(callee_pointer);
-                    let callee = callee.as_js_object_mut();
+                    let callee = JSObject::from_raw_ptr(callee_pointer);
                     let callee_fn = match callee._type {
                         JSType::NativeFunction(f) => f,
                         // TODO: JSFunction,
@@ -213,11 +214,11 @@ impl VirtualMachine {
                     // parent object
                     let parent_obj_pointer_reg = self.fetch();
                     let parent_obj_pointer = self.get_reg_v(parent_obj_pointer_reg);
-                    let mut parent_obj = Object::from_row_ptr(parent_obj_pointer);
+                    let parent_obj = JSObject::from_raw_ptr_mut(parent_obj_pointer);
 
                     // call
-                    let ret = callee_fn(self, &mut parent_obj, vec![]);
-                    self.mov(RName::R0, ret.raw_ptr());
+                    let ret = callee_fn(self, parent_obj, vec![]);
+                    self.mov(RName::R0, ret.as_raw_ptr());
                 }
 
                 Bytecodes::Return => {
@@ -341,48 +342,41 @@ impl VirtualMachine {
     fn add(&mut self) {
         let r1 = self.fetch();
         let r2 = self.fetch();
-        let o1 = Object::from_row_ptr(self.get_reg_v(r1));
-        let o2 = Object::from_row_ptr(self.get_reg_v(r2));
-        let jso1 = o1.as_js_object_ref();
-        let jso2 = o2.as_js_object_ref();
+        let l_obj = JSObject::from_raw_ptr(self.get_reg_v(r1));
+        let r_obj = JSObject::from_raw_ptr(self.get_reg_v(r2));
 
-        match (&jso1._type, &jso2._type) {
+        match (&l_obj._type, &r_obj._type) {
             (JSType::Number(n1), JSType::Number(n2)) => {
-                let mut base_obj = self.heap.alloc().unwrap();
-                let num_obj = JSNumber::create(n1 + n2, &mut base_obj, self);
-                let raw_ptr = num_obj.raw_ptr();
-                self.mov(RName::R0, raw_ptr);
+                let base_obj = self.heap.alloc().unwrap();
+                let num_obj = JSNumber::create(n1 + n2, base_obj, self);
+                self.mov(RName::R0, num_obj.as_raw_ptr());
             }
             (JSType::String(s1), JSType::String(s2)) => {
-                let mut base_obj = self.heap.alloc().unwrap();
+                let base_obj = self.heap.alloc().unwrap();
                 let mut s = s2.clone();
                 s.push_str(s1);
-                let num_obj = JSString::create(s, &mut base_obj, self);
-                let raw_ptr = num_obj.raw_ptr();
-                self.mov(RName::R0, raw_ptr);
+                let num_obj = JSString::create(s, base_obj, self);
+                self.mov(RName::R0, num_obj.as_raw_ptr());
             }
             (JSType::Number(n1), JSType::String(s2)) => {
-                let mut base_obj = self.heap.alloc().unwrap();
+                let base_obj = self.heap.alloc().unwrap();
                 let mut s = s2.clone();
                 s.push_str(&n1.to_string());
-                let num_obj = JSString::create(s, &mut base_obj, self);
-                let raw_ptr = num_obj.raw_ptr();
-                self.mov(RName::R0, raw_ptr);
+                let num_obj = JSString::create(s, base_obj, self);
+                self.mov(RName::R0, num_obj.as_raw_ptr());
             }
             (JSType::String(s1), JSType::Number(n2)) => {
-                let mut base_obj = self.heap.alloc().unwrap();
+                let base_obj = self.heap.alloc().unwrap();
                 let mut s = n2.to_string();
                 s.push_str(s1);
-                let num_obj = JSString::create(s, &mut base_obj, self);
-                let raw_ptr = num_obj.raw_ptr();
-                self.mov(RName::R0, raw_ptr);
+                let num_obj = JSString::create(s, base_obj, self);
+                self.mov(RName::R0, num_obj.as_raw_ptr());
             }
             _ => {
                 // TODO: string + others
-                let mut base_obj = self.heap.alloc().unwrap();
-                let num_obj = JSNumber::create(f64::NAN, &mut base_obj, self);
-                let raw_ptr = num_obj.raw_ptr();
-                self.mov(RName::R0, raw_ptr);
+                let base_obj = self.heap.alloc().unwrap();
+                let num_obj = JSNumber::create(f64::NAN, base_obj, self);
+                self.mov(RName::R0, num_obj.as_raw_ptr());
             }
         }
     }
@@ -390,23 +384,19 @@ impl VirtualMachine {
     fn sub(&mut self) {
         let r1 = self.fetch();
         let r2 = self.fetch();
-        let o1 = Object::from_row_ptr(self.get_reg_v(r1));
-        let o2 = Object::from_row_ptr(self.get_reg_v(r2));
-        let jso1 = o1.as_js_object_ref();
-        let jso2 = o2.as_js_object_ref();
+        let l_obj = JSObject::from_raw_ptr(self.get_reg_v(r1));
+        let r_obj = JSObject::from_raw_ptr(self.get_reg_v(r2));
 
-        match (&jso1._type, &jso2._type) {
+        match (&l_obj._type, &r_obj._type) {
             (JSType::Number(n1), JSType::Number(n2)) => {
-                let mut base_obj = self.heap.alloc().unwrap();
-                let num_obj = JSNumber::create(n1 - n2, &mut base_obj, self);
-                let raw_ptr = num_obj.raw_ptr();
-                self.mov(RName::R0, raw_ptr);
+                let base_obj = self.heap.alloc().unwrap();
+                let num_obj = JSNumber::create(n1 - n2, base_obj, self);
+                self.mov(RName::R0, num_obj.as_raw_ptr());
             }
             _ => {
-                let mut base_obj = self.heap.alloc().unwrap();
-                let num_obj = JSNumber::create(f64::NAN, &mut base_obj, self);
-                let raw_ptr = num_obj.raw_ptr();
-                self.mov(RName::R0, raw_ptr);
+                let base_obj = self.heap.alloc().unwrap();
+                let num_obj = JSNumber::create(f64::NAN, base_obj, self);
+                self.mov(RName::R0, num_obj.as_raw_ptr());
             }
         }
     }
@@ -414,23 +404,19 @@ impl VirtualMachine {
     fn mul(&mut self) {
         let r1 = self.fetch();
         let r2 = self.fetch();
-        let o1 = Object::from_row_ptr(self.get_reg_v(r1));
-        let o2 = Object::from_row_ptr(self.get_reg_v(r2));
-        let jso1 = o1.as_js_object_ref();
-        let jso2 = o2.as_js_object_ref();
+        let l_obj = JSObject::from_raw_ptr(self.get_reg_v(r1));
+        let r_obj = JSObject::from_raw_ptr(self.get_reg_v(r2));
 
-        match (&jso1._type, &jso2._type) {
+        match (&l_obj._type, &r_obj._type) {
             (JSType::Number(n1), JSType::Number(n2)) => {
-                let mut base_obj = self.heap.alloc().unwrap();
-                let num_obj = JSNumber::create(n1 * n2, &mut base_obj, self);
-                let raw_ptr = num_obj.raw_ptr();
-                self.mov(RName::R0, raw_ptr);
+                let base_obj = self.heap.alloc().unwrap();
+                let num_obj = JSNumber::create(n1 * n2, base_obj, self);
+                self.mov(RName::R0, num_obj.as_raw_ptr());
             }
             _ => {
-                let mut base_obj = self.heap.alloc().unwrap();
-                let num_obj = JSNumber::create(f64::NAN, &mut base_obj, self);
-                let raw_ptr = num_obj.raw_ptr();
-                self.mov(RName::R0, raw_ptr);
+                let base_obj = self.heap.alloc().unwrap();
+                let num_obj = JSNumber::create(f64::NAN, base_obj, self);
+                self.mov(RName::R0, num_obj.as_raw_ptr());
             }
         }
     }
@@ -438,23 +424,19 @@ impl VirtualMachine {
     fn div(&mut self) {
         let r1 = self.fetch();
         let r2 = self.fetch();
-        let o1 = Object::from_row_ptr(self.get_reg_v(r1));
-        let o2 = Object::from_row_ptr(self.get_reg_v(r2));
-        let jso1 = o1.as_js_object_ref();
-        let jso2 = o2.as_js_object_ref();
+        let l_obj = JSObject::from_raw_ptr(self.get_reg_v(r1));
+        let r_obj = JSObject::from_raw_ptr(self.get_reg_v(r2));
 
-        match (&jso1._type, &jso2._type) {
+        match (&l_obj._type, &r_obj._type) {
             (JSType::Number(n1), JSType::Number(n2)) => {
-                let mut base_obj = self.heap.alloc().unwrap();
-                let num_obj = JSNumber::create(n1 / n2, &mut base_obj, self);
-                let raw_ptr = num_obj.raw_ptr();
-                self.mov(RName::R0, raw_ptr);
+                let base_obj = self.heap.alloc().unwrap();
+                let num_obj = JSNumber::create(n1 / n2, base_obj, self);
+                self.mov(RName::R0, num_obj.as_raw_ptr());
             }
             _ => {
-                let mut base_obj = self.heap.alloc().unwrap();
-                let num_obj = JSNumber::create(f64::NAN, &mut base_obj, self);
-                let raw_ptr = num_obj.raw_ptr();
-                self.mov(RName::R0, raw_ptr);
+                let base_obj = self.heap.alloc().unwrap();
+                let num_obj = JSNumber::create(f64::NAN, base_obj, self);
+                self.mov(RName::R0, num_obj.as_raw_ptr());
             }
         }
     }
@@ -462,23 +444,19 @@ impl VirtualMachine {
     fn r#mod(&mut self) {
         let r1 = self.fetch();
         let r2 = self.fetch();
-        let o1 = Object::from_row_ptr(self.get_reg_v(r1));
-        let o2 = Object::from_row_ptr(self.get_reg_v(r2));
-        let jso1 = o1.as_js_object_ref();
-        let jso2 = o2.as_js_object_ref();
+        let l_obj = JSObject::from_raw_ptr(self.get_reg_v(r1));
+        let r_obj = JSObject::from_raw_ptr(self.get_reg_v(r2));
 
-        match (&jso1._type, &jso2._type) {
+        match (&l_obj._type, &r_obj._type) {
             (JSType::Number(n1), JSType::Number(n2)) => {
-                let mut base_obj = self.heap.alloc().unwrap();
-                let num_obj = JSNumber::create(n1 % n2, &mut base_obj, self);
-                let raw_ptr = num_obj.raw_ptr();
-                self.mov(RName::R0, raw_ptr);
+                let base_obj = self.heap.alloc().unwrap();
+                let num_obj = JSNumber::create(n1 % n2, base_obj, self);
+                self.mov(RName::R0, num_obj.as_raw_ptr());
             }
             _ => {
-                let mut base_obj = self.heap.alloc().unwrap();
-                let num_obj = JSNumber::create(f64::NAN, &mut base_obj, self);
-                let raw_ptr = num_obj.raw_ptr();
-                self.mov(RName::R0, raw_ptr);
+                let base_obj = self.heap.alloc().unwrap();
+                let num_obj = JSNumber::create(f64::NAN, base_obj, self);
+                self.mov(RName::R0, num_obj.as_raw_ptr());
             }
         }
     }
@@ -502,9 +480,8 @@ impl VirtualMachine {
 impl VirtualMachine {
     pub(crate) fn print_current_expr(&self) {
         let ptr = self.get_reg_v(RName::R0);
-        let o = Object::from_row_ptr(ptr);
-        let js_value = o.as_js_object_ref();
-        println!("{}", js_value);
+        let obj = JSObject::from_raw_ptr(ptr);
+        println!("{}", obj);
     }
 
     pub(crate) fn print_bytecode(&self) {

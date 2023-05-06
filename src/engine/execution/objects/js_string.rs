@@ -1,30 +1,31 @@
 #![allow(dead_code)]
 use crate::engine::execution::vm::VirtualMachine;
 
-use super::{constant::PROTOTYPE_KEY_NAME, js_object::JSType, object::Object};
+use super::{
+    constant::PROTOTYPE_KEY_NAME,
+    js_object::{JSObject, JSType},
+};
 
 pub(crate) struct JSString;
 
 impl JSString {
     pub(crate) fn create<'a>(
         s: String,
-        allocated: &'a mut Object,
+        allocated: &'a mut JSObject,
         vm: &mut VirtualMachine,
-    ) -> &'a mut Object {
+    ) -> &'a mut JSObject {
         // string prototype
-        let mut prototype = vm.heap.alloc().unwrap();
+        let prototype = vm.heap.alloc().unwrap();
         let mut string_char_code_at_fn = vm.heap.alloc().unwrap();
-        string_char_code_at_fn.as_js_object_mut()._type =
-            JSType::NativeFunction(string_char_code_at);
+
+        string_char_code_at_fn._type = JSType::NativeFunction(string_char_code_at);
         prototype
-            .as_js_object_mut()
             .properties
             .insert("charCodeAt".to_string(), string_char_code_at_fn);
 
         // create string instance
-        let object_ref = allocated.as_js_object_mut();
-        object_ref._type = JSType::String(s);
-        object_ref
+        allocated._type = JSType::String(s);
+        allocated
             .properties
             .insert(String::from(PROTOTYPE_KEY_NAME), prototype);
 
@@ -32,8 +33,12 @@ impl JSString {
     }
 }
 
-fn string_char_code_at(vm: &mut VirtualMachine, this: &mut Object, _: Vec<Object>) -> Object {
-    let n = match this.as_js_object_mut()._type {
+fn string_char_code_at(
+    vm: &mut VirtualMachine,
+    this: &mut JSObject,
+    _: Vec<JSObject>,
+) -> &'static mut JSObject {
+    let n = match this._type {
         JSType::Number(n) => n,
         _ => panic!("TypeError: Number.prototype.toString is not generic"),
     };
@@ -41,6 +46,6 @@ fn string_char_code_at(vm: &mut VirtualMachine, this: &mut Object, _: Vec<Object
     // TODO: string object
     let s = n.to_string();
     let mut string = vm.heap.alloc().unwrap();
-    string.as_js_object_mut()._type = JSType::String(s);
+    string._type = JSType::String(s);
     string
 }
