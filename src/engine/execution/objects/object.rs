@@ -1,10 +1,9 @@
 #![allow(dead_code)]
 
-use std::ptr::NonNull;
+use std::{fmt::Debug, ptr::NonNull};
 
 use super::js_object::JSObject;
 
-#[derive(Debug)]
 pub struct Object {
     pub(crate) ptr: NonNull<JSObject>,
 }
@@ -30,5 +29,11 @@ impl Object {
 
     pub(crate) fn as_js_object_mut(&mut self) -> &mut JSObject {
         unsafe { self.ptr.as_mut() }
+    }
+}
+
+impl Debug for Object {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        self.as_js_object_ref().fmt(f)
     }
 }
