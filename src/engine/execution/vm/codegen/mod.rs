@@ -93,13 +93,14 @@ impl<'a> CodeGenerator<'a> {
                     Expression::Member(member_expr) => {
                         // gen callee
                         self.gen_expression(&call_expr.callee);
-                        self.code.extend_from_slice(&[Pop, R1]);
 
                         // TODO: arguments (gen array)
                         // self.gen_expression(expr.arguments);
 
                         self.gen_expression(&member_expr.object);
+
                         self.code.extend_from_slice(&[Pop, R2]);
+                        self.code.extend_from_slice(&[Pop, R1]);
 
                         // gen call instruction (signature: `[CallProperty, callee_pointer, argument_pointer, parent_obj_pointer]`)
                         self.code.extend_from_slice(&[CallProperty, R1, R2]);
