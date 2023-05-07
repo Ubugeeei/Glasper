@@ -557,7 +557,7 @@ impl<'a> HostInterpreter<'a> {
             RuntimeObject::String(s) => match obj {
                 RuntimeObject::Object(o) => {
                     self.exec_ctx_this = o.clone();
-                    self.eval_property(o, s.value.as_ref())
+                    Self::eval_property(o, s.value.as_ref())
                 }
                 _ => Err(Error::new(
                     std::io::ErrorKind::Other,
@@ -586,18 +586,14 @@ impl<'a> HostInterpreter<'a> {
         }
     }
 
-    fn eval_property(
-        &self,
-        target_obj: Rc<RefCell<JSObject>>,
-        key: &str,
-    ) -> Result<RuntimeObject, Error> {
+    fn eval_property(target_obj: Rc<RefCell<JSObject>>, key: &str) -> Result<RuntimeObject, Error> {
         let binding = target_obj.borrow();
         let p = binding.properties.get(key);
         match p {
             Some(v) => Ok(v.clone()),
             None => match target_obj.borrow().properties.get("__proto__") {
                 Some(v) => match v {
-                    RuntimeObject::Object(o) => self.eval_property(o.clone(), key),
+                    RuntimeObject::Object(o) => Self::eval_property(o.clone(), key),
                     _ => unreachable!("unreachable"),
                 },
                 None => Ok(RuntimeObject::Undefined(JSUndefined)),
