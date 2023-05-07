@@ -1,4 +1,3 @@
-mod cli;
 mod engine;
 mod runtime;
 
@@ -19,7 +18,7 @@ const VERSION: &str = env!("CARGO_PKG_VERSION");
 fn main() {
     let args: Vec<String> = env::args().collect();
     if args.len() == 1 {
-        cli::interact::start(false);
+        runtime::cli::interact::start(false);
     } else {
         match &*args[1] {
             "-h" | "--help" => {
@@ -29,10 +28,10 @@ fn main() {
                 println!("v{}", VERSION);
             }
             "--vm" => {
-                cli::interact::start(true);
+                runtime::cli::interact::start(true);
             }
             arg => {
-                cli::file::run(arg);
+                runtime::cli::file::run(arg);
             }
         }
     }
