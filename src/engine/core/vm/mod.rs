@@ -17,8 +17,6 @@ use self::{
 use crate::engine::parsing::{lexer, parser::Parser};
 use std::fmt::Display;
 
-use super::interface::GlasperEngine;
-
 pub(crate) mod bytecodes;
 pub(crate) mod codegen;
 pub(crate) mod constant_table;
@@ -98,8 +96,9 @@ impl VirtualMachine {
     }
 }
 
-impl GlasperEngine for VirtualMachine {
-    fn run(&mut self, source: String) {
+/// core impl
+impl VirtualMachine {
+    pub fn run(&mut self, source: String) {
         match &*source {
             "%PrintDump()" => {
                 self.print_dump();
@@ -126,10 +125,7 @@ impl GlasperEngine for VirtualMachine {
             }
         };
     }
-}
 
-/// core impl
-impl VirtualMachine {
     fn interpret(&mut self) -> Result<(), VMError> {
         loop {
             let opcode = self.fetch();

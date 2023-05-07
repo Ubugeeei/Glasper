@@ -1,18 +1,4 @@
-// NOTE: 1,65.0 emits a warning, but it's not a problem.
-//error: parameter is only used in recursion
-// --> src/engine/eval/evaluator.rs:566:10
-// |
-// 566 |         &self,
-// |          ^^^^
-// |
-// = note: `-D clippy::only-used-in-recursion` implied by `-D warnings`
-// note: parameter used here
-// --> src/engine/eval/evaluator.rs:576:49
-// |
-// 576 |                     RuntimeObject::Object(o) => self.eval_property(o.clone(), key),
-// |                                                 ^^^^
-// = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#only_used_in_recursion
-#![allow(clippy::only_used_in_recursion)]
+#![allow(dead_code)]
 
 use std::{cell::RefCell, collections::HashMap, io::Error, rc::Rc};
 
@@ -31,8 +17,6 @@ use crate::engine::{
     },
     parsing::{lexer::Lexer, parser::Parser},
 };
-
-use super::interface::GlasperEngine;
 
 pub mod api;
 pub mod handles;
@@ -56,16 +40,14 @@ impl<'a> HostInterpreter<'a> {
     }
 }
 
-impl<'a> GlasperEngine for HostInterpreter<'a> {
-    fn run(&mut self, source: String) {
+impl<'a> HostInterpreter<'a> {
+    pub fn run(&mut self, source: String) {
         match self.execute(source) {
             Ok(o) => println!("{}", o),
             Err(e) => println!("{}", e),
         }
     }
-}
 
-impl<'a> HostInterpreter<'a> {
     fn execute(&mut self, source: String) -> Result<RuntimeObject, Error> {
         let mut l = Lexer::new(source);
         let mut p = Parser::new(&mut l);

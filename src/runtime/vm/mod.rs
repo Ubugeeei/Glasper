@@ -1,4 +1,4 @@
-use crate::engine::core::{interface::GlasperEngine, vm::VirtualMachine};
+use crate::engine::core::vm::VirtualMachine;
 
 use super::interface::JSRuntime;
 
