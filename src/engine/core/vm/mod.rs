@@ -23,6 +23,7 @@ pub(crate) mod codegen;
 pub(crate) mod constant_table;
 pub(crate) mod context;
 pub(crate) mod heap;
+pub(crate) mod jit;
 pub(crate) mod objects;
 pub(crate) mod register;
 
