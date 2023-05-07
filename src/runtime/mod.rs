@@ -1,3 +1,1 @@
-pub mod js;
-
-pub mod binding;
+pub mod host;

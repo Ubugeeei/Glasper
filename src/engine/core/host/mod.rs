@@ -17,17 +17,23 @@
 use std::{cell::RefCell, collections::HashMap, io::Error, rc::Rc};
 
 use crate::engine::{
-    api::Context,
     ast::{
         ArrayExpression, BlockStatement, CallExpression, ConstStatement, Expression, ForInit,
         ForStatement, IfStatement, LetStatement, MemberExpression, ObjectExpression, Program,
         Statement, SwitchStatement, UpdateExpression,
     },
-    core::legacy_object::{JSBoolean, JSNull, JSNumber, JSUndefined, RuntimeObject},
-    handles::{Variable, VariableKind},
+    core::host::{
+        api::Context,
+        handles::{Variable, VariableKind},
+        objects::{
+            JSBoolean, JSFunction, JSNull, JSNumber, JSObject, JSString, JSUndefined, RuntimeObject,
+        },
+    },
 };
 
-use super::legacy_object::{JSFunction, JSObject, JSString};
+pub mod api;
+pub mod handles;
+pub mod objects;
 
 pub struct Evaluator<'a> {
     ctx: &'a mut Context,
@@ -1020,7 +1026,7 @@ enum ScopeType {
 mod tests {
     use super::*;
     use crate::engine::{
-        handles::HandleScope,
+        core::host::handles::HandleScope,
         parsing::{lexer::Lexer, parser::Parser},
     };
 

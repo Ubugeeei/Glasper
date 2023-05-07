@@ -1,7 +1,7 @@
 use rustyline::error::ReadlineError;
 
 use crate::engine::core::vm::VirtualMachine;
-use crate::runtime::js::JavaScriptRuntime;
+use crate::runtime::host::js::JavaScriptRuntime;
 
 pub fn start(vm: bool) {
     println!("Welcome to Glasper v0.1.0 ");

@@ -1,6 +1,6 @@
 use std::{cell::RefCell, collections::HashMap, rc::Rc};
 
-use crate::engine::core::legacy_object::{
+use crate::engine::core::host::objects::{
     JSBuiltinFunction, JSObject, JSString, JSUndefined, RuntimeObject,
 };
 

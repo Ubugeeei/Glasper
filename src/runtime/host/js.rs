@@ -1,9 +1,9 @@
 use std::io::Error;
 
-use crate::engine::{
+use crate::engine::core::host::{
     api::{Context, Isolate, Script},
-    core::legacy_object::RuntimeObject,
     handles::HandleScope,
+    objects::RuntimeObject,
 };
 
 use super::binding::console::ConsoleBuilder;
@@ -29,7 +29,7 @@ impl JavaScriptRuntime {
         global.set("console", console);
 
         let mut isolate = Isolate::new(context);
-        isolate.install_functions(vec!["src/runtime/array.js"]);
+        isolate.install_functions(vec!["src/runtime/host/array.js"]);
 
         JavaScriptRuntime { isolate }
     }

@@ -1,4 +1,4 @@
-use crate::runtime::js::JavaScriptRuntime;
+use crate::runtime::host::js::JavaScriptRuntime;
 
 pub fn run(path: &str) {
     let mut runtime = JavaScriptRuntime::new();
