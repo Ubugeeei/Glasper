@@ -6,13 +6,14 @@ use self::{
     constant_table::ConstantTable,
     context::ExecutionContext,
     heap::Heap,
+    objects::{
+        js_number::JSNumber,
+        js_object::{JSObject, JSType},
+        js_string::JSString,
+    },
     register::Register,
 };
-use super::objects::{
-    js_number::JSNumber,
-    js_object::{JSObject, JSType},
-    js_string::JSString,
-};
+
 use crate::engine::parsing::{lexer, parser::Parser};
 use std::fmt::Display;
 
@@ -21,6 +22,7 @@ pub(crate) mod codegen;
 pub(crate) mod constant_table;
 pub(crate) mod context;
 pub(crate) mod heap;
+pub(crate) mod objects;
 pub(crate) mod register;
 
 enum VMErrorKind {
