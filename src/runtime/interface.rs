@@ -1,4 +1,4 @@
-use super::{host::js::HostJSRuntime, vm::VMRuntime};
+use super::{host::HostJSRuntime, vm::VMRuntime};
 
 pub trait JSRuntime {
     fn run(&mut self, source: String);
