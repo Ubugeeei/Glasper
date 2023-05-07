@@ -17,8 +17,10 @@ const VERSION: &str = env!("CARGO_PKG_VERSION");
 
 fn main() {
     let args: Vec<String> = env::args().collect();
+    let vm = args.iter().any(|arg| arg == "--vm");
+
     if args.len() == 1 {
-        runtime::cli::interact::start(false);
+        runtime::cli::interact::start(vm);
     } else {
         match &*args[1] {
             "-h" | "--help" => {
@@ -28,10 +30,10 @@ fn main() {
                 println!("v{}", VERSION);
             }
             "--vm" => {
-                runtime::cli::interact::start(true);
+                runtime::cli::interact::start(vm);
             }
             arg => {
-                runtime::cli::file::run(arg);
+                runtime::cli::file::run(arg, vm);
             }
         }
     }

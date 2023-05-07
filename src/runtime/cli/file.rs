@@ -1,10 +1,10 @@
-use crate::runtime::host::js::JavaScriptRuntime;
+use crate::runtime::interface::JSRuntimeBuilder;
 
-pub fn run(path: &str) {
-    let mut runtime = JavaScriptRuntime::new();
+pub fn run(path: &str, vm: bool) {
+    let mut runtime = JSRuntimeBuilder::build(vm);
     match std::fs::read_to_string(path) {
         Ok(source) => {
-            let _ = runtime.execute(source);
+            runtime.run(source);
         }
         Err(_) => {
             let crr_dir = std::env::current_dir().unwrap();

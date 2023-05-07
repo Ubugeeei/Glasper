@@ -3,7 +3,7 @@ use crate::engine::{
     core::host::{
         handles::HandleScope,
         objects::{JSObject, RuntimeObject},
-        Evaluator,
+        HostInterpreter,
     },
     parsing::{lexer::Lexer, parser::Parser},
 };
@@ -105,7 +105,7 @@ impl<'a> Script<'a> {
         }
     }
     pub fn run(&mut self) -> Result<RuntimeObject, Error> {
-        let mut ev = Evaluator::new(self.context);
+        let mut ev = HostInterpreter::new(self.context);
         ev.eval(&self.ast)
     }
 }

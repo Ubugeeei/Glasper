@@ -1,23 +1,24 @@
-use std::io::Error;
-
-use crate::engine::core::host::{
-    api::{Context, Isolate, Script},
-    handles::HandleScope,
-    objects::RuntimeObject,
+use crate::{
+    engine::core::host::{
+        api::{Context, Isolate, Script},
+        handles::HandleScope,
+    },
+    runtime::interface::JSRuntime,
 };
 
 use super::binding::console::ConsoleBuilder;
 
-pub struct JavaScriptRuntime {
+pub struct HostJSRuntime {
     isolate: Isolate,
 }
-impl Default for JavaScriptRuntime {
+
+impl Default for HostJSRuntime {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl JavaScriptRuntime {
+impl HostJSRuntime {
     pub fn new() -> Self {
         let handle_scope = HandleScope::new();
         let mut context = Context::new(handle_scope);
@@ -31,15 +32,22 @@ impl JavaScriptRuntime {
         let mut isolate = Isolate::new(context);
         isolate.install_functions(vec!["src/runtime/host/array.js"]);
 
-        JavaScriptRuntime { isolate }
+        HostJSRuntime { isolate }
     }
+}
 
-    pub fn execute(&mut self, source: String) -> Result<RuntimeObject, Error> {
+impl JSRuntime for HostJSRuntime {
+    fn run(&mut self, source: String) {
         let scope = self.get_cxt();
         let mut script = Script::compile(source, scope);
-        script.run()
+        match script.run() {
+            Ok(o) => println!("{}", o),
+            Err(e) => println!("{}", e),
+        }
     }
+}
 
+impl HostJSRuntime {
     fn get_cxt(&mut self) -> &mut Context {
         &mut self.isolate.context
     }

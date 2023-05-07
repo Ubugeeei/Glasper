@@ -1,64 +1,12 @@
 use rustyline::error::ReadlineError;
 
-use crate::engine::core::vm::VirtualMachine;
-use crate::runtime::host::js::JavaScriptRuntime;
+use crate::runtime::interface::JSRuntimeBuilder;
 
 pub fn start(vm: bool) {
     println!("Welcome to Glasper v0.1.0 ");
     println!("exit using ctrl+c or ctrl+d or exit()");
-    if vm {
-        start_vm_repl();
-    } else {
-        start_host_repl();
-    }
-}
 
-fn start_host_repl() {
-    let mut runtime = JavaScriptRuntime::new();
-    let mut rl = rustyline::DefaultEditor::new().unwrap();
-
-    loop {
-        let input = rl.readline("> ");
-        match input {
-            Ok(line) => {
-                let _ = rl.add_history_entry(&line);
-
-                /*
-                 *
-                 * exit
-                 *
-                 */
-                if line == "exit()" {
-                    println!("Bye!");
-                    break;
-                }
-
-                /*
-                 *
-                 * execute
-                 *
-                 */
-                match runtime.execute(line) {
-                    Ok(o) => println!("{}", o),
-                    Err(e) => println!("{}", e),
-                }
-            }
-
-            Err(ReadlineError::Interrupted) | Err(ReadlineError::Eof) => {
-                break;
-            }
-
-            Err(err) => {
-                println!("error: {:?}", err);
-                break;
-            }
-        }
-    }
-}
-
-fn start_vm_repl() {
-    let mut interpreter = VirtualMachine::new();
-    interpreter.init();
+    let mut runtime = JSRuntimeBuilder::build(vm);
 
     let mut rl = rustyline::DefaultEditor::new().unwrap();
 
@@ -73,19 +21,7 @@ fn start_vm_repl() {
                     break;
                 }
 
-                if line == "%PrintDump()" {
-                    interpreter.print_dump();
-                } else if line == "%PrintIr()" {
-                    interpreter.print_ir();
-                } else if line == "%PrintBytes()" {
-                    interpreter.print_bytecode();
-                } else if !line.trim().is_empty() {
-                    if let Err(e) = interpreter.run(line) {
-                        println!("{}", e);
-                    } else {
-                        interpreter.print_current_expr();
-                    };
-                }
+                runtime.run(line);
             }
 
             Err(ReadlineError::Interrupted) | Err(ReadlineError::Eof) => {

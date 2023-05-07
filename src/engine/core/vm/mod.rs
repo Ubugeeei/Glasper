@@ -17,6 +17,8 @@ use self::{
 use crate::engine::parsing::{lexer, parser::Parser};
 use std::fmt::Display;
 
+use super::interface::GlasperEngine;
+
 pub(crate) mod bytecodes;
 pub(crate) mod codegen;
 pub(crate) mod constant_table;
@@ -73,41 +75,61 @@ pub(crate) struct VirtualMachine {
 
 impl VirtualMachine {
     pub(crate) fn new() -> Self {
-        VirtualMachine {
-            execution_context: ExecutionContext::new(),
-            constant_table: ConstantTable::new(),
+        let execution_context = ExecutionContext::new();
+        let mut heap = Heap::new(1024 * 1024);
 
+        // create global objects
+        let base_obj = heap.alloc().unwrap();
+        base_obj._type = JSType::Undefined;
+        execution_context
+            .context
+            .borrow_mut()
+            .set("undefined".to_string(), base_obj.as_raw_ptr());
+
+        Self {
+            execution_context,
+            constant_table: ConstantTable::new(),
             register: Register::new(),
             pc: 0,
             stack: Vec::new(),
             code: Vec::new(),
-            heap: Heap::new(1024 * 1024),
+            heap,
         }
+    }
+}
+
+impl GlasperEngine for VirtualMachine {
+    fn run(&mut self, source: String) {
+        match &*source {
+            "%PrintDump()" => {
+                self.print_dump();
+            }
+            "%PrintIr()" => {
+                self.print_ir();
+            }
+            "%PrintBytes()" => {
+                self.print_bytecode();
+            }
+            _ => {
+                let mut lexer = lexer::Lexer::new(source);
+                let mut parser = Parser::new(&mut lexer);
+                let program = parser.parse_program();
+                let mut codegen = CodeGenerator::new(&mut self.constant_table);
+                let mut code = codegen.gen(&program);
+                self.code.append(&mut code);
+
+                if let Err(e) = self.interpret() {
+                    println!("{}", e);
+                } else {
+                    self.print_current_expr();
+                };
+            }
+        };
     }
 }
 
 /// core impl
 impl VirtualMachine {
-    pub(crate) fn init(&mut self) {
-        let base_obj = self.heap.alloc().unwrap();
-        base_obj._type = JSType::Undefined;
-        self.execution_context
-            .context
-            .clone()
-            .borrow_mut()
-            .set("undefined".to_string(), base_obj.as_raw_ptr());
-    }
-
-    pub(crate) fn run(&mut self, source: String) -> Result<(), VMError> {
-        let mut lexer = lexer::Lexer::new(source);
-        let mut parser = Parser::new(&mut lexer);
-        let program = parser.parse_program();
-        let mut codegen = CodeGenerator::new(&mut self.constant_table);
-        let mut code = codegen.gen(&program);
-        self.code.append(&mut code);
-        self.interpret()
-    }
-
     fn interpret(&mut self) -> Result<(), VMError> {
         loop {
             let opcode = self.fetch();
@@ -480,13 +502,13 @@ impl VirtualMachine {
 
 /// printer impl
 impl VirtualMachine {
-    pub(crate) fn print_current_expr(&self) {
+    fn print_current_expr(&self) {
         let ptr = self.get_reg_v(RName::R0);
         let obj = JSObject::from_raw_ptr(ptr);
         println!("{}", obj);
     }
 
-    pub(crate) fn print_bytecode(&self) {
+    fn print_bytecode(&self) {
         for (i, byte) in self.code.iter().enumerate() {
             if i % 16 == 0 {
                 print!("\x1b[30m{:08x}:\x1b[0m     ", i / 16);
@@ -501,7 +523,7 @@ impl VirtualMachine {
         println!();
     }
 
-    pub(crate) fn print_bytecode_with_ir(&self) {
+    fn print_bytecode_with_ir(&self) {
         for (i, byte) in self.code.iter().enumerate() {
             if i % 16 == 0 {
                 print!("\x1b[30m{:?} @    {}:\x1b[0m ", byte as *const u8, i / 16);
@@ -516,7 +538,7 @@ impl VirtualMachine {
         println!();
     }
 
-    pub(crate) fn print_ir(&self) {
+    fn print_ir(&self) {
         let i = self.get_instructions(&self.code);
         for (inst, _) in i {
             print!("\x1b[30m{inst}\x1b[0m ");
@@ -524,7 +546,7 @@ impl VirtualMachine {
         }
     }
 
-    pub(crate) fn print_dump(&self) {
+    fn print_dump(&self) {
         let i = self.get_instructions(&self.code);
         for (idx, (_, bytes)) in i.iter().enumerate() {
             print!(

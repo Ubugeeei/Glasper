@@ -29,30 +29,51 @@ use crate::engine::{
             JSBoolean, JSFunction, JSNull, JSNumber, JSObject, JSString, JSUndefined, RuntimeObject,
         },
     },
+    parsing::{lexer::Lexer, parser::Parser},
 };
+
+use super::interface::GlasperEngine;
 
 pub mod api;
 pub mod handles;
 pub mod objects;
 
-pub struct Evaluator<'a> {
+pub struct HostInterpreter<'a> {
     ctx: &'a mut Context,
     exec_ctx_this: Rc<RefCell<JSObject>>,
 }
-impl<'a> Evaluator<'a> {
+impl<'a> HostInterpreter<'a> {
     pub fn new(ctx: &'a mut Context) -> Self {
         // TODO: bind global object
         let global_obj = Rc::new(RefCell::new(JSObject {
             properties: HashMap::new(),
         }));
 
-        Evaluator {
+        HostInterpreter {
             ctx,
             exec_ctx_this: global_obj,
         }
     }
+}
 
-    pub fn eval(&mut self, program: &Program) -> Result<RuntimeObject, Error> {
+impl<'a> GlasperEngine for HostInterpreter<'a> {
+    fn run(&mut self, source: String) {
+        match self.execute(source) {
+            Ok(o) => println!("{}", o),
+            Err(e) => println!("{}", e),
+        }
+    }
+}
+
+impl<'a> HostInterpreter<'a> {
+    fn execute(&mut self, source: String) -> Result<RuntimeObject, Error> {
+        let mut l = Lexer::new(source);
+        let mut p = Parser::new(&mut l);
+        let program = p.parse_program();
+        self.eval(&program)
+    }
+
+    fn eval(&mut self, program: &Program) -> Result<RuntimeObject, Error> {
         let mut result = RuntimeObject::Undefined(JSUndefined);
         for statement in &program.statements {
             result = self.eval_statement(statement, ScopeType::Block)?;
@@ -1038,7 +1059,7 @@ mod tests {
 
         let handle_scope = HandleScope::new();
         let mut context = Context::new(handle_scope);
-        let mut ev = Evaluator::new(&mut context);
+        let mut ev = HostInterpreter::new(&mut context);
         assert_eq!(program.statements.len(), 1);
         assert_eq!(
             format!("{}", ev.eval(&program).unwrap()),
@@ -1054,7 +1075,7 @@ mod tests {
 
         let handle_scope = HandleScope::new();
         let mut context = Context::new(handle_scope);
-        let mut ev = Evaluator::new(&mut context);
+        let mut ev = HostInterpreter::new(&mut context);
         assert_eq!(program.statements.len(), 1);
         assert_eq!(
             format!("{}", ev.eval(&program).unwrap()),
@@ -1071,7 +1092,7 @@ mod tests {
 
             let handle_scope = HandleScope::new();
             let mut context = Context::new(handle_scope);
-            let mut ev = Evaluator::new(&mut context);
+            let mut ev = HostInterpreter::new(&mut context);
             assert_eq!(program.statements.len(), 1);
             assert_eq!(
                 format!("{}", ev.eval(&program).unwrap()),
@@ -1085,7 +1106,7 @@ mod tests {
 
             let handle_scope = HandleScope::new();
             let mut context = Context::new(handle_scope);
-            let mut ev = Evaluator::new(&mut context);
+            let mut ev = HostInterpreter::new(&mut context);
             assert_eq!(program.statements.len(), 1);
             assert_eq!(
                 format!("{}", ev.eval(&program).unwrap()),
@@ -1117,7 +1138,7 @@ mod tests {
 
             let handle_scope = HandleScope::new();
             let mut context = Context::new(handle_scope);
-            let mut ev = Evaluator::new(&mut context);
+            let mut ev = HostInterpreter::new(&mut context);
             assert_eq!(program.statements.len(), 1);
             assert_eq!(format!("{}", ev.eval(&program).unwrap()), expected);
         }
@@ -1183,7 +1204,7 @@ mod tests {
 
             let handle_scope = HandleScope::new();
             let mut context = Context::new(handle_scope);
-            let mut ev = Evaluator::new(&mut context);
+            let mut ev = HostInterpreter::new(&mut context);
             assert_eq!(program.statements.len(), 1);
             assert_eq!(format!("{}", ev.eval(&program).unwrap()), expected);
         }
@@ -1208,7 +1229,7 @@ mod tests {
 
             let handle_scope = HandleScope::new();
             let mut context = Context::new(handle_scope);
-            let mut ev = Evaluator::new(&mut context);
+            let mut ev = HostInterpreter::new(&mut context);
             assert_eq!(format!("{}", ev.eval(&program).unwrap()), expected);
         }
     }
@@ -1224,7 +1245,7 @@ mod tests {
 
             let handle_scope = HandleScope::new();
             let mut context = Context::new(handle_scope);
-            let mut ev = Evaluator::new(&mut context);
+            let mut ev = HostInterpreter::new(&mut context);
             assert_eq!(
                 format!("{}", ev.eval(&program).unwrap()),
                 "\x1b[33m2\x1b[0m"
@@ -1240,7 +1261,7 @@ mod tests {
 
             let handle_scope = HandleScope::new();
             let mut context = Context::new(handle_scope);
-            let mut ev = Evaluator::new(&mut context);
+            let mut ev = HostInterpreter::new(&mut context);
             assert_eq!(
                 format!("{}", ev.eval(&program).unwrap()),
                 "\x1b[33m2\x1b[0m"
@@ -1256,7 +1277,7 @@ mod tests {
 
             let handle_scope = HandleScope::new();
             let mut context = Context::new(handle_scope);
-            let mut ev = Evaluator::new(&mut context);
+            let mut ev = HostInterpreter::new(&mut context);
             assert_eq!(
                 format!("{}", ev.eval(&program).unwrap()),
                 "\x1b[33m2\x1b[0m"
@@ -1272,7 +1293,7 @@ mod tests {
 
             let handle_scope = HandleScope::new();
             let mut context = Context::new(handle_scope);
-            let mut ev = Evaluator::new(&mut context);
+            let mut ev = HostInterpreter::new(&mut context);
             ev.eval(&program).unwrap_err();
         }
 
@@ -1285,7 +1306,7 @@ mod tests {
 
             let handle_scope = HandleScope::new();
             let mut context = Context::new(handle_scope);
-            let mut ev = Evaluator::new(&mut context);
+            let mut ev = HostInterpreter::new(&mut context);
             ev.eval(&program).unwrap_err();
         }
 
@@ -1298,7 +1319,7 @@ mod tests {
 
             let handle_scope = HandleScope::new();
             let mut context = Context::new(handle_scope);
-            let mut ev = Evaluator::new(&mut context);
+            let mut ev = HostInterpreter::new(&mut context);
             ev.eval(&program).unwrap_err();
         }
     }
@@ -1421,7 +1442,7 @@ mod tests {
                 let program = p.parse_program();
                 let handle_scope = HandleScope::new();
                 let mut context = Context::new(handle_scope);
-                let mut ev = Evaluator::new(&mut context);
+                let mut ev = HostInterpreter::new(&mut context);
                 assert_eq!(format!("{}", ev.eval(&program).unwrap()), expected);
             }
         }
@@ -1502,7 +1523,7 @@ mod tests {
                 let program = p.parse_program();
                 let handle_scope = HandleScope::new();
                 let mut context = Context::new(handle_scope);
-                let mut ev = Evaluator::new(&mut context);
+                let mut ev = HostInterpreter::new(&mut context);
                 assert_eq!(format!("{}", ev.eval(&program).unwrap()), expected);
             }
         }
@@ -1558,7 +1579,7 @@ mod tests {
             let program = p.parse_program();
             let handle_scope = HandleScope::new();
             let mut context = Context::new(handle_scope);
-            let mut ev = Evaluator::new(&mut context);
+            let mut ev = HostInterpreter::new(&mut context);
             assert_eq!(format!("{}", ev.eval(&program).unwrap()), expected);
         }
     }
@@ -1601,7 +1622,7 @@ mod tests {
             let program = p.parse_program();
             let handle_scope = HandleScope::new();
             let mut context = Context::new(handle_scope);
-            let mut ev = Evaluator::new(&mut context);
+            let mut ev = HostInterpreter::new(&mut context);
             assert_eq!(format!("{}", ev.eval(&program).unwrap()), expected);
         }
     }
@@ -1633,7 +1654,7 @@ mod tests {
             let program = p.parse_program();
             let handle_scope = HandleScope::new();
             let mut context = Context::new(handle_scope);
-            let mut ev = Evaluator::new(&mut context);
+            let mut ev = HostInterpreter::new(&mut context);
             assert_eq!(format!("{}", ev.eval(&program).unwrap()), expected);
         }
     }
@@ -1661,7 +1682,7 @@ mod tests {
             let program = p.parse_program();
             let handle_scope = HandleScope::new();
             let mut context = Context::new(handle_scope);
-            let mut ev = Evaluator::new(&mut context);
+            let mut ev = HostInterpreter::new(&mut context);
             assert_eq!(format!("{}", ev.eval(&program).unwrap()), expected);
         }
     }
@@ -1686,7 +1707,7 @@ mod tests {
             let program = p.parse_program();
             let handle_scope = HandleScope::new();
             let mut context = Context::new(handle_scope);
-            let mut ev = Evaluator::new(&mut context);
+            let mut ev = HostInterpreter::new(&mut context);
             assert_eq!(format!("{}", ev.eval(&program).unwrap()), expected);
         }
     }
@@ -1710,7 +1731,7 @@ mod tests {
             let program = p.parse_program();
             let handle_scope = HandleScope::new();
             let mut context = Context::new(handle_scope);
-            let mut ev = Evaluator::new(&mut context);
+            let mut ev = HostInterpreter::new(&mut context);
             assert_eq!(format!("{}", ev.eval(&program).unwrap()), expected);
         }
     }
