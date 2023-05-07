@@ -1,5 +1,5 @@
 pub mod api;
 pub mod ast;
-pub mod execution;
+pub mod core;
 pub mod handles;
 pub mod parsing;

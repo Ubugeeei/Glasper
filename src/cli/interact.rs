@@ -1,6 +1,6 @@
 use rustyline::error::ReadlineError;
 
-use crate::engine::execution::vm::VirtualMachine;
+use crate::engine::core::vm::VirtualMachine;
 use crate::runtime::js::JavaScriptRuntime;
 
 pub fn start(vm: bool) {

@@ -1,5 +1,5 @@
 #![allow(dead_code)]
-use crate::engine::execution::vm::VirtualMachine;
+use crate::engine::core::vm::VirtualMachine;
 
 use super::{
     constant::PROTOTYPE_KEY_NAME,

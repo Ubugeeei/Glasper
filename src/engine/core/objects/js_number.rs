@@ -4,7 +4,7 @@ use super::{
     constant::PROTOTYPE_KEY_NAME,
     js_object::{JSObject, JSType},
 };
-use crate::engine::execution::vm::VirtualMachine;
+use crate::engine::core::vm::VirtualMachine;
 
 pub(crate) struct JSNumber;
 
