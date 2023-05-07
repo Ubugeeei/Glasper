@@ -2,7 +2,7 @@ use rustyline::error::ReadlineError;
 
 use crate::runtime::interface::JSRuntimeBuilder;
 
-pub fn start(vm: bool) {
+pub fn start_repl(vm: bool) {
     println!("Welcome to Glasper v0.1.0 ");
     println!("exit using ctrl+c or ctrl+d or exit()");
 

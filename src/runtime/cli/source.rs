@@ -1,6 +1,6 @@
 use crate::runtime::interface::JSRuntimeBuilder;
 
-pub fn run(path: &str, vm: bool) {
+pub fn exec_source(path: &str, vm: bool) {
     let mut runtime = JSRuntimeBuilder::build(vm);
     match std::fs::read_to_string(path) {
         Ok(source) => {
