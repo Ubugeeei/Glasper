@@ -1,7 +1,10 @@
 use crate::{
-    engine::core::host::{
-        api::{Context, Isolate, Script},
-        handles::HandleScope,
+    engine::{
+        core::host::{
+            api::{Context, Isolate, Script},
+            handles::HandleScope,
+        },
+        parsing::{BuiltinParser, Parser},
     },
     runtime::interface::JSRuntime,
 };
@@ -29,7 +32,7 @@ impl HostJSRuntime {
         let console = console_builder.build();
         global.set("console", console);
 
-        let mut isolate = Isolate::new(context);
+        let mut isolate = Isolate::new(context, Box::new(BuiltinParser));
         isolate.install_functions(vec!["src/runtime/host/array.js"]);
 
         HostJSRuntime { isolate }
@@ -39,7 +42,8 @@ impl HostJSRuntime {
 impl JSRuntime for HostJSRuntime {
     fn run(&mut self, source: String) {
         let scope = self.get_cxt();
-        let mut script = Script::compile(source, scope);
+        let mut parser: Box<dyn Parser> = Box::new(BuiltinParser);
+        let mut script = Script::compile(source, scope, &mut parser);
         match script.run() {
             Ok(o) => println!("{}", o),
             Err(e) => println!("{}", e),

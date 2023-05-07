@@ -1,4 +1,4 @@
-use crate::engine::core::vm::VirtualMachine;
+use crate::engine::{core::vm::VirtualMachine, parsing::BuiltinParser};
 
 use super::interface::JSRuntime;
 
@@ -8,7 +8,8 @@ pub struct VMRuntime {
 
 impl VMRuntime {
     pub fn new() -> Self {
-        let vm = VirtualMachine::new();
+        let parser = Box::new(BuiltinParser);
+        let vm = VirtualMachine::new(parser);
         VMRuntime { vm }
     }
 }

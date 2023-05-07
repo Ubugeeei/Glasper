@@ -5,23 +5,24 @@ use crate::engine::{
         objects::{JSObject, RuntimeObject},
         HostInterpreter,
     },
-    parsing::{lexer::Lexer, parser::Parser},
+    parsing::Parser,
 };
 use std::{cell::RefCell, collections::HashMap, io::Error, rc::Rc};
 
 pub struct Isolate {
     pub context: Context,
+    parser: Box<dyn Parser>,
 }
 impl Isolate {
-    pub fn new(context: Context) -> Self {
-        Isolate { context }
+    pub fn new(context: Context, parser: Box<dyn Parser>) -> Self {
+        Isolate { context, parser }
     }
 
     pub fn install_functions(&mut self, paths: Vec<&str>) {
         for path in paths {
             match std::fs::read_to_string(path) {
                 Ok(source) => {
-                    let mut script = Script::compile(source, &mut self.context);
+                    let mut script = Script::compile(source, &mut self.context, &mut self.parser);
                     let _ = script.run();
                 }
                 Err(_) => {
@@ -96,11 +97,9 @@ pub struct Script<'a> {
     context: &'a mut Context,
 }
 impl<'a> Script<'a> {
-    pub fn compile(source: String, context: &'a mut Context) -> Self {
-        let mut l = Lexer::new(source);
-        let mut p = Parser::new(&mut l);
+    pub fn compile(source: String, context: &'a mut Context, parser: &mut Box<dyn Parser>) -> Self {
         Script {
-            ast: p.parse_program(),
+            ast: parser.parse(source),
             context,
         }
     }

@@ -15,7 +15,7 @@ use crate::engine::{
             JSBoolean, JSFunction, JSNull, JSNumber, JSObject, JSString, JSUndefined, RuntimeObject,
         },
     },
-    parsing::{lexer::Lexer, parser::Parser},
+    parsing::Parser,
 };
 
 pub mod api;
@@ -41,18 +41,12 @@ impl<'a> HostInterpreter<'a> {
 }
 
 impl<'a> HostInterpreter<'a> {
-    pub fn run(&mut self, source: String) {
-        match self.execute(source) {
+    pub fn run(&mut self, source: String, parser: impl Parser) {
+        let ast = parser.parse(source);
+        match self.eval(&ast) {
             Ok(o) => println!("{}", o),
             Err(e) => println!("{}", e),
         }
-    }
-
-    fn execute(&mut self, source: String) -> Result<RuntimeObject, Error> {
-        let mut l = Lexer::new(source);
-        let mut p = Parser::new(&mut l);
-        let program = p.parse_program();
-        self.eval(&program)
     }
 
     fn eval(&mut self, program: &Program) -> Result<RuntimeObject, Error> {
@@ -1024,17 +1018,11 @@ enum ScopeType {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::engine::{
-        core::host::handles::HandleScope,
-        parsing::{lexer::Lexer, parser::Parser},
-    };
+    use crate::engine::{core::host::handles::HandleScope, parsing::BuiltinParser};
 
     #[test]
     fn test_eval_let_statement() {
-        let mut l = Lexer::new("let a = 1;".to_string());
-        let mut p = Parser::new(&mut l);
-        let program = p.parse_program();
-
+        let program = BuiltinParser.parse("let a = 1;".to_string());
         let handle_scope = HandleScope::new();
         let mut context = Context::new(handle_scope);
         let mut ev = HostInterpreter::new(&mut context);
@@ -1047,10 +1035,7 @@ mod tests {
 
     #[test]
     fn test_eval_int() {
-        let mut l = Lexer::new("1".to_string());
-        let mut p = Parser::new(&mut l);
-        let program = p.parse_program();
-
+        let program = BuiltinParser.parse("1".to_string());
         let handle_scope = HandleScope::new();
         let mut context = Context::new(handle_scope);
         let mut ev = HostInterpreter::new(&mut context);
@@ -1064,10 +1049,7 @@ mod tests {
     #[test]
     fn test_eval_bool() {
         {
-            let mut l = Lexer::new("true".to_string());
-            let mut p = Parser::new(&mut l);
-            let program = p.parse_program();
-
+            let program = BuiltinParser.parse("true".to_string());
             let handle_scope = HandleScope::new();
             let mut context = Context::new(handle_scope);
             let mut ev = HostInterpreter::new(&mut context);
@@ -1078,10 +1060,7 @@ mod tests {
             );
         }
         {
-            let mut l = Lexer::new("false".to_string());
-            let mut p = Parser::new(&mut l);
-            let program = p.parse_program();
-
+            let program = BuiltinParser.parse("false".to_string());
             let handle_scope = HandleScope::new();
             let mut context = Context::new(handle_scope);
             let mut ev = HostInterpreter::new(&mut context);
@@ -1110,10 +1089,7 @@ mod tests {
         ];
 
         for (input, expected) in case {
-            let mut l = Lexer::new(input.to_string());
-            let mut p = Parser::new(&mut l);
-            let program = p.parse_program();
-
+            let program = BuiltinParser.parse(input.to_string());
             let handle_scope = HandleScope::new();
             let mut context = Context::new(handle_scope);
             let mut ev = HostInterpreter::new(&mut context);
@@ -1176,10 +1152,7 @@ mod tests {
         ];
 
         for (input, expected) in case {
-            let mut l = Lexer::new(input.to_string());
-            let mut p = Parser::new(&mut l);
-            let program = p.parse_program();
-
+            let program = BuiltinParser.parse(input.to_string());
             let handle_scope = HandleScope::new();
             let mut context = Context::new(handle_scope);
             let mut ev = HostInterpreter::new(&mut context);
@@ -1201,10 +1174,7 @@ mod tests {
         ];
 
         for (input, expected) in case {
-            let mut l = Lexer::new(input.to_string());
-            let mut p = Parser::new(&mut l);
-            let program = p.parse_program();
-
+            let program = BuiltinParser.parse(input.to_string());
             let handle_scope = HandleScope::new();
             let mut context = Context::new(handle_scope);
             let mut ev = HostInterpreter::new(&mut context);
@@ -1216,11 +1186,7 @@ mod tests {
     fn test_assign_var_validation() {
         // reassign to let variable
         {
-            let input = "let a = 1; a = 2;";
-            let mut l = Lexer::new(input.to_string());
-            let mut p = Parser::new(&mut l);
-            let program = p.parse_program();
-
+            let program = BuiltinParser.parse("let a = 1; a = 2;".to_string());
             let handle_scope = HandleScope::new();
             let mut context = Context::new(handle_scope);
             let mut ev = HostInterpreter::new(&mut context);
@@ -1232,11 +1198,7 @@ mod tests {
 
         // redeclare (let)
         {
-            let input = "let a = 1; let a = 2; a;";
-            let mut l = Lexer::new(input.to_string());
-            let mut p = Parser::new(&mut l);
-            let program = p.parse_program();
-
+            let program = BuiltinParser.parse("let a = 1; let a = 2; a;".to_string());
             let handle_scope = HandleScope::new();
             let mut context = Context::new(handle_scope);
             let mut ev = HostInterpreter::new(&mut context);
@@ -1248,11 +1210,7 @@ mod tests {
 
         // redeclare (let -> const)
         {
-            let input = "let a = 1; const a = 2; a;";
-            let mut l = Lexer::new(input.to_string());
-            let mut p = Parser::new(&mut l);
-            let program = p.parse_program();
-
+            let program = BuiltinParser.parse("let a = 1; const a = 2; a;".to_string());
             let handle_scope = HandleScope::new();
             let mut context = Context::new(handle_scope);
             let mut ev = HostInterpreter::new(&mut context);
@@ -1264,11 +1222,7 @@ mod tests {
 
         // reassign to const variable
         {
-            let input = "const a = 1; a = 2;";
-            let mut l = Lexer::new(input.to_string());
-            let mut p = Parser::new(&mut l);
-            let program = p.parse_program();
-
+            let program = BuiltinParser.parse("const a = 1; a = 2;".to_string());
             let handle_scope = HandleScope::new();
             let mut context = Context::new(handle_scope);
             let mut ev = HostInterpreter::new(&mut context);
@@ -1277,11 +1231,7 @@ mod tests {
 
         // redeclare (const -> const)
         {
-            let input = "const a = 1; const a = 2; a;";
-            let mut l = Lexer::new(input.to_string());
-            let mut p = Parser::new(&mut l);
-            let program = p.parse_program();
-
+            let program = BuiltinParser.parse("const a = 1; const a = 2; a;".to_string());
             let handle_scope = HandleScope::new();
             let mut context = Context::new(handle_scope);
             let mut ev = HostInterpreter::new(&mut context);
@@ -1290,11 +1240,7 @@ mod tests {
 
         // redeclare (const -> let)
         {
-            let input = "const a = 1; let a = 2; a;";
-            let mut l = Lexer::new(input.to_string());
-            let mut p = Parser::new(&mut l);
-            let program = p.parse_program();
-
+            let program = BuiltinParser.parse("const a = 1; let a = 2; a;".to_string());
             let handle_scope = HandleScope::new();
             let mut context = Context::new(handle_scope);
             let mut ev = HostInterpreter::new(&mut context);
@@ -1415,9 +1361,7 @@ mod tests {
             ];
 
             for (input, expected) in case {
-                let mut l = Lexer::new(input.to_string());
-                let mut p = Parser::new(&mut l);
-                let program = p.parse_program();
+                let program = BuiltinParser.parse(input.to_string());
                 let handle_scope = HandleScope::new();
                 let mut context = Context::new(handle_scope);
                 let mut ev = HostInterpreter::new(&mut context);
@@ -1496,9 +1440,7 @@ mod tests {
             ];
 
             for (input, expected) in case {
-                let mut l = Lexer::new(input.to_string());
-                let mut p = Parser::new(&mut l);
-                let program = p.parse_program();
+                let program = BuiltinParser.parse(input.to_string());
                 let handle_scope = HandleScope::new();
                 let mut context = Context::new(handle_scope);
                 let mut ev = HostInterpreter::new(&mut context);
@@ -1552,9 +1494,7 @@ mod tests {
         ];
 
         for (input, expected) in case {
-            let mut l = Lexer::new(input.to_string());
-            let mut p = Parser::new(&mut l);
-            let program = p.parse_program();
+            let program = BuiltinParser.parse(input.to_string());
             let handle_scope = HandleScope::new();
             let mut context = Context::new(handle_scope);
             let mut ev = HostInterpreter::new(&mut context);
@@ -1595,9 +1535,7 @@ mod tests {
         ];
 
         for (input, expected) in case {
-            let mut l = Lexer::new(input.to_string());
-            let mut p = Parser::new(&mut l);
-            let program = p.parse_program();
+            let program = BuiltinParser.parse(input.to_string());
             let handle_scope = HandleScope::new();
             let mut context = Context::new(handle_scope);
             let mut ev = HostInterpreter::new(&mut context);
@@ -1627,9 +1565,7 @@ mod tests {
         )];
 
         for (input, expected) in case {
-            let mut l = Lexer::new(input.to_string());
-            let mut p = Parser::new(&mut l);
-            let program = p.parse_program();
+            let program = BuiltinParser.parse(input.to_string());
             let handle_scope = HandleScope::new();
             let mut context = Context::new(handle_scope);
             let mut ev = HostInterpreter::new(&mut context);
@@ -1655,9 +1591,7 @@ mod tests {
         )];
 
         for (input, expected) in case {
-            let mut l = Lexer::new(input.to_string());
-            let mut p = Parser::new(&mut l);
-            let program = p.parse_program();
+            let program = BuiltinParser.parse(input.to_string());
             let handle_scope = HandleScope::new();
             let mut context = Context::new(handle_scope);
             let mut ev = HostInterpreter::new(&mut context);
@@ -1680,9 +1614,7 @@ mod tests {
         )];
 
         for (input, expected) in case {
-            let mut l = Lexer::new(input.to_string());
-            let mut p = Parser::new(&mut l);
-            let program = p.parse_program();
+            let program = BuiltinParser.parse(input.to_string());
             let handle_scope = HandleScope::new();
             let mut context = Context::new(handle_scope);
             let mut ev = HostInterpreter::new(&mut context);
@@ -1704,9 +1636,7 @@ mod tests {
         )];
 
         for (input, expected) in case {
-            let mut l = Lexer::new(input.to_string());
-            let mut p = Parser::new(&mut l);
-            let program = p.parse_program();
+            let program = BuiltinParser.parse(input.to_string());
             let handle_scope = HandleScope::new();
             let mut context = Context::new(handle_scope);
             let mut ev = HostInterpreter::new(&mut context);

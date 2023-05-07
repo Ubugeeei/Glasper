@@ -1,5 +1,7 @@
 #![allow(dead_code)]
 
+use crate::engine::parsing::Parser;
+
 use self::{
     bytecodes::{Bytecodes, RName},
     codegen::CodeGenerator,
@@ -14,7 +16,6 @@ use self::{
     register::Register,
 };
 
-use crate::engine::parsing::{lexer, parser::Parser};
 use std::fmt::Display;
 
 pub(crate) mod bytecodes;
@@ -63,6 +64,7 @@ impl Display for VMError {
 pub(crate) struct VirtualMachine {
     execution_context: ExecutionContext,
     pub(crate) constant_table: ConstantTable,
+    parser: Box<dyn Parser>,
 
     register: Register,
     pc: usize,
@@ -72,7 +74,7 @@ pub(crate) struct VirtualMachine {
 }
 
 impl VirtualMachine {
-    pub(crate) fn new() -> Self {
+    pub(crate) fn new(parser: Box<dyn Parser>) -> Self {
         let execution_context = ExecutionContext::new();
         let mut heap = Heap::new(1024 * 1024);
 
@@ -87,6 +89,7 @@ impl VirtualMachine {
         Self {
             execution_context,
             constant_table: ConstantTable::new(),
+            parser,
             register: Register::new(),
             pc: 0,
             stack: Vec::new(),
@@ -110,9 +113,7 @@ impl VirtualMachine {
                 self.print_bytecode();
             }
             _ => {
-                let mut lexer = lexer::Lexer::new(source);
-                let mut parser = Parser::new(&mut lexer);
-                let program = parser.parse_program();
+                let program = self.parser.parse(source);
                 let mut codegen = CodeGenerator::new(&mut self.constant_table);
                 let mut code = codegen.gen(&program);
                 self.code.append(&mut code);
